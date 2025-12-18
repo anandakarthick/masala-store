@@ -1,57 +1,103 @@
-<div class="bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-lg transition">
+<div class="bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-lg transition" 
+     x-data="{ 
+        quantity: 1, 
+        maxStock: {{ $product->has_variants ? ($product->activeVariants->first()->stock_quantity ?? 100) : $product->stock_quantity }},
+        increment() { if(this.quantity < this.maxStock && this.quantity < 99) this.quantity++ },
+        decrement() { if(this.quantity > 1) this.quantity-- }
+     }">
     <a href="{{ route('products.show', $product->slug) }}" class="block">
-        <div class="relative aspect-square bg-gray-100">
+        <div class="relative h-40 sm:h-44 md:h-48 bg-gray-100 overflow-hidden">
             @if($product->primary_image_url)
-                <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" 
-                     class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                <img src="{{ $product->primary_image_url }}" 
+                     alt="{{ $product->name }}" 
+                     class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                     loading="lazy">
             @else
                 <div class="w-full h-full flex items-center justify-center text-gray-400">
-                    <i class="fas fa-image text-4xl"></i>
+                    <i class="fas fa-image text-3xl"></i>
                 </div>
             @endif
             
             @if($product->discount_percentage > 0)
-                <span class="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                <span class="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded">
                     -{{ $product->discount_percentage }}%
                 </span>
             @endif
             
-            @if($product->isOutOfStock())
-                <span class="absolute top-2 right-2 bg-gray-800 text-white text-xs px-2 py-1 rounded">
+            @if($product->is_combo)
+                <span class="absolute top-2 right-2 bg-green-600 text-white text-xs px-2 py-0.5 rounded">
+                    <i class="fas fa-gift mr-1"></i>Pack
+                </span>
+            @elseif($product->isOutOfStock())
+                <span class="absolute top-2 right-2 bg-gray-800 text-white text-xs px-2 py-0.5 rounded">
                     Out of Stock
                 </span>
             @endif
         </div>
     </a>
     
-    <div class="p-4">
+    <div class="p-3">
         <a href="{{ route('category.show', $product->category->slug) }}" 
-           class="text-xs text-orange-600 hover:text-orange-700">
+           class="text-xs text-green-600 hover:text-green-700">
             {{ $product->category->name }}
         </a>
         
-        <h3 class="font-semibold text-gray-800 mt-1 group-hover:text-orange-600 transition">
+        <h3 class="font-medium text-gray-800 mt-1 text-sm leading-tight group-hover:text-green-600 transition line-clamp-2">
             <a href="{{ route('products.show', $product->slug) }}">{{ $product->name }}</a>
         </h3>
         
-        <p class="text-sm text-gray-500 mt-1">{{ $product->weight_display }}</p>
+        <p class="text-xs text-gray-500 mt-1">{{ $product->weight_display }}</p>
         
-        <div class="flex items-center justify-between mt-3">
-            <div>
-                @if($product->discount_price)
-                    <span class="text-lg font-bold text-orange-600">₹{{ number_format($product->discount_price, 2) }}</span>
-                    <span class="text-sm text-gray-400 line-through ml-1">₹{{ number_format($product->price, 2) }}</span>
+        <div class="mt-2">
+            <div class="mb-2">
+                @if($product->has_variants && $product->activeVariants->count() > 0)
+                    <span class="text-sm font-bold text-green-600">{{ $product->price_display }}</span>
+                @elseif($product->discount_price)
+                    <span class="text-sm font-bold text-green-600">₹{{ number_format($product->discount_price, 2) }}</span>
+                    <span class="text-xs text-gray-400 line-through ml-1">₹{{ number_format($product->price, 2) }}</span>
                 @else
-                    <span class="text-lg font-bold text-orange-600">₹{{ number_format($product->price, 2) }}</span>
+                    <span class="text-sm font-bold text-green-600">₹{{ number_format($product->price, 2) }}</span>
                 @endif
             </div>
             
             @if(!$product->isOutOfStock())
-                <button type="button" 
-                        @click="addToCart({{ $product->id }})"
-                        class="bg-orange-600 hover:bg-orange-700 text-white p-2 rounded-lg transition"
-                        title="Add to Cart">
-                    <i class="fas fa-cart-plus"></i>
+                @if($product->has_variants)
+                    {{-- Products with variants - show view button --}}
+                    <a href="{{ route('products.show', $product->slug) }}" 
+                       class="w-full flex items-center justify-center gap-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition text-xs font-medium">
+                        <i class="fas fa-eye"></i> Select Options
+                    </a>
+                @else
+                    {{-- Products without variants - show quantity selector and add to cart --}}
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center border border-gray-300 rounded-lg flex-shrink-0">
+                            <button type="button" 
+                                    @click="decrement()"
+                                    class="w-7 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-l-lg">
+                                <i class="fas fa-minus text-xs"></i>
+                            </button>
+                            <input type="number" 
+                                   x-model.number="quantity" 
+                                   min="1" 
+                                   :max="maxStock"
+                                   class="w-8 h-8 text-center border-0 focus:ring-0 text-xs p-0"
+                                   readonly>
+                            <button type="button" 
+                                    @click="increment()"
+                                    class="w-7 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-r-lg">
+                                <i class="fas fa-plus text-xs"></i>
+                            </button>
+                        </div>
+                        <button type="button" 
+                                @click="addToCart({{ $product->id }}, quantity)"
+                                class="flex-1 flex items-center justify-center gap-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition text-xs font-medium">
+                            <i class="fas fa-cart-plus"></i> Add
+                        </button>
+                    </div>
+                @endif
+            @else
+                <button disabled class="w-full bg-gray-400 text-white py-2 rounded-lg text-xs font-medium cursor-not-allowed">
+                    Out of Stock
                 </button>
             @endif
         </div>

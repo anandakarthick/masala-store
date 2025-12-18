@@ -22,6 +22,30 @@
         .toast-leave { animation: toastOut 0.3s ease-in forwards; }
         @keyframes toastIn { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes toastOut { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-100%); opacity: 0; } }
+        
+        /* Line clamp for product names */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .line-clamp-1 {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        /* Hide number input spinners */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
     </style>
     
     @stack('styles')
@@ -31,48 +55,64 @@
     <div x-show="toast.show" x-cloak
          x-transition:enter="toast-enter"
          x-transition:leave="toast-leave"
-         :class="toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'"
+         :class="toast.type === 'success' ? 'bg-green-500' : (toast.type === 'warning' ? 'bg-yellow-500' : 'bg-red-500')"
          class="fixed top-4 right-4 z-50 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
-        <i :class="toast.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
+        <i :class="toast.type === 'success' ? 'fas fa-check-circle' : (toast.type === 'warning' ? 'fas fa-exclamation-triangle' : 'fas fa-exclamation-circle')"></i>
         <span x-text="toast.message"></span>
     </div>
 
     <!-- Top Bar -->
-    <div class="bg-green-700 text-white text-sm py-2">
-        <div class="container mx-auto px-4 flex justify-between items-center">
-            <div class="flex items-center space-x-4">
-                <span><i class="fas fa-phone mr-1"></i> {{ \App\Models\Setting::get('business_phone', '+91 98765 43210') }}</span>
-                <span class="hidden md:inline"><i class="fas fa-envelope mr-1"></i> {{ \App\Models\Setting::get('business_email', 'support@svmasala.com') }}</span>
-            </div>
-            <div class="flex items-center space-x-4">
-                <a href="{{ route('tracking.index') }}" class="hover:text-green-200">Track Order</a>
-                @auth
-                    <a href="{{ route('account.dashboard') }}" class="hover:text-green-200">My Account</a>
-                @else
-                    <a href="{{ route('login') }}" class="hover:text-green-200">Login</a>
-                    <a href="{{ route('register') }}" class="hover:text-green-200">Register</a>
-                @endauth
+    <div class="bg-green-700 text-white text-sm py-2 overflow-visible">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-wrap justify-between items-center gap-2">
+                <!-- Contact Info - Left -->
+                <div class="flex items-center space-x-3 text-xs sm:text-sm">
+                    <span class="flex items-center">
+                        <i class="fas fa-phone mr-1"></i> 
+                        <span class="hidden sm:inline">{{ \App\Models\Setting::get('business_phone', '+91 98765 43210') }}</span>
+                        <span class="sm:hidden">Call</span>
+                    </span>
+                    <span class="hidden md:flex items-center">
+                        <i class="fas fa-envelope mr-1"></i> {{ \App\Models\Setting::get('business_email', 'support@svmasala.com') }}
+                    </span>
+                </div>
+                
+                <!-- User Links - Right -->
+                <div class="flex items-center space-x-3 text-xs sm:text-sm flex-shrink-0">
+                    <a href="{{ route('tracking.index') }}" class="hover:text-green-200 whitespace-nowrap">
+                        <i class="fas fa-truck sm:mr-1"></i><span class="hidden sm:inline">Track Order</span>
+                    </a>
+                    @auth
+                        <a href="{{ route('account.dashboard') }}" class="hover:text-green-200 whitespace-nowrap">
+                            <i class="fas fa-user sm:mr-1"></i><span class="hidden sm:inline">My Account</span>
+                        </a>
+                    @else
+                        <a href="{{ route('login') }}" class="hover:text-green-200 whitespace-nowrap">Login</a>
+                        <a href="{{ route('register') }}" class="hover:text-green-200 whitespace-nowrap hidden sm:inline">Register</a>
+                    @endauth
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Header -->
-    <header class="bg-white shadow-md sticky top-0 z-40" x-data="{ mobileMenuOpen: false }">
+    <header class="bg-white shadow-md sticky top-0 z-40 overflow-visible" x-data="{ mobileMenuOpen: false }">
         <div class="container mx-auto px-4">
-            <div class="flex items-center justify-between py-4">
+            <div class="flex items-center justify-between py-3 gap-2">
                 <!-- Logo -->
-                <a href="{{ route('home') }}" class="flex items-center space-x-2">
+                <a href="{{ route('home') }}" class="flex items-center flex-shrink-0">
                     @if(\App\Models\Setting::logo())
-                        <img src="{{ \App\Models\Setting::logo() }}" alt="{{ \App\Models\Setting::get('business_name', 'SV Masala') }}" class="h-10">
+                        <img src="{{ \App\Models\Setting::logo() }}" alt="{{ \App\Models\Setting::get('business_name', 'SV Masala') }}" class="h-8 sm:h-10">
                     @else
-                        <span class="text-xl font-bold text-green-700">
-                            <i class="fas fa-leaf"></i> {{ \App\Models\Setting::get('business_name', 'SV Masala & Herbal Products') }}
+                        <span class="text-base sm:text-xl font-bold text-green-700 whitespace-nowrap">
+                            <i class="fas fa-leaf"></i> <span class="hidden sm:inline">{{ \App\Models\Setting::get('business_name', 'SV Masala & Herbal Products') }}</span>
+                            <span class="sm:hidden">SV Masala</span>
                         </span>
                     @endif
                 </a>
 
-                <!-- Search Bar -->
-                <form action="{{ route('products.search') }}" method="GET" class="hidden md:flex flex-1 max-w-md mx-8">
+                <!-- Search Bar - Desktop -->
+                <form action="{{ route('products.search') }}" method="GET" class="hidden md:flex flex-1 max-w-md mx-4">
                     <div class="relative w-full">
                         <input type="text" name="q" placeholder="Search products..." 
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -83,26 +123,29 @@
                     </div>
                 </form>
 
-                <!-- Cart & Mobile Menu -->
-                <div class="flex items-center space-x-4">
-                    <a href="{{ route('cart.index') }}" class="relative text-gray-700 hover:text-green-600">
+                <!-- Cart & Mobile Menu - Right -->
+                <div class="flex items-center space-x-3 flex-shrink-0">
+                    <!-- Cart Icon -->
+                    <a href="{{ route('cart.index') }}" class="relative text-gray-700 hover:text-green-600 p-2">
                         <i class="fas fa-shopping-cart text-xl"></i>
                         <span x-show="cartCount > 0" 
                               x-text="cartCount"
-                              class="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                              class="absolute -top-1 -right-1 bg-green-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
                         </span>
                     </a>
                     
-                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden text-gray-700">
+                    <!-- Mobile Menu Button -->
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden text-gray-700 p-2">
                         <i class="fas fa-bars text-xl"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- Navigation -->
+            <!-- Navigation - Desktop -->
             <nav class="hidden md:block border-t">
-                <ul class="flex items-center justify-center space-x-8 py-3">
+                <ul class="flex items-center justify-center space-x-6 py-3 text-sm">
                     <li><a href="{{ route('home') }}" class="text-gray-700 hover:text-green-600 font-medium">Home</a></li>
+                    <li><a href="{{ route('products.index') }}" class="text-gray-700 hover:text-green-600 font-medium">All Products</a></li>
                     @php $categories = \App\Models\Category::whereNull('parent_id')->where('is_active', true)->orderBy('sort_order')->get(); @endphp
                     @foreach($categories as $category)
                         <li class="relative group">
@@ -129,17 +172,82 @@
             </nav>
 
             <!-- Mobile Menu -->
-            <div x-show="mobileMenuOpen" x-cloak class="md:hidden border-t py-4">
+            <div x-show="mobileMenuOpen" x-cloak 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="md:hidden border-t py-4">
+                <!-- Mobile Search -->
                 <form action="{{ route('products.search') }}" method="GET" class="mb-4">
-                    <input type="text" name="q" placeholder="Search..." class="w-full px-4 py-2 border rounded-lg">
+                    <div class="relative">
+                        <input type="text" name="q" placeholder="Search products..." 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <button type="submit" class="absolute right-0 top-0 h-full px-4 text-gray-500">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
                 </form>
-                <ul class="space-y-2">
-                    <li><a href="{{ route('home') }}" class="block py-2 text-gray-700">Home</a></li>
+                
+                <!-- Mobile Nav Links -->
+                <ul class="space-y-1">
+                    <li>
+                        <a href="{{ route('home') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50 hover:text-green-600">
+                            <i class="fas fa-home w-5 mr-2"></i>Home
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('products.index') }}" class="block py-2 px-3 rounded text-green-600 bg-green-50 font-medium">
+                            <i class="fas fa-th-large w-5 mr-2"></i>All Products
+                        </a>
+                    </li>
                     @foreach($categories as $category)
-                        <li><a href="{{ route('category.show', $category->slug) }}" class="block py-2 text-gray-700">{{ $category->name }}</a></li>
+                        <li>
+                            <a href="{{ route('category.show', $category->slug) }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50 hover:text-green-600">
+                                <i class="fas fa-tag w-5 mr-2"></i>{{ $category->name }}
+                            </a>
+                        </li>
                     @endforeach
-                    <li><a href="{{ route('about') }}" class="block py-2 text-gray-700">About</a></li>
-                    <li><a href="{{ route('contact') }}" class="block py-2 text-gray-700">Contact</a></li>
+                    <li class="border-t pt-2 mt-2">
+                        <a href="{{ route('about') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50 hover:text-green-600">
+                            <i class="fas fa-info-circle w-5 mr-2"></i>About
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('contact') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50 hover:text-green-600">
+                            <i class="fas fa-envelope w-5 mr-2"></i>Contact
+                        </a>
+                    </li>
+                    <li class="border-t pt-2 mt-2">
+                        <a href="{{ route('tracking.index') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50 hover:text-green-600">
+                            <i class="fas fa-truck w-5 mr-2"></i>Track Order
+                        </a>
+                    </li>
+                    @auth
+                        <li>
+                            <a href="{{ route('account.dashboard') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50 hover:text-green-600">
+                                <i class="fas fa-user w-5 mr-2"></i>My Account
+                            </a>
+                        </li>
+                        <li>
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="w-full text-left py-2 px-3 rounded text-red-600 hover:bg-red-50">
+                                    <i class="fas fa-sign-out-alt w-5 mr-2"></i>Logout
+                                </button>
+                            </form>
+                        </li>
+                    @else
+                        <li>
+                            <a href="{{ route('login') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50 hover:text-green-600">
+                                <i class="fas fa-sign-in-alt w-5 mr-2"></i>Login
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('register') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50 hover:text-green-600">
+                                <i class="fas fa-user-plus w-5 mr-2"></i>Register
+                            </a>
+                        </li>
+                    @endauth
                 </ul>
             </div>
         </div>
@@ -219,6 +327,96 @@
     </footer>
 
     <script>
+        // CSRF Token Helper - Refreshes token if expired
+        const csrfHelper = {
+            getToken() {
+                const meta = document.querySelector('meta[name="csrf-token"]');
+                return meta ? meta.content : '';
+            },
+            
+            updateToken(newToken) {
+                const meta = document.querySelector('meta[name="csrf-token"]');
+                if (meta) {
+                    meta.content = newToken;
+                }
+            },
+            
+            async refreshToken() {
+                try {
+                    const response = await fetch('{{ route("csrf.token") }}', {
+                        method: 'GET',
+                        headers: { 
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'same-origin'
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.csrf_token) {
+                            this.updateToken(data.csrf_token);
+                            console.log('CSRF token refreshed successfully');
+                            return data.csrf_token;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to refresh CSRF token:', e);
+                }
+                return null;
+            },
+            
+            async fetchWithCSRF(url, options = {}) {
+                const defaultHeaders = {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this.getToken(),
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                };
+                
+                options.headers = { ...defaultHeaders, ...options.headers };
+                options.credentials = 'same-origin';
+                
+                let response = await fetch(url, options);
+                
+                // If CSRF token mismatch (419), refresh and retry once
+                if (response.status === 419) {
+                    console.log('CSRF token expired, attempting refresh...');
+                    
+                    // Try to get new token from the response
+                    try {
+                        const errorData = await response.json();
+                        if (errorData.csrf_token) {
+                            this.updateToken(errorData.csrf_token);
+                            options.headers['X-CSRF-TOKEN'] = errorData.csrf_token;
+                            return await fetch(url, options);
+                        }
+                    } catch (e) {
+                        // Response wasn't JSON, try manual refresh
+                    }
+                    
+                    // Manual token refresh
+                    const newToken = await this.refreshToken();
+                    if (newToken) {
+                        options.headers['X-CSRF-TOKEN'] = newToken;
+                        response = await fetch(url, options);
+                    } else {
+                        // If refresh failed, reload page after short delay
+                        console.log('Token refresh failed, reloading page...');
+                        setTimeout(() => window.location.reload(), 1000);
+                        return null;
+                    }
+                }
+                
+                return response;
+            }
+        };
+        
+        // Refresh CSRF token periodically (every 30 minutes) to prevent expiration
+        setInterval(() => {
+            csrfHelper.refreshToken();
+        }, 30 * 60 * 1000);
+
         function cartManager() {
             return {
                 cartCount: {{ \App\Models\Cart::getCart()->total_items }},
@@ -263,16 +461,12 @@
                             body.variant_id = variantId;
                         }
                         
-                        const response = await fetch('{{ route("cart.add") }}', {
+                        const response = await csrfHelper.fetchWithCSRF('{{ route("cart.add") }}', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest'
-                            },
                             body: JSON.stringify(body)
                         });
+                        
+                        if (!response) return; // Page will reload
                         
                         const data = await response.json();
                         
@@ -283,8 +477,9 @@
                             this.showToast(data.message || 'Error adding to cart', 'error');
                         }
                     } catch (error) {
-                        this.showToast('Error adding to cart', 'error');
                         console.error('Cart error:', error);
+                        this.showToast('Session expired. Refreshing...', 'warning');
+                        setTimeout(() => window.location.reload(), 1500);
                     }
                 }
             }

@@ -10,13 +10,17 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::active()->with('category', 'primaryImage');
+        $query = Product::active()->with('category', 'primaryImage', 'activeVariants');
 
         // Category filter
         if ($request->filled('category')) {
             $category = Category::where('slug', $request->category)->first();
             if ($category) {
-                $query->where('category_id', $category->id);
+                $categoryIds = [$category->id];
+                // Include children categories
+                $childIds = Category::where('parent_id', $category->id)->pluck('id')->toArray();
+                $categoryIds = array_merge($categoryIds, $childIds);
+                $query->whereIn('category_id', $categoryIds);
             }
         }
 
@@ -57,7 +61,7 @@ class ProductController extends Controller
         }
 
         $products = $query->paginate(12);
-        $categories = Category::active()->withCount('activeProducts')->get();
+        $categories = Category::active()->whereNull('parent_id')->withCount('activeProducts')->get();
 
         $currentCategory = $request->filled('category') 
             ? Category::where('slug', $request->category)->first() 
@@ -72,12 +76,12 @@ class ProductController extends Controller
             abort(404);
         }
 
-        $product->load('category', 'images');
+        $product->load('category', 'images', 'activeVariants', 'comboItems.includedProduct');
 
         $relatedProducts = Product::active()
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
-            ->with('primaryImage')
+            ->with('primaryImage', 'activeVariants')
             ->take(4)
             ->get();
 
@@ -90,17 +94,26 @@ class ProductController extends Controller
             abort(404);
         }
 
+        // Get products from this category and its children
+        $categoryIds = [$category->id];
+        $childIds = Category::where('parent_id', $category->id)->pluck('id')->toArray();
+        $categoryIds = array_merge($categoryIds, $childIds);
+
         $products = Product::active()
-            ->where('category_id', $category->id)
-            ->with('primaryImage')
+            ->whereIn('category_id', $categoryIds)
+            ->with('primaryImage', 'category', 'activeVariants')
             ->paginate(12);
 
-        $categories = Category::active()->withCount('activeProducts')->get();
+        $categories = Category::active()->whereNull('parent_id')->withCount('activeProducts')->get();
+
+        // Get child categories for display
+        $childCategories = Category::active()->where('parent_id', $category->id)->get();
 
         return view('frontend.products.index', [
             'products' => $products,
             'categories' => $categories,
             'currentCategory' => $category,
+            'childCategories' => $childCategories,
         ]);
     }
 
@@ -114,7 +127,7 @@ class ProductController extends Controller
                     ->orWhere('description', 'like', "%{$search}%")
                     ->orWhere('sku', 'like', "%{$search}%");
             })
-            ->with('primaryImage')
+            ->with('primaryImage', 'activeVariants')
             ->paginate(12);
 
         return view('frontend.products.search', compact('products', 'search'));

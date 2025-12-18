@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\ComboItem;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\StockMovement;
@@ -15,9 +16,8 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with('category', 'primaryImage');
+        $query = Product::with('category', 'primaryImage')->withCount('variants');
 
-        // Search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -26,22 +26,27 @@ class ProductController extends Controller
             });
         }
 
-        // Category filter
         if ($request->filled('category')) {
             $query->where('category_id', $request->category);
         }
 
-        // Status filter
         if ($request->filled('status')) {
             $query->where('is_active', $request->status === 'active');
         }
 
-        // Stock filter
         if ($request->filled('stock')) {
             if ($request->stock === 'low') {
                 $query->lowStock();
             } elseif ($request->stock === 'out') {
                 $query->where('stock_quantity', 0);
+            }
+        }
+
+        if ($request->filled('type')) {
+            if ($request->type === 'combo') {
+                $query->where('is_combo', true);
+            } elseif ($request->type === 'regular') {
+                $query->where('is_combo', false);
             }
         }
 
@@ -54,7 +59,8 @@ class ProductController extends Controller
     public function create()
     {
         $categories = Category::active()->get();
-        return view('admin.products.create', compact('categories'));
+        $allProducts = Product::active()->where('is_combo', false)->orderBy('name')->get();
+        return view('admin.products.create', compact('categories', 'allProducts'));
     }
 
     public function store(Request $request)
@@ -81,13 +87,20 @@ class ProductController extends Controller
             'meta_description' => 'nullable|string',
             'is_featured' => 'boolean',
             'is_active' => 'boolean',
+            'is_combo' => 'boolean',
             'images.*' => 'nullable|image|max:2048',
+            'combo_items' => 'nullable|array',
+            'combo_items.*.item_name' => 'required_with:combo_items|string|max:255',
+            'combo_items.*.item_quantity' => 'nullable|string|max:100',
+            'combo_items.*.item_description' => 'nullable|string|max:500',
+            'combo_items.*.included_product_id' => 'nullable|exists:products,id',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
         $validated['sku'] = $validated['sku'] ?? strtoupper(Str::random(8));
         $validated['is_featured'] = $request->boolean('is_featured');
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['is_combo'] = $request->boolean('is_combo');
 
         $product = Product::create($validated);
 
@@ -101,6 +114,22 @@ class ProductController extends Controller
                     'is_primary' => $index === 0,
                     'sort_order' => $index,
                 ]);
+            }
+        }
+
+        // Handle combo items
+        if ($request->boolean('is_combo') && $request->has('combo_items')) {
+            foreach ($request->combo_items as $index => $item) {
+                if (!empty($item['item_name'])) {
+                    ComboItem::create([
+                        'combo_product_id' => $product->id,
+                        'included_product_id' => $item['included_product_id'] ?? null,
+                        'item_name' => $item['item_name'],
+                        'item_quantity' => $item['item_quantity'] ?? null,
+                        'item_description' => $item['item_description'] ?? null,
+                        'sort_order' => $index,
+                    ]);
+                }
             }
         }
 
@@ -121,15 +150,16 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
-        $product->load('category', 'images', 'stockMovements.createdBy');
+        $product->load('category', 'images', 'stockMovements.createdBy', 'comboItems.includedProduct', 'variants');
         return view('admin.products.show', compact('product'));
     }
 
     public function edit(Product $product)
     {
         $categories = Category::active()->get();
-        $product->load('images');
-        return view('admin.products.edit', compact('product', 'categories'));
+        $allProducts = Product::active()->where('is_combo', false)->where('id', '!=', $product->id)->orderBy('name')->get();
+        $product->load('images', 'comboItems', 'variants');
+        return view('admin.products.edit', compact('product', 'categories', 'allProducts'));
     }
 
     public function update(Request $request, Product $product)
@@ -155,12 +185,19 @@ class ProductController extends Controller
             'meta_description' => 'nullable|string',
             'is_featured' => 'boolean',
             'is_active' => 'boolean',
+            'is_combo' => 'boolean',
             'images.*' => 'nullable|image|max:2048',
+            'combo_items' => 'nullable|array',
+            'combo_items.*.item_name' => 'required_with:combo_items|string|max:255',
+            'combo_items.*.item_quantity' => 'nullable|string|max:100',
+            'combo_items.*.item_description' => 'nullable|string|max:500',
+            'combo_items.*.included_product_id' => 'nullable|exists:products,id',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
         $validated['is_featured'] = $request->boolean('is_featured');
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['is_combo'] = $request->boolean('is_combo');
 
         $product->update($validated);
 
@@ -178,13 +215,30 @@ class ProductController extends Controller
             }
         }
 
+        // Handle combo items - delete existing and re-create
+        $product->comboItems()->delete();
+        
+        if ($request->boolean('is_combo') && $request->has('combo_items')) {
+            foreach ($request->combo_items as $index => $item) {
+                if (!empty($item['item_name'])) {
+                    ComboItem::create([
+                        'combo_product_id' => $product->id,
+                        'included_product_id' => $item['included_product_id'] ?? null,
+                        'item_name' => $item['item_name'],
+                        'item_quantity' => $item['item_quantity'] ?? null,
+                        'item_description' => $item['item_description'] ?? null,
+                        'sort_order' => $index,
+                    ]);
+                }
+            }
+        }
+
         return redirect()->route('admin.products.index')
             ->with('success', 'Product updated successfully.');
     }
 
     public function destroy(Product $product)
     {
-        // Delete images
         foreach ($product->images as $image) {
             Storage::disk('public')->delete($image->image_path);
         }
@@ -211,11 +265,9 @@ class ProductController extends Controller
 
     public function setPrimaryImage(ProductImage $image)
     {
-        // Remove primary from all images of this product
         ProductImage::where('product_id', $image->product_id)
             ->update(['is_primary' => false]);
 
-        // Set this image as primary
         $image->update(['is_primary' => true]);
 
         return back()->with('success', 'Primary image updated.');

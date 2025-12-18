@@ -4,48 +4,49 @@
 @section('meta_description', $product->meta_description ?? $product->short_description)
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
+<div class="container mx-auto px-4 py-6">
     <!-- Breadcrumb -->
-    <nav class="mb-6">
+    <nav class="mb-4">
         <ol class="flex items-center space-x-2 text-sm text-gray-500">
-            <li><a href="{{ route('home') }}" class="hover:text-orange-600">Home</a></li>
+            <li><a href="{{ route('home') }}" class="hover:text-green-600">Home</a></li>
             <li><i class="fas fa-chevron-right text-xs"></i></li>
-            <li><a href="{{ route('products.index') }}" class="hover:text-orange-600">Products</a></li>
+            <li><a href="{{ route('products.index') }}" class="hover:text-green-600">Products</a></li>
             <li><i class="fas fa-chevron-right text-xs"></i></li>
-            <li><a href="{{ route('category.show', $product->category->slug) }}" class="hover:text-orange-600">{{ $product->category->name }}</a></li>
+            <li><a href="{{ route('category.show', $product->category->slug) }}" class="hover:text-green-600">{{ $product->category->name }}</a></li>
             <li><i class="fas fa-chevron-right text-xs"></i></li>
-            <li class="text-gray-800">{{ $product->name }}</li>
+            <li class="text-gray-800 truncate max-w-32">{{ $product->name }}</li>
         </ol>
     </nav>
 
-    <div class="bg-white rounded-lg shadow-md p-6 lg:p-8">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Product Images -->
             <div x-data="{ activeImage: 0 }">
                 <!-- Main Image -->
-                <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
+                <div class="relative h-64 md:h-80 bg-gray-100 rounded-lg overflow-hidden mb-3">
                     @if($product->images->count() > 0)
                         @foreach($product->images as $index => $image)
                             <img x-show="activeImage === {{ $index }}" 
                                  src="{{ $image->url }}" 
                                  alt="{{ $image->alt_text ?? $product->name }}"
-                                 class="w-full h-full object-cover">
+                                 class="w-full h-full object-contain"
+                                 loading="lazy">
                         @endforeach
                     @else
                         <div class="w-full h-full flex items-center justify-center text-gray-400">
-                            <i class="fas fa-image text-6xl"></i>
+                            <i class="fas fa-image text-5xl"></i>
                         </div>
                     @endif
                 </div>
                 
                 <!-- Thumbnails -->
                 @if($product->images->count() > 1)
-                    <div class="flex gap-2 overflow-x-auto">
+                    <div class="flex gap-2 overflow-x-auto pb-2">
                         @foreach($product->images as $index => $image)
                             <button @click="activeImage = {{ $index }}"
-                                    :class="activeImage === {{ $index }} ? 'ring-2 ring-orange-600' : ''"
-                                    class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden">
-                                <img src="{{ $image->url }}" alt="" class="w-full h-full object-cover">
+                                    :class="activeImage === {{ $index }} ? 'ring-2 ring-green-600' : 'ring-1 ring-gray-200'"
+                                    class="flex-shrink-0 w-14 h-14 rounded overflow-hidden">
+                                <img src="{{ $image->url }}" alt="" class="w-full h-full object-cover" loading="lazy">
                             </button>
                         @endforeach
                     </div>
@@ -72,42 +73,77 @@
                 'baseStock' => $product->stock_quantity,
                 'productId' => $product->id,
             ]) }})">
-                <span class="text-sm text-orange-600 font-medium">{{ $product->category->name }}</span>
-                <h1 class="text-2xl lg:text-3xl font-bold text-gray-800 mt-2">{{ $product->name }}</h1>
+                @if($product->is_combo)
+                    <span class="inline-flex items-center bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full mb-2">
+                        <i class="fas fa-gift mr-1"></i> Combo Pack
+                    </span>
+                @endif
+                
+                <span class="text-xs text-green-600 font-medium">{{ $product->category->name }}</span>
+                <h1 class="text-xl md:text-2xl font-bold text-gray-800 mt-1">{{ $product->name }}</h1>
                 
                 <!-- SKU -->
-                <p class="text-sm text-gray-500 mt-2">SKU: <span x-text="selectedVariant ? selectedVariant.sku : '{{ $product->sku }}'"></span></p>
+                <p class="text-xs text-gray-500 mt-1">SKU: <span x-text="selectedVariant ? selectedVariant.sku : '{{ $product->sku }}'"></span></p>
                 
                 <!-- Price -->
-                <div class="mt-4">
+                <div class="mt-3">
                     <template x-if="currentDiscountPrice">
-                        <div class="flex items-center gap-3">
-                            <span class="text-3xl font-bold text-orange-600">₹<span x-text="currentDiscountPrice.toFixed(2)"></span></span>
-                            <span class="text-xl text-gray-400 line-through">₹<span x-text="currentPrice.toFixed(2)"></span></span>
-                            <span class="bg-red-100 text-red-600 text-sm px-2 py-1 rounded" x-text="'Save ' + discountPercent + '%'"></span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl font-bold text-green-600">₹<span x-text="currentDiscountPrice.toFixed(2)"></span></span>
+                            <span class="text-lg text-gray-400 line-through">₹<span x-text="currentPrice.toFixed(2)"></span></span>
+                            <span class="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded" x-text="'Save ' + discountPercent + '%'"></span>
                         </div>
                     </template>
                     <template x-if="!currentDiscountPrice">
-                        <span class="text-3xl font-bold text-orange-600">₹<span x-text="currentPrice.toFixed(2)"></span></span>
+                        <span class="text-2xl font-bold text-green-600">₹<span x-text="currentPrice.toFixed(2)"></span></span>
                     </template>
                     
                     @if($product->gst_percentage > 0)
-                        <p class="text-sm text-gray-500 mt-1">(Inclusive of {{ $product->gst_percentage }}% GST)</p>
+                        <p class="text-xs text-gray-500 mt-1">(Inclusive of {{ $product->gst_percentage }}% GST)</p>
                     @endif
                 </div>
 
+                <!-- Combo/Pack Contents -->
+                @if($product->is_combo && $product->comboItems->count() > 0)
+                    <div class="mt-4 bg-green-50 border border-green-200 rounded-lg p-3">
+                        <h3 class="font-semibold text-green-800 flex items-center text-sm mb-2">
+                            <i class="fas fa-box-open mr-2"></i> What's Inside This Pack
+                        </h3>
+                        <div class="space-y-1.5">
+                            @foreach($product->comboItems as $item)
+                                <div class="flex items-start text-sm">
+                                    <i class="fas fa-check text-green-600 mt-0.5 mr-2 text-xs"></i>
+                                    <div>
+                                        <span class="text-gray-800">{{ $item->item_name }}</span>
+                                        @if($item->item_quantity)
+                                            <span class="text-green-600 font-medium ml-1">({{ $item->item_quantity }})</span>
+                                        @endif
+                                        @if($item->item_description)
+                                            <p class="text-xs text-gray-500">{{ $item->item_description }}</p>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <p class="text-xs text-green-700 mt-2 pt-2 border-t border-green-200">
+                            <i class="fas fa-tag mr-1"></i> 
+                            Total {{ $product->comboItems->count() }} items in this pack
+                        </p>
+                    </div>
+                @endif
+
                 <!-- Variants Selection -->
                 @if($product->has_variants && $product->activeVariants->count() > 0)
-                    <div class="mt-6">
+                    <div class="mt-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Select Size/Pack</label>
                         <div class="flex flex-wrap gap-2">
                             @foreach($product->activeVariants as $variant)
                                 <button type="button"
                                         @click="selectVariant({{ $variant->id }})"
                                         :class="selectedVariantId === {{ $variant->id }} 
-                                            ? 'border-orange-600 bg-orange-50 text-orange-600' 
-                                            : 'border-gray-300 hover:border-orange-400'"
-                                        class="px-4 py-2 border-2 rounded-lg font-medium transition {{ $variant->isOutOfStock() ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                            ? 'border-green-600 bg-green-50 text-green-600' 
+                                            : 'border-gray-300 hover:border-green-400'"
+                                        class="px-3 py-1.5 border-2 rounded-lg text-sm font-medium transition {{ $variant->isOutOfStock() ? 'opacity-50 cursor-not-allowed' : '' }}"
                                         {{ $variant->isOutOfStock() ? 'disabled' : '' }}>
                                     {{ $variant->name }}
                                     @if($variant->isOutOfStock())
@@ -120,19 +156,19 @@
                 @endif
 
                 <!-- Stock Status -->
-                <div class="mt-4">
+                <div class="mt-3">
                     <template x-if="currentStock <= 0">
-                        <span class="inline-flex items-center bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm">
+                        <span class="inline-flex items-center bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs">
                             <i class="fas fa-times-circle mr-1"></i> Out of Stock
                         </span>
                     </template>
                     <template x-if="currentStock > 0 && currentStock <= 10">
-                        <span class="inline-flex items-center bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full text-sm">
+                        <span class="inline-flex items-center bg-yellow-100 text-yellow-600 px-2 py-1 rounded-full text-xs">
                             <i class="fas fa-exclamation-circle mr-1"></i> Only <span x-text="currentStock"></span> left
                         </span>
                     </template>
                     <template x-if="currentStock > 10">
-                        <span class="inline-flex items-center bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm">
+                        <span class="inline-flex items-center bg-green-100 text-green-600 px-2 py-1 rounded-full text-xs">
                             <i class="fas fa-check-circle mr-1"></i> In Stock
                         </span>
                     </template>
@@ -140,27 +176,27 @@
 
                 <!-- Short Description -->
                 @if($product->short_description)
-                    <p class="text-gray-600 mt-4">{{ $product->short_description }}</p>
+                    <p class="text-gray-600 mt-3 text-sm">{{ $product->short_description }}</p>
                 @endif
 
                 <!-- Add to Cart -->
-                <div class="mt-6" x-show="currentStock > 0">
-                    <div class="flex items-center gap-4">
+                <div class="mt-4" x-show="currentStock > 0">
+                    <div class="flex items-center gap-3">
                         <div class="flex items-center border border-gray-300 rounded-lg">
-                            <button type="button" @click="quantity = Math.max(1, quantity - 1)" class="px-4 py-2 text-gray-600 hover:bg-gray-100">
-                                <i class="fas fa-minus"></i>
+                            <button type="button" @click="quantity = Math.max(1, quantity - 1)" class="px-3 py-2 text-gray-600 hover:bg-gray-100">
+                                <i class="fas fa-minus text-sm"></i>
                             </button>
                             <input type="number" x-model.number="quantity" min="1" :max="currentStock"
-                                   class="w-16 text-center border-0 focus:ring-0">
-                            <button type="button" @click="quantity = Math.min(currentStock, quantity + 1)" class="px-4 py-2 text-gray-600 hover:bg-gray-100">
-                                <i class="fas fa-plus"></i>
+                                   class="w-12 text-center border-0 focus:ring-0 text-sm">
+                            <button type="button" @click="quantity = Math.min(currentStock, quantity + 1)" class="px-3 py-2 text-gray-600 hover:bg-gray-100">
+                                <i class="fas fa-plus text-sm"></i>
                             </button>
                         </div>
                         <button type="button" 
                                 @click="addToCartWithVariant()"
                                 :disabled="hasVariants && !selectedVariantId"
-                                :class="(hasVariants && !selectedVariantId) ? 'bg-gray-400 cursor-not-allowed' : 'bg-orange-600 hover:bg-orange-700'"
-                                class="flex-1 text-white py-3 px-6 rounded-lg font-semibold">
+                                :class="(hasVariants && !selectedVariantId) ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'"
+                                class="flex-1 text-white py-2.5 px-4 rounded-lg font-semibold text-sm">
                             <i class="fas fa-cart-plus mr-2"></i> 
                             <span x-text="hasVariants && !selectedVariantId ? 'Select a Size' : 'Add to Cart'"></span>
                         </button>
@@ -168,41 +204,43 @@
                 </div>
 
                 <!-- Features -->
-                <div class="grid grid-cols-2 gap-4 mt-8 pt-6 border-t">
-                    <div class="flex items-center gap-2 text-sm text-gray-600">
-                        <i class="fas fa-shipping-fast text-orange-600"></i>
+                <div class="grid grid-cols-2 gap-3 mt-6 pt-4 border-t">
+                    <div class="flex items-center gap-2 text-xs text-gray-600">
+                        <i class="fas fa-shipping-fast text-green-600"></i>
                         <span>Free Shipping over ₹500</span>
                     </div>
-                    <div class="flex items-center gap-2 text-sm text-gray-600">
-                        <i class="fas fa-check-circle text-orange-600"></i>
+                    <div class="flex items-center gap-2 text-xs text-gray-600">
+                        <i class="fas fa-check-circle text-green-600"></i>
                         <span>100% Authentic</span>
                     </div>
-                    <div class="flex items-center gap-2 text-sm text-gray-600">
-                        <i class="fas fa-lock text-orange-600"></i>
+                    <div class="flex items-center gap-2 text-xs text-gray-600">
+                        <i class="fas fa-lock text-green-600"></i>
                         <span>Secure Payment</span>
                     </div>
-                    <div class="flex items-center gap-2 text-sm text-gray-600">
-                        <i class="fas fa-headset text-orange-600"></i>
-                        <span>24/7 Support</span>
+                    <div class="flex items-center gap-2 text-xs text-gray-600">
+                        <i class="fas fa-leaf text-green-600"></i>
+                        <span>Natural & Pure</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Description Tab -->
-        <div class="mt-12 pt-8 border-t">
-            <h2 class="text-xl font-bold mb-4">Product Description</h2>
-            <div class="prose max-w-none text-gray-600">
+        @if($product->description)
+        <div class="mt-8 pt-6 border-t">
+            <h2 class="text-lg font-bold mb-3">Product Description</h2>
+            <div class="prose max-w-none text-gray-600 text-sm">
                 {!! nl2br(e($product->description)) !!}
             </div>
         </div>
+        @endif
     </div>
 
     <!-- Related Products -->
     @if($relatedProducts->count() > 0)
-        <section class="mt-12">
-            <h2 class="text-2xl font-bold mb-6">Related Products</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <section class="mt-8">
+            <h2 class="text-xl font-bold mb-4">Related Products</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
                 @foreach($relatedProducts as $relatedProduct)
                     @include('frontend.partials.product-card', ['product' => $relatedProduct])
                 @endforeach
@@ -227,7 +265,6 @@ function productDetail(config) {
         
         init() {
             if (this.hasVariants && this.variants.length > 0) {
-                // Select default variant or first available variant
                 var defaultVariant = this.variants.find(function(v) { return v.is_default && v.stock > 0; });
                 if (!defaultVariant) {
                     defaultVariant = this.variants.find(function(v) { return v.stock > 0; });
@@ -277,11 +314,9 @@ function productDetail(config) {
                 return;
             }
             
-            // Use the global addToCart function with variant
             if (typeof addToCart === 'function') {
                 addToCart(this.productId, this.quantity, this.selectedVariantId);
             } else {
-                // Fallback - call the cart manager
                 var event = new CustomEvent('add-to-cart', { 
                     detail: { 
                         productId: this.productId, 

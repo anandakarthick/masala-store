@@ -11,7 +11,7 @@
         <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex items-start justify-between mb-4">
                 <div>
-                    <span class="text-sm text-orange-600 font-medium">{{ $product->category->name }}</span>
+                    <span class="text-sm text-green-600 font-medium">{{ $product->category->name }}</span>
                     <h2 class="text-2xl font-bold text-gray-800">{{ $product->name }}</h2>
                     <p class="text-gray-500">SKU: {{ $product->sku }}</p>
                 </div>
@@ -58,7 +58,76 @@
             @endif
         </div>
 
-        <!-- Stock Management -->
+        <!-- Product Variants Section -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">
+                    <i class="fas fa-layer-group text-green-600 mr-2"></i>Product Variants
+                </h3>
+                <a href="{{ route('admin.products.variants.index', $product) }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
+                    <i class="fas fa-cog mr-1"></i> Manage Variants
+                </a>
+            </div>
+
+            @if($product->variants->count() > 0)
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Variant</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            @foreach($product->variants as $variant)
+                                <tr class="hover:bg-gray-50 {{ $variant->is_default ? 'bg-green-50' : '' }}">
+                                    <td class="px-4 py-3">
+                                        <span class="font-medium">{{ $variant->name }}</span>
+                                        @if($variant->is_default)
+                                            <span class="ml-2 text-xs bg-green-600 text-white px-2 py-0.5 rounded">Default</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">{{ $variant->sku }}</td>
+                                    <td class="px-4 py-3">
+                                        @if($variant->discount_price)
+                                            <span class="text-green-600 font-medium">₹{{ number_format($variant->discount_price, 2) }}</span>
+                                            <span class="text-gray-400 line-through text-sm ml-1">₹{{ number_format($variant->price, 2) }}</span>
+                                        @else
+                                            <span class="font-medium">₹{{ number_format($variant->price, 2) }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="{{ $variant->isOutOfStock() ? 'text-red-600' : ($variant->isLowStock() ? 'text-yellow-600' : 'text-green-600') }} font-medium">
+                                            {{ $variant->stock_quantity }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="px-2 py-1 text-xs rounded-full {{ $variant->is_active ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600' }}">
+                                            {{ $variant->is_active ? 'Active' : 'Inactive' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="text-center py-8 bg-gray-50 rounded-lg">
+                    <i class="fas fa-box-open text-4xl text-gray-400 mb-2"></i>
+                    <p class="text-gray-600 mb-3">No variants added yet</p>
+                    <p class="text-sm text-gray-500 mb-4">Add sizes like 100g, 200g, 500g, 1kg to sell this product in different sizes</p>
+                    <a href="{{ route('admin.products.variants.index', $product) }}" class="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
+                        <i class="fas fa-plus mr-1"></i> Add Variants
+                    </a>
+                </div>
+            @endif
+        </div>
+
+        <!-- Stock Management (for non-variant products) -->
+        @if(!$product->has_variants)
         <div class="bg-white rounded-lg shadow-md p-6">
             <h3 class="text-lg font-semibold mb-4">Stock Management</h3>
             
@@ -80,7 +149,7 @@
                 @csrf
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                    <select name="type" required class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
+                    <select name="type" required class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
                         <option value="in">Stock In</option>
                         <option value="out">Stock Out</option>
                         <option value="adjustment">Adjustment</option>
@@ -89,20 +158,21 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
                     <input type="number" name="quantity" min="1" required
-                           class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
+                           class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                     <input type="text" name="notes" placeholder="Optional"
-                           class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
+                           class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
                 </div>
                 <div class="flex items-end">
-                    <button type="submit" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-lg">
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg">
                         Update Stock
                     </button>
                 </div>
             </form>
         </div>
+        @endif
 
         <!-- Stock History -->
         <div class="bg-white rounded-lg shadow-md">
@@ -155,7 +225,7 @@
             @if($product->images->count() > 0)
                 <div class="space-y-2">
                     @foreach($product->images as $image)
-                        <img src="{{ $image->url }}" alt="" class="w-full rounded-lg {{ $image->is_primary ? 'ring-2 ring-orange-500' : '' }}">
+                        <img src="{{ $image->url }}" alt="" class="w-full rounded-lg {{ $image->is_primary ? 'ring-2 ring-green-500' : '' }}">
                     @endforeach
                 </div>
             @else
@@ -178,16 +248,31 @@
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-gray-600">Featured</span>
-                    <span class="px-2 py-1 text-xs rounded-full {{ $product->is_featured ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-600' }}">
+                    <span class="px-2 py-1 text-xs rounded-full {{ $product->is_featured ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600' }}">
                         {{ $product->is_featured ? 'Yes' : 'No' }}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-600">Has Variants</span>
+                    <span class="px-2 py-1 text-xs rounded-full {{ $product->has_variants ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600' }}">
+                        {{ $product->has_variants ? 'Yes ('.$product->variants->count().')' : 'No' }}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-600">Combo Pack</span>
+                    <span class="px-2 py-1 text-xs rounded-full {{ $product->is_combo ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-600' }}">
+                        {{ $product->is_combo ? 'Yes' : 'No' }}
                     </span>
                 </div>
             </div>
         </div>
 
         <!-- Actions -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <a href="{{ route('admin.products.edit', $product) }}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-center mb-2">
+        <div class="bg-white rounded-lg shadow-md p-6 space-y-2">
+            <a href="{{ route('admin.products.variants.index', $product) }}" class="block w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-center">
+                <i class="fas fa-layer-group mr-2"></i>Manage Variants
+            </a>
+            <a href="{{ route('admin.products.edit', $product) }}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-center">
                 <i class="fas fa-edit mr-2"></i>Edit Product
             </a>
             <a href="{{ route('admin.products.index') }}" class="block w-full bg-gray-200 text-gray-700 py-2 rounded-lg text-center">

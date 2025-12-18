@@ -11,8 +11,10 @@ use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\ProductVariantController as AdminProductVariantController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +26,11 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// CSRF Token refresh route
+Route::get('/csrf-token', function() {
+    return response()->json(['csrf_token' => csrf_token()]);
+})->name('csrf.token');
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 Route::post('/contact', [HomeController::class, 'submitContact'])->name('contact.submit');
@@ -105,6 +112,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Dashboard
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
+    // Notifications (for new order alerts)
+    Route::get('/notifications/check-orders', [AdminNotificationController::class, 'checkNewOrders'])->name('notifications.check-orders');
+    Route::get('/notifications/pending-count', [AdminNotificationController::class, 'pendingCount'])->name('notifications.pending-count');
+
     // Categories
     Route::resource('categories', AdminCategoryController::class);
     Route::post('categories/{category}/toggle-status', [AdminCategoryController::class, 'toggleStatus'])->name('categories.toggle-status');
@@ -115,6 +126,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('products/{product}/update-stock', [AdminProductController::class, 'updateStock'])->name('products.update-stock');
     Route::delete('products/images/{image}', [AdminProductController::class, 'deleteImage'])->name('products.delete-image');
     Route::post('products/images/{image}/set-primary', [AdminProductController::class, 'setPrimaryImage'])->name('products.set-primary-image');
+    
+    // Product Variants
+    Route::get('products/{product}/variants', [AdminProductVariantController::class, 'index'])->name('products.variants.index');
+    Route::post('products/{product}/variants', [AdminProductVariantController::class, 'store'])->name('products.variants.store');
+    Route::put('products/{product}/variants/{variant}', [AdminProductVariantController::class, 'update'])->name('products.variants.update');
+    Route::delete('products/{product}/variants/{variant}', [AdminProductVariantController::class, 'destroy'])->name('products.variants.destroy');
 
     // Orders
     Route::resource('orders', AdminOrderController::class)->only(['index', 'show', 'create', 'store']);

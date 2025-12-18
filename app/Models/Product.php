@@ -33,6 +33,7 @@ class Product extends Model
         'is_featured',
         'is_active',
         'has_variants',
+        'is_combo',
     ];
 
     protected $casts = [
@@ -45,6 +46,7 @@ class Product extends Model
         'is_featured' => 'boolean',
         'is_active' => 'boolean',
         'has_variants' => 'boolean',
+        'is_combo' => 'boolean',
     ];
 
     protected static function boot()
@@ -91,6 +93,14 @@ class Product extends Model
         return $this->hasOne(ProductVariant::class)->where('is_default', true);
     }
 
+    /**
+     * Items included in this combo/pack
+     */
+    public function comboItems(): HasMany
+    {
+        return $this->hasMany(ComboItem::class, 'combo_product_id')->orderBy('sort_order');
+    }
+
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class);
@@ -109,6 +119,11 @@ class Product extends Model
     public function scopeFeatured($query)
     {
         return $query->where('is_featured', true);
+    }
+
+    public function scopeCombo($query)
+    {
+        return $query->where('is_combo', true);
     }
 
     public function scopeInStock($query)
@@ -233,5 +248,11 @@ class Product extends Model
             return $this->activeVariants->sum('stock_quantity');
         }
         return $this->stock_quantity;
+    }
+
+    // Check if product is a combo/pack
+    public function isCombo(): bool
+    {
+        return $this->is_combo || $this->comboItems->count() > 0;
     }
 }

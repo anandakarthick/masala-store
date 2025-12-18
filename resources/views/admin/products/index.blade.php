@@ -10,7 +10,7 @@
             <h2 class="text-lg font-semibold">All Products</h2>
             <p class="text-sm text-gray-500">Manage your product catalog</p>
         </div>
-        <a href="{{ route('admin.products.create') }}" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg">
+        <a href="{{ route('admin.products.create') }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
             <i class="fas fa-plus mr-2"></i> Add Product
         </a>
     </div>
@@ -19,8 +19,8 @@
     <div class="p-4 border-b bg-gray-50">
         <form action="" method="GET" class="flex flex-wrap gap-4">
             <input type="text" name="search" placeholder="Search products..." value="{{ request('search') }}"
-                   class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
-            <select name="category" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
+                   class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+            <select name="category" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
                 <option value="">All Categories</option>
                 @foreach($categories as $category)
                     <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
@@ -28,12 +28,12 @@
                     </option>
                 @endforeach
             </select>
-            <select name="status" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
+            <select name="status" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
                 <option value="">All Status</option>
                 <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
                 <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
             </select>
-            <select name="stock" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
+            <select name="stock" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
                 <option value="">All Stock</option>
                 <option value="low" {{ request('stock') === 'low' ? 'selected' : '' }}>Low Stock</option>
                 <option value="out" {{ request('stock') === 'out' ? 'selected' : '' }}>Out of Stock</option>
@@ -70,22 +70,34 @@
                                 @endif
                                 <div>
                                     <p class="font-medium text-gray-800">{{ $product->name }}</p>
-                                    <p class="text-sm text-gray-500">{{ $product->weight_display }}</p>
+                                    <p class="text-sm text-gray-500">
+                                        {{ $product->weight_display }}
+                                        @if($product->has_variants)
+                                            <span class="ml-1 text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">{{ $product->variants_count ?? $product->variants->count() }} variants</span>
+                                        @endif
+                                        @if($product->is_combo)
+                                            <span class="ml-1 text-xs bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded">Combo</span>
+                                        @endif
+                                    </p>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ $product->sku }}</td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ $product->category->name }}</td>
                         <td class="px-6 py-4">
-                            @if($product->discount_price)
-                                <span class="font-medium text-orange-600">₹{{ number_format($product->discount_price, 2) }}</span>
+                            @if($product->has_variants)
+                                <span class="text-gray-600 text-sm">{{ $product->price_display }}</span>
+                            @elseif($product->discount_price)
+                                <span class="font-medium text-green-600">₹{{ number_format($product->discount_price, 2) }}</span>
                                 <span class="text-sm text-gray-400 line-through ml-1">₹{{ number_format($product->price, 2) }}</span>
                             @else
                                 <span class="font-medium">₹{{ number_format($product->price, 2) }}</span>
                             @endif
                         </td>
                         <td class="px-6 py-4">
-                            @if($product->stock_quantity <= 0)
+                            @if($product->has_variants)
+                                <span class="text-gray-600 text-sm">{{ $product->total_stock }} total</span>
+                            @elseif($product->stock_quantity <= 0)
                                 <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-600">Out of Stock</span>
                             @elseif($product->isLowStock())
                                 <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-600">{{ $product->stock_quantity }} (Low)</span>
@@ -103,17 +115,20 @@
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center space-x-2">
-                                <a href="{{ route('admin.products.show', $product) }}" class="text-gray-600 hover:text-gray-800">
+                                <a href="{{ route('admin.products.show', $product) }}" class="text-gray-600 hover:text-gray-800" title="View">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="{{ route('admin.products.edit', $product) }}" class="text-blue-600 hover:text-blue-800">
+                                <a href="{{ route('admin.products.variants.index', $product) }}" class="text-green-600 hover:text-green-800" title="Manage Variants">
+                                    <i class="fas fa-layer-group"></i>
+                                </a>
+                                <a href="{{ route('admin.products.edit', $product) }}" class="text-blue-600 hover:text-blue-800" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <form action="{{ route('admin.products.destroy', $product) }}" method="POST" class="inline"
                                       onsubmit="return confirm('Are you sure you want to delete this product?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-800">
+                                    <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
