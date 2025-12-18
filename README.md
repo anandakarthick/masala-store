@@ -1,59 +1,174 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Masala Store - Laravel E-Commerce Application
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A complete Laravel-based e-commerce application for selling Masala, Oils, Candles & Return Gifts.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Admin Panel
+- **Dashboard** - Overview of sales, orders, and inventory
+- **Product Management** - Full CRUD with images, pricing, stock management
+- **Category Management** - Hierarchical categories with SEO fields
+- **Order Management** - Process orders, update status, generate invoices
+- **Customer Management** - View and manage customer accounts
+- **Coupon System** - Create percentage/fixed discount coupons
+- **Reports** - Sales, product, stock, and customer reports
+- **Settings** - Business info, shipping charges, banners
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Customer Frontend
+- **Product Catalog** - Browse by category, search, filter, sort
+- **Shopping Cart** - Add/update/remove items
+- **Checkout** - Guest & registered checkout with COD/UPI
+- **Order Tracking** - Track orders by order number
+- **User Account** - Order history, profile management
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Installation
 
-## Learning Laravel
+### Requirements
+- PHP 8.2+
+- Composer
+- Node.js & NPM
+- SQLite (default) or MySQL
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Setup Steps
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+1. **Navigate to project directory:**
+```bash
+cd D:\cladue\masala-store
+```
 
-## Laravel Sponsors
+2. **Install PHP dependencies:**
+```bash
+composer install
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+3. **Install Node dependencies:**
+```bash
+npm install
+```
 
-### Premium Partners
+4. **Run database migrations:**
+```bash
+php artisan migrate
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+5. **Seed the database:**
+```bash
+php artisan db:seed
+```
 
-## Contributing
+6. **Create storage link:**
+```bash
+php artisan storage:link
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+7. **Build assets:**
+```bash
+npm run build
+```
 
-## Code of Conduct
+8. **Start the development server:**
+```bash
+php artisan serve
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+9. **Access the application:**
+- Frontend: http://localhost:8000
+- Admin Panel: http://localhost:8000/admin
 
-## Security Vulnerabilities
+## Default Admin Credentials
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- **Email:** admin@masalastore.com
+- **Password:** password
+
+## Project Structure
+
+```
+app/
+├── Http/
+│   ├── Controllers/
+│   │   ├── Admin/           # Admin controllers
+│   │   ├── AuthController.php
+│   │   ├── CartController.php
+│   │   ├── CheckoutController.php
+│   │   ├── HomeController.php
+│   │   ├── ProductController.php
+│   │   └── ...
+│   └── Middleware/
+│       ├── AdminMiddleware.php
+│       └── RoleMiddleware.php
+├── Models/
+│   ├── User.php
+│   ├── Product.php
+│   ├── Category.php
+│   ├── Order.php
+│   ├── Cart.php
+│   └── ...
+database/
+├── migrations/              # Database migrations
+├── seeders/                 # Database seeders
+resources/
+├── views/
+│   ├── layouts/            # Layout templates
+│   ├── admin/              # Admin views
+│   ├── frontend/           # Frontend views
+│   └── auth/               # Authentication views
+routes/
+└── web.php                 # All routes
+```
+
+## Key Routes
+
+### Frontend
+- `/` - Home page
+- `/products` - Product listing
+- `/products/{slug}` - Product detail
+- `/category/{slug}` - Category products
+- `/cart` - Shopping cart
+- `/checkout` - Checkout page
+- `/track` - Order tracking
+
+### Admin
+- `/admin` - Dashboard
+- `/admin/products` - Product management
+- `/admin/categories` - Category management
+- `/admin/orders` - Order management
+- `/admin/customers` - Customer management
+- `/admin/coupons` - Coupon management
+- `/admin/reports/sales` - Sales reports
+- `/admin/reports/stock` - Stock reports
+- `/admin/settings` - General settings
+
+## Customization
+
+### Adding New Categories
+Categories can be added via Admin Panel > Categories > Add Category
+
+### Updating Business Information
+Go to Admin Panel > Settings to update:
+- Business name, email, phone, address
+- GST number
+- Logo
+- Shipping charges
+- Free shipping threshold
+
+### Managing Products
+Products support:
+- Multiple images
+- Discount pricing
+- Weight/quantity units (g, kg, ml, L, piece)
+- Stock tracking with low stock alerts
+- Batch numbers and expiry dates
+- GST percentage
+- SEO fields
+
+## Technologies Used
+
+- **Backend:** Laravel 12
+- **Frontend:** Blade Templates, Tailwind CSS
+- **JavaScript:** Alpine.js
+- **Database:** SQLite (default)
+- **Icons:** Font Awesome
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT License
