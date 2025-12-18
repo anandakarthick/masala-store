@@ -180,6 +180,20 @@ return new class extends Migration
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'name' => 'WooCommerce Store',
+                'code' => 'woocommerce',
+                'logo' => 'https://woocommerce.com/wp-content/themes/flavor/assets/images/woo-logo.svg',
+                'website_url' => null,
+                'seller_portal_url' => null,
+                'description' => 'Your own WordPress/WooCommerce online store',
+                'platform_type' => 'own_store',
+                'commission_percentage' => 0.00,
+                'is_active' => true,
+                'sort_order' => 9,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 

@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\PaymentMethodController as AdminPaymentMethodController;
 use App\Http\Controllers\Admin\SellingPlatformController as AdminSellingPlatformController;
+use App\Http\Controllers\Admin\VariantAttributeController as AdminVariantAttributeController;
 use App\Http\Controllers\RazorpayController;
 use Illuminate\Support\Facades\Route;
 
@@ -148,8 +149,21 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Product Variants
     Route::get('products/{product}/variants', [AdminProductVariantController::class, 'index'])->name('products.variants.index');
     Route::post('products/{product}/variants', [AdminProductVariantController::class, 'store'])->name('products.variants.store');
+    Route::post('products/{product}/variants/bulk', [AdminProductVariantController::class, 'bulkCreate'])->name('products.variants.bulk');
     Route::put('products/{product}/variants/{variant}', [AdminProductVariantController::class, 'update'])->name('products.variants.update');
     Route::delete('products/{product}/variants/{variant}', [AdminProductVariantController::class, 'destroy'])->name('products.variants.destroy');
+
+    // Variant Attributes (Size, Color, Material, etc.)
+    Route::prefix('variant-attributes')->name('variant-attributes.')->group(function () {
+        Route::get('/', [AdminVariantAttributeController::class, 'index'])->name('index');
+        Route::post('/', [AdminVariantAttributeController::class, 'store'])->name('store');
+        Route::put('/{attribute}', [AdminVariantAttributeController::class, 'update'])->name('update');
+        Route::delete('/{attribute}', [AdminVariantAttributeController::class, 'destroy'])->name('destroy');
+        Route::post('/{attribute}/values', [AdminVariantAttributeController::class, 'storeValue'])->name('values.store');
+        Route::put('/{attribute}/values/{value}', [AdminVariantAttributeController::class, 'updateValue'])->name('values.update');
+        Route::delete('/{attribute}/values/{value}', [AdminVariantAttributeController::class, 'destroyValue'])->name('values.destroy');
+    });
+    Route::get('variant-attributes/get-values', [AdminVariantAttributeController::class, 'getValues'])->name('variant-attributes.get-values');
 
     // Orders
     Route::resource('orders', AdminOrderController::class)->only(['index', 'show', 'create', 'store']);
@@ -209,6 +223,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/{platform}/edit', [AdminSellingPlatformController::class, 'edit'])->name('edit');
         Route::put('/{platform}', [AdminSellingPlatformController::class, 'update'])->name('update');
         Route::post('/{platform}/toggle', [AdminSellingPlatformController::class, 'toggleStatus'])->name('toggle');
+        Route::post('/{platform}/test-connection', [AdminSellingPlatformController::class, 'testConnection'])->name('test-connection');
         
         // Product Listings
         Route::get('/{platform}/add-products', [AdminSellingPlatformController::class, 'addProducts'])->name('add-products');
@@ -219,8 +234,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/{platform}/bulk-status', [AdminSellingPlatformController::class, 'bulkUpdateStatus'])->name('bulk-status');
         Route::post('/{platform}/sync-stock', [AdminSellingPlatformController::class, 'syncStock'])->name('sync-stock');
         
+        // API Sync Routes
+        Route::post('/{platform}/listings/{listing}/push', [AdminSellingPlatformController::class, 'pushToApi'])->name('push-to-api');
+        Route::post('/{platform}/listings/{listing}/sync-stock', [AdminSellingPlatformController::class, 'syncStockToApi'])->name('sync-stock-api');
+        Route::post('/{platform}/listings/{listing}/sync-price', [AdminSellingPlatformController::class, 'syncPriceToApi'])->name('sync-price-api');
+        Route::post('/{platform}/listings/{listing}/delete-from-api', [AdminSellingPlatformController::class, 'deleteFromApi'])->name('delete-from-api');
+        Route::post('/{platform}/bulk-push', [AdminSellingPlatformController::class, 'bulkPushToApi'])->name('bulk-push');
+        Route::post('/{platform}/sync-all-stock', [AdminSellingPlatformController::class, 'syncAllStockToApi'])->name('sync-all-stock-api');
+        
         // Platform Orders
         Route::get('/{platform}/orders', [AdminSellingPlatformController::class, 'orders'])->name('orders');
         Route::post('/{platform}/orders', [AdminSellingPlatformController::class, 'storeOrder'])->name('store-order');
+        Route::post('/{platform}/fetch-orders', [AdminSellingPlatformController::class, 'fetchOrdersFromApi'])->name('fetch-orders-api');
     });
 });

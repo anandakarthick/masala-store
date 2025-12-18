@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductPlatformListing;
 use App\Models\SellingPlatform;
 use App\Models\PlatformOrder;
+use App\Services\Platforms\PlatformServiceFactory;
 use Illuminate\Http\Request;
 
 class SellingPlatformController extends Controller
@@ -59,7 +60,11 @@ class SellingPlatformController extends Controller
             'total_commission' => $platform->platformOrders()->sum('commission_amount'),
         ];
 
-        return view('admin.selling-platforms.show', compact('platform', 'listings', 'stats'));
+        // Check if platform has API integration
+        $service = PlatformServiceFactory::make($platform);
+        $hasApi = $service && $service->isConfigured();
+
+        return view('admin.selling-platforms.show', compact('platform', 'listings', 'stats', 'hasApi'));
     }
 
     /**
@@ -85,34 +90,41 @@ class SellingPlatformController extends Controller
         ]);
 
         // Build settings array based on platform
-        $settings = [];
+        $settings = $platform->settings ?? [];
         
         if ($platform->code === 'amazon') {
-            $settings = [
+            $settings = array_merge($settings, [
                 'seller_id' => $request->input('seller_id'),
                 'marketplace_id' => $request->input('marketplace_id'),
-                'mws_access_key' => $request->input('mws_access_key'),
-                'mws_secret_key' => $request->input('mws_secret_key'),
-            ];
+                'refresh_token' => $request->input('refresh_token'),
+                'client_id' => $request->input('client_id'),
+                'client_secret' => $request->input('client_secret'),
+            ]);
         } elseif ($platform->code === 'flipkart') {
-            $settings = [
+            $settings = array_merge($settings, [
                 'seller_id' => $request->input('seller_id'),
                 'api_key' => $request->input('api_key'),
                 'api_secret' => $request->input('api_secret'),
-            ];
+            ]);
         } elseif ($platform->code === 'shopify') {
-            $settings = [
+            $settings = array_merge($settings, [
                 'store_url' => $request->input('store_url'),
                 'api_key' => $request->input('api_key'),
                 'api_secret' => $request->input('api_secret'),
                 'access_token' => $request->input('access_token'),
-            ];
-        } elseif (in_array($platform->code, ['meesho', 'indiamart', 'etsy', 'myntra', 'jiomart'])) {
-            $settings = [
+            ]);
+        } elseif ($platform->code === 'woocommerce') {
+            $settings = array_merge($settings, [
+                'store_url' => $request->input('store_url'),
+                'consumer_key' => $request->input('consumer_key'),
+                'consumer_secret' => $request->input('consumer_secret'),
+            ]);
+        } else {
+            $settings = array_merge($settings, [
                 'seller_id' => $request->input('seller_id'),
                 'api_key' => $request->input('api_key'),
                 'api_secret' => $request->input('api_secret'),
-            ];
+            ]);
         }
 
         $validated['settings'] = $settings;
@@ -122,6 +134,25 @@ class SellingPlatformController extends Controller
 
         return redirect()->route('admin.selling-platforms.show', $platform)
             ->with('success', 'Platform settings updated successfully.');
+    }
+
+    /**
+     * Test API connection
+     */
+    public function testConnection(SellingPlatform $platform)
+    {
+        $service = PlatformServiceFactory::make($platform);
+        
+        if (!$service) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No API service available for this platform.',
+            ]);
+        }
+
+        $result = $service->testConnection();
+
+        return response()->json($result);
     }
 
     /**
@@ -143,7 +174,6 @@ class SellingPlatformController extends Controller
      */
     public function addProducts(SellingPlatform $platform)
     {
-        // Get products not yet listed on this platform
         $listedProductIds = $platform->productListings()->pluck('product_id');
         
         $products = Product::active()
@@ -168,7 +198,6 @@ class SellingPlatformController extends Controller
         foreach ($validated['products'] as $productId) {
             $product = Product::find($productId);
             
-            // Check if not already listed
             $exists = ProductPlatformListing::where('product_id', $productId)
                 ->where('selling_platform_id', $platform->id)
                 ->exists();
@@ -180,6 +209,7 @@ class SellingPlatformController extends Controller
                     'platform_price' => $product->effective_price,
                     'platform_mrp' => $product->price,
                     'platform_stock' => $product->total_stock,
+                    'platform_sku' => $product->sku,
                     'status' => 'draft',
                 ]);
                 $added++;
@@ -196,7 +226,11 @@ class SellingPlatformController extends Controller
     public function editListing(SellingPlatform $platform, ProductPlatformListing $listing)
     {
         $listing->load('product');
-        return view('admin.selling-platforms.edit-listing', compact('platform', 'listing'));
+        
+        $service = PlatformServiceFactory::make($platform);
+        $hasApi = $service && $service->isConfigured();
+        
+        return view('admin.selling-platforms.edit-listing', compact('platform', 'listing', 'hasApi'));
     }
 
     /**
@@ -222,6 +256,143 @@ class SellingPlatformController extends Controller
 
         return redirect()->route('admin.selling-platforms.show', $platform)
             ->with('success', 'Listing updated successfully.');
+    }
+
+    /**
+     * Push product to platform via API
+     */
+    public function pushToApi(SellingPlatform $platform, ProductPlatformListing $listing)
+    {
+        $service = PlatformServiceFactory::make($platform);
+        
+        if (!$service || !$service->isConfigured()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'API not configured for this platform.',
+            ]);
+        }
+
+        // If product already exists on platform, update it
+        if ($listing->platform_product_id) {
+            $result = $service->updateProduct($listing);
+        } else {
+            $result = $service->createProduct($listing);
+        }
+
+        return response()->json($result);
+    }
+
+    /**
+     * Sync stock to platform via API
+     */
+    public function syncStockToApi(SellingPlatform $platform, ProductPlatformListing $listing)
+    {
+        $service = PlatformServiceFactory::make($platform);
+        
+        if (!$service || !$service->isConfigured()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'API not configured for this platform.',
+            ]);
+        }
+
+        // First update local stock from product
+        $listing->update(['platform_stock' => $listing->product->total_stock]);
+
+        // Then sync to platform
+        $result = $service->updateStock($listing);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Sync price to platform via API
+     */
+    public function syncPriceToApi(SellingPlatform $platform, ProductPlatformListing $listing)
+    {
+        $service = PlatformServiceFactory::make($platform);
+        
+        if (!$service || !$service->isConfigured()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'API not configured for this platform.',
+            ]);
+        }
+
+        $result = $service->updatePrice($listing);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Delete product from platform via API
+     */
+    public function deleteFromApi(SellingPlatform $platform, ProductPlatformListing $listing)
+    {
+        $service = PlatformServiceFactory::make($platform);
+        
+        if (!$service || !$service->isConfigured()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'API not configured for this platform.',
+            ]);
+        }
+
+        $result = $service->deleteProduct($listing);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Bulk push products to platform
+     */
+    public function bulkPushToApi(Request $request, SellingPlatform $platform)
+    {
+        $validated = $request->validate([
+            'listing_ids' => 'required|array',
+            'listing_ids.*' => 'exists:product_platform_listings,id',
+        ]);
+
+        $service = PlatformServiceFactory::make($platform);
+        
+        if (!$service || !$service->isConfigured()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'API not configured for this platform.',
+            ]);
+        }
+
+        $results = [
+            'success' => 0,
+            'failed' => 0,
+            'errors' => [],
+        ];
+
+        foreach ($validated['listing_ids'] as $listingId) {
+            $listing = ProductPlatformListing::find($listingId);
+            
+            if (!$listing) continue;
+
+            $result = $listing->platform_product_id 
+                ? $service->updateProduct($listing)
+                : $service->createProduct($listing);
+
+            if ($result['success']) {
+                $results['success']++;
+            } else {
+                $results['failed']++;
+                $results['errors'][] = [
+                    'product' => $listing->product->name,
+                    'error' => $result['message'] ?? 'Unknown error',
+                ];
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$results['success']} synced, {$results['failed']} failed.",
+            'details' => $results,
+        ]);
     }
 
     /**
@@ -263,7 +434,7 @@ class SellingPlatformController extends Controller
     }
 
     /**
-     * Sync stock with platform
+     * Sync stock with platform (local)
      */
     public function syncStock(SellingPlatform $platform)
     {
@@ -281,7 +452,92 @@ class SellingPlatformController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', "{$synced} listing(s) stock synced.");
+        return redirect()->back()->with('success', "{$synced} listing(s) stock synced locally.");
+    }
+
+    /**
+     * Sync all stock to platform via API
+     */
+    public function syncAllStockToApi(SellingPlatform $platform)
+    {
+        $service = PlatformServiceFactory::make($platform);
+        
+        if (!$service || !$service->isConfigured()) {
+            return redirect()->back()->with('error', 'API not configured for this platform.');
+        }
+
+        $listings = $platform->productListings()
+            ->where('status', 'active')
+            ->whereNotNull('platform_product_id')
+            ->with('product')
+            ->get();
+
+        $synced = 0;
+        $failed = 0;
+
+        foreach ($listings as $listing) {
+            $listing->update(['platform_stock' => $listing->product->total_stock]);
+            
+            $result = $service->updateStock($listing);
+            
+            if ($result['success']) {
+                $synced++;
+            } else {
+                $failed++;
+            }
+        }
+
+        return redirect()->back()
+            ->with('success', "{$synced} synced to {$platform->name}" . ($failed > 0 ? ", {$failed} failed" : ""));
+    }
+
+    /**
+     * Fetch orders from platform API
+     */
+    public function fetchOrdersFromApi(SellingPlatform $platform)
+    {
+        $service = PlatformServiceFactory::make($platform);
+        
+        if (!$service || !$service->isConfigured()) {
+            return redirect()->back()->with('error', 'API not configured for this platform.');
+        }
+
+        $result = $service->fetchOrders();
+
+        if (!$result['success']) {
+            return redirect()->back()->with('error', $result['message'] ?? 'Failed to fetch orders.');
+        }
+
+        $imported = 0;
+        foreach ($result['orders'] ?? [] as $orderData) {
+            // Check if order already exists
+            $orderId = $orderData['id'] ?? $orderData['order_id'] ?? null;
+            if (!$orderId) continue;
+
+            $exists = PlatformOrder::where('selling_platform_id', $platform->id)
+                ->where('platform_order_id', $orderId)
+                ->exists();
+
+            if (!$exists) {
+                $amount = $orderData['total_price'] ?? $orderData['total'] ?? 0;
+                $commission = $platform->calculateCommission($amount);
+
+                PlatformOrder::create([
+                    'selling_platform_id' => $platform->id,
+                    'platform_order_id' => $orderId,
+                    'platform_order_amount' => $amount,
+                    'commission_amount' => $commission,
+                    'settlement_amount' => $amount - $commission,
+                    'customer_name' => $orderData['customer']['first_name'] ?? $orderData['billing']['first_name'] ?? null,
+                    'platform_order_status' => $orderData['status'] ?? $orderData['financial_status'] ?? 'pending',
+                    'platform_order_date' => $orderData['created_at'] ?? now(),
+                    'order_data' => $orderData,
+                ]);
+                $imported++;
+            }
+        }
+
+        return redirect()->back()->with('success', "{$imported} new orders imported from {$platform->name}.");
     }
 
     /**
@@ -293,7 +549,10 @@ class SellingPlatformController extends Controller
             ->latest('platform_order_date')
             ->paginate(20);
 
-        return view('admin.selling-platforms.orders', compact('platform', 'orders'));
+        $service = PlatformServiceFactory::make($platform);
+        $hasApi = $service && $service->isConfigured();
+
+        return view('admin.selling-platforms.orders', compact('platform', 'orders', 'hasApi'));
     }
 
     /**

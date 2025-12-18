@@ -31,6 +31,11 @@
                         </span>
                         <span class="text-sm text-gray-500">{{ $platform->platform_type_label }}</span>
                         <span class="text-sm text-orange-600">Commission: {{ $platform->commission_percentage }}%</span>
+                        @if($hasApi ?? false)
+                            <span class="text-sm px-2 py-0.5 rounded-full bg-blue-100 text-blue-600">
+                                <i class="fas fa-plug mr-1"></i>API Connected
+                            </span>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -89,11 +94,19 @@
             <form action="{{ route('admin.selling-platforms.sync-stock', $platform) }}" method="POST" class="inline">
                 @csrf
                 <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
-                    <i class="fas fa-sync mr-1"></i> Sync Stock
+                    <i class="fas fa-sync mr-1"></i> Sync Stock (Local)
                 </button>
             </form>
+            @if($hasApi ?? false)
+            <form action="{{ route('admin.selling-platforms.sync-all-stock-api', $platform) }}" method="POST" class="inline">
+                @csrf
+                <button type="submit" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
+                    <i class="fas fa-cloud-upload-alt mr-1"></i> Sync All to {{ $platform->name }}
+                </button>
+            </form>
+            @endif
             <a href="{{ route('admin.selling-platforms.orders', $platform) }}" 
-               class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
+               class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">
                 <i class="fas fa-shopping-bag mr-1"></i> View Orders
             </a>
         </div>
@@ -103,6 +116,9 @@
                 <option value="active">Mark Active</option>
                 <option value="inactive">Mark Inactive</option>
                 <option value="pending">Mark Pending</option>
+                @if($hasApi ?? false)
+                <option value="push">Push to {{ $platform->name }}</option>
+                @endif
             </select>
             <button onclick="applyBulkAction()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm">
                 Apply
@@ -158,8 +174,11 @@
                                 <div class="ml-3">
                                     <p class="font-medium text-gray-800">{{ Str::limit($listing->product->name, 30) }}</p>
                                     <p class="text-xs text-gray-500">SKU: {{ $listing->platform_sku ?? $listing->product->sku }}</p>
+                                    @if($listing->platform_product_id)
+                                        <span class="text-xs text-green-600"><i class="fas fa-link"></i> {{ Str::limit($listing->platform_product_id, 15) }}</span>
+                                    @endif
                                     @if($listing->listing_url)
-                                        <a href="{{ $listing->listing_url }}" target="_blank" class="text-xs text-blue-600 hover:underline">
+                                        <a href="{{ $listing->listing_url }}" target="_blank" class="text-xs text-blue-600 hover:underline block">
                                             <i class="fas fa-external-link-alt"></i> View on {{ $platform->name }}
                                         </a>
                                     @endif
@@ -188,21 +207,36 @@
                                    ($listing->status === 'rejected' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600')) }}">
                                 {{ $listing->status_label }}
                             </span>
-                            @if($listing->listed_at)
-                                <p class="text-xs text-gray-500 mt-1">Listed: {{ $listing->listed_at->format('d M Y') }}</p>
+                            @if($listing->platform_product_id)
+                                <span class="block text-xs text-blue-600 mt-1"><i class="fas fa-cloud"></i> Synced</span>
+                            @endif
+                            @if($listing->last_synced_at)
+                                <p class="text-xs text-gray-400 mt-1">{{ $listing->last_synced_at->diffForHumans() }}</p>
                             @endif
                         </td>
                         <td class="px-4 py-3">
-                            <div class="flex items-center space-x-2">
+                            <div class="flex items-center space-x-1">
                                 <a href="{{ route('admin.selling-platforms.edit-listing', [$platform, $listing]) }}" 
-                                   class="text-blue-600 hover:text-blue-700" title="Edit">
+                                   class="p-1 text-blue-600 hover:text-blue-700" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
+                                @if($hasApi ?? false)
+                                    <button onclick="pushToApi({{ $listing->id }})" 
+                                            class="p-1 text-purple-600 hover:text-purple-700" title="Push to {{ $platform->name }}">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                    </button>
+                                    @if($listing->platform_product_id)
+                                        <button onclick="syncStock({{ $listing->id }})" 
+                                                class="p-1 text-green-600 hover:text-green-700" title="Sync Stock">
+                                            <i class="fas fa-sync"></i>
+                                        </button>
+                                    @endif
+                                @endif
                                 <form action="{{ route('admin.selling-platforms.delete-listing', [$platform, $listing]) }}" 
                                       method="POST" class="inline" onsubmit="return confirm('Remove this listing?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-700" title="Remove">
+                                    <button type="submit" class="p-1 text-red-600 hover:text-red-700" title="Remove">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
@@ -219,10 +253,32 @@
         </div>
     @endif
 </div>
+
+<!-- API Sync Modal -->
+<div id="syncModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="text-center">
+            <div id="syncLoading">
+                <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+                <p class="text-gray-600">Syncing to {{ $platform->name }}...</p>
+            </div>
+            <div id="syncResult" class="hidden">
+                <i id="syncIcon" class="text-4xl mb-4"></i>
+                <p id="syncMessage" class="text-gray-600"></p>
+                <button onclick="closeSyncModal()" class="mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
+const platformId = {{ $platform->id }};
+const hasApi = {{ ($hasApi ?? false) ? 'true' : 'false' }};
+
 function toggleSelectAll(checkbox) {
     document.querySelectorAll('.listing-checkbox').forEach(cb => cb.checked = checkbox.checked);
 }
@@ -240,6 +296,14 @@ function applyBulkAction() {
         return;
     }
     
+    if (action === 'push' && hasApi) {
+        bulkPush(selected);
+    } else {
+        updateStatus(selected, action);
+    }
+}
+
+function updateStatus(listingIds, status) {
     fetch('{{ route("admin.selling-platforms.bulk-status", $platform) }}', {
         method: 'POST',
         headers: {
@@ -247,17 +311,95 @@ function applyBulkAction() {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'Accept': 'application/json',
         },
-        body: JSON.stringify({
-            listing_ids: selected,
-            status: action
-        })
+        body: JSON.stringify({ listing_ids: listingIds, status: status })
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            location.reload();
-        }
+        if (data.success) location.reload();
     });
+}
+
+function bulkPush(listingIds) {
+    showSyncModal();
+    
+    fetch('{{ route("admin.selling-platforms.bulk-push", $platform) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ listing_ids: listingIds })
+    })
+    .then(response => response.json())
+    .then(data => {
+        showSyncResult(data.success, data.message);
+        if (data.success) setTimeout(() => location.reload(), 2000);
+    })
+    .catch(error => {
+        showSyncResult(false, 'An error occurred');
+    });
+}
+
+function pushToApi(listingId) {
+    showSyncModal();
+    
+    fetch(`{{ url('admin/selling-platforms/'.$platform->id.'/listings') }}/${listingId}/push`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        showSyncResult(data.success, data.message);
+        if (data.success) setTimeout(() => location.reload(), 2000);
+    })
+    .catch(error => {
+        showSyncResult(false, 'An error occurred');
+    });
+}
+
+function syncStock(listingId) {
+    showSyncModal();
+    
+    fetch(`{{ url('admin/selling-platforms/'.$platform->id.'/listings') }}/${listingId}/sync-stock`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        showSyncResult(data.success, data.message);
+        if (data.success) setTimeout(() => location.reload(), 2000);
+    })
+    .catch(error => {
+        showSyncResult(false, 'An error occurred');
+    });
+}
+
+function showSyncModal() {
+    document.getElementById('syncModal').classList.remove('hidden');
+    document.getElementById('syncLoading').classList.remove('hidden');
+    document.getElementById('syncResult').classList.add('hidden');
+}
+
+function showSyncResult(success, message) {
+    document.getElementById('syncLoading').classList.add('hidden');
+    document.getElementById('syncResult').classList.remove('hidden');
+    document.getElementById('syncIcon').className = success 
+        ? 'fas fa-check-circle text-4xl mb-4 text-green-600' 
+        : 'fas fa-times-circle text-4xl mb-4 text-red-600';
+    document.getElementById('syncMessage').textContent = message;
+}
+
+function closeSyncModal() {
+    document.getElementById('syncModal').classList.add('hidden');
 }
 </script>
 @endpush

@@ -34,6 +34,7 @@ class Product extends Model
         'is_active',
         'has_variants',
         'is_combo',
+        'product_type',
     ];
 
     protected $casts = [
