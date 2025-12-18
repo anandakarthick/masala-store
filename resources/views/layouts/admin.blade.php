@@ -166,6 +166,17 @@
                     </li>
                     
                     <li class="pt-4">
+                        <span x-show="sidebarOpen" class="px-3 text-xs text-gray-400 uppercase">Channels</span>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.selling-platforms.index') }}" 
+                           class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-700 {{ request()->routeIs('admin.selling-platforms.*') ? 'bg-green-600' : '' }}">
+                            <i class="fas fa-store w-6"></i>
+                            <span x-show="sidebarOpen" class="ml-3">Selling Platforms</span>
+                        </a>
+                    </li>
+                    
+                    <li class="pt-4">
                         <span x-show="sidebarOpen" class="px-3 text-xs text-gray-400 uppercase">Settings</span>
                     </li>
                     <li>

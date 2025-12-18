@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\ProductVariantController as AdminProductVariantCo
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\PaymentMethodController as AdminPaymentMethodController;
+use App\Http\Controllers\Admin\SellingPlatformController as AdminSellingPlatformController;
 use App\Http\Controllers\RazorpayController;
 use Illuminate\Support\Facades\Route;
 
@@ -200,4 +201,26 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('payment-methods/{paymentMethod}/edit', [AdminPaymentMethodController::class, 'edit'])->name('payment-methods.edit');
     Route::put('payment-methods/{paymentMethod}', [AdminPaymentMethodController::class, 'update'])->name('payment-methods.update');
     Route::post('payment-methods/{paymentMethod}/toggle', [AdminPaymentMethodController::class, 'toggleStatus'])->name('payment-methods.toggle');
+
+    // Selling Platforms (Multi-channel selling)
+    Route::prefix('selling-platforms')->name('selling-platforms.')->group(function () {
+        Route::get('/', [AdminSellingPlatformController::class, 'index'])->name('index');
+        Route::get('/{platform}', [AdminSellingPlatformController::class, 'show'])->name('show');
+        Route::get('/{platform}/edit', [AdminSellingPlatformController::class, 'edit'])->name('edit');
+        Route::put('/{platform}', [AdminSellingPlatformController::class, 'update'])->name('update');
+        Route::post('/{platform}/toggle', [AdminSellingPlatformController::class, 'toggleStatus'])->name('toggle');
+        
+        // Product Listings
+        Route::get('/{platform}/add-products', [AdminSellingPlatformController::class, 'addProducts'])->name('add-products');
+        Route::post('/{platform}/add-products', [AdminSellingPlatformController::class, 'storeProducts'])->name('store-products');
+        Route::get('/{platform}/listings/{listing}/edit', [AdminSellingPlatformController::class, 'editListing'])->name('edit-listing');
+        Route::put('/{platform}/listings/{listing}', [AdminSellingPlatformController::class, 'updateListing'])->name('update-listing');
+        Route::delete('/{platform}/listings/{listing}', [AdminSellingPlatformController::class, 'deleteListing'])->name('delete-listing');
+        Route::post('/{platform}/bulk-status', [AdminSellingPlatformController::class, 'bulkUpdateStatus'])->name('bulk-status');
+        Route::post('/{platform}/sync-stock', [AdminSellingPlatformController::class, 'syncStock'])->name('sync-stock');
+        
+        // Platform Orders
+        Route::get('/{platform}/orders', [AdminSellingPlatformController::class, 'orders'])->name('orders');
+        Route::post('/{platform}/orders', [AdminSellingPlatformController::class, 'storeOrder'])->name('store-order');
+    });
 });

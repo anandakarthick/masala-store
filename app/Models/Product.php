@@ -111,6 +111,22 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    /**
+     * Platform listings for this product
+     */
+    public function platformListings(): HasMany
+    {
+        return $this->hasMany(ProductPlatformListing::class);
+    }
+
+    /**
+     * Active platform listings
+     */
+    public function activePlatformListings(): HasMany
+    {
+        return $this->hasMany(ProductPlatformListing::class)->where('status', 'active');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
