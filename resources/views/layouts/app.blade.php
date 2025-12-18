@@ -62,33 +62,35 @@
     </div>
 
     <!-- Top Bar -->
-    <div class="bg-green-700 text-white text-sm py-2 overflow-visible">
-        <div class="container mx-auto px-4">
-            <div class="flex flex-wrap justify-between items-center gap-2">
+    <div class="bg-green-700 text-white text-xs sm:text-sm py-1.5">
+        <div class="container mx-auto px-2 sm:px-4">
+            <div class="flex justify-between items-center">
                 <!-- Contact Info - Left -->
-                <div class="flex items-center space-x-3 text-xs sm:text-sm">
-                    <span class="flex items-center">
-                        <i class="fas fa-phone mr-1"></i> 
-                        <span class="hidden sm:inline">{{ \App\Models\Setting::get('business_phone', '+91 98765 43210') }}</span>
-                        <span class="sm:hidden">Call</span>
-                    </span>
-                    <span class="hidden md:flex items-center">
-                        <i class="fas fa-envelope mr-1"></i> {{ \App\Models\Setting::get('business_email', 'support@svmasala.com') }}
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <a href="tel:{{ \App\Models\Setting::get('business_phone', '+919876543210') }}" class="flex items-center hover:text-green-200">
+                        <i class="fas fa-phone text-xs mr-1"></i>
+                        <span class="hidden sm:inline truncate">{{ \App\Models\Setting::get('business_phone', '+91 98765 43210') }}</span>
+                    </a>
+                    <span class="hidden lg:flex items-center">
+                        <i class="fas fa-envelope text-xs mr-1"></i>
+                        <span class="truncate">{{ \App\Models\Setting::get('business_email', 'support@svmasala.com') }}</span>
                     </span>
                 </div>
                 
                 <!-- User Links - Right -->
-                <div class="flex items-center space-x-3 text-xs sm:text-sm flex-shrink-0">
-                    <a href="{{ route('tracking.index') }}" class="hover:text-green-200 whitespace-nowrap">
-                        <i class="fas fa-truck sm:mr-1"></i><span class="hidden sm:inline">Track Order</span>
+                <div class="flex items-center gap-2 sm:gap-3 ml-2">
+                    <a href="{{ route('tracking.index') }}" class="hover:text-green-200 flex items-center">
+                        <i class="fas fa-truck text-xs"></i>
+                        <span class="hidden md:inline ml-1">Track</span>
                     </a>
                     @auth
-                        <a href="{{ route('account.dashboard') }}" class="hover:text-green-200 whitespace-nowrap">
-                            <i class="fas fa-user sm:mr-1"></i><span class="hidden sm:inline">My Account</span>
+                        <a href="{{ route('account.dashboard') }}" class="hover:text-green-200 flex items-center">
+                            <i class="fas fa-user text-xs"></i>
+                            <span class="hidden md:inline ml-1">Account</span>
                         </a>
                     @else
-                        <a href="{{ route('login') }}" class="hover:text-green-200 whitespace-nowrap">Login</a>
-                        <a href="{{ route('register') }}" class="hover:text-green-200 whitespace-nowrap hidden sm:inline">Register</a>
+                        <a href="{{ route('login') }}" class="hover:text-green-200">Login</a>
+                        <a href="{{ route('register') }}" class="hover:text-green-200 hidden sm:block">Register</a>
                     @endauth
                 </div>
             </div>
@@ -96,23 +98,24 @@
     </div>
 
     <!-- Header -->
-    <header class="bg-white shadow-md sticky top-0 z-40 overflow-visible" x-data="{ mobileMenuOpen: false }">
-        <div class="container mx-auto px-4">
-            <div class="flex items-center justify-between py-3 gap-2">
+    <header class="bg-white shadow-md sticky top-0 z-40" x-data="{ mobileMenuOpen: false }">
+        <div class="container mx-auto px-2 sm:px-4">
+            <div class="flex items-center justify-between py-2 sm:py-3">
                 <!-- Logo -->
-                <a href="{{ route('home') }}" class="flex items-center flex-shrink-0">
+                <a href="{{ route('home') }}" class="flex items-center min-w-0">
                     @if(\App\Models\Setting::logo())
                         <img src="{{ \App\Models\Setting::logo() }}" alt="{{ \App\Models\Setting::get('business_name', 'SV Masala') }}" class="h-8 sm:h-10">
                     @else
-                        <span class="text-base sm:text-xl font-bold text-green-700 whitespace-nowrap">
-                            <i class="fas fa-leaf"></i> <span class="hidden sm:inline">{{ \App\Models\Setting::get('business_name', 'SV Masala & Herbal Products') }}</span>
-                            <span class="sm:hidden">SV Masala</span>
+                        <span class="text-sm sm:text-lg font-bold text-green-700 flex items-center">
+                            <i class="fas fa-leaf mr-1"></i>
+                            <span class="hidden md:inline">{{ \App\Models\Setting::get('business_name', 'SV Masala & Herbal Products') }}</span>
+                            <span class="md:hidden">SV Masala</span>
                         </span>
                     @endif
                 </a>
 
                 <!-- Search Bar - Desktop -->
-                <form action="{{ route('products.search') }}" method="GET" class="hidden md:flex flex-1 max-w-md mx-4">
+                <form action="{{ route('products.search') }}" method="GET" class="hidden lg:flex flex-1 max-w-md mx-4">
                     <div class="relative w-full">
                         <input type="text" name="q" placeholder="Search products..." 
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -123,27 +126,32 @@
                     </div>
                 </form>
 
-                <!-- Cart & Mobile Menu - Right -->
-                <div class="flex items-center space-x-3 flex-shrink-0">
+                <!-- Right Side Icons -->
+                <div class="flex items-center gap-1 sm:gap-2">
+                    <!-- Search Icon - Mobile/Tablet -->
+                    <a href="{{ route('products.search') }}" class="lg:hidden text-gray-700 hover:text-green-600 p-2">
+                        <i class="fas fa-search text-lg"></i>
+                    </a>
+                    
                     <!-- Cart Icon -->
                     <a href="{{ route('cart.index') }}" class="relative text-gray-700 hover:text-green-600 p-2">
-                        <i class="fas fa-shopping-cart text-xl"></i>
+                        <i class="fas fa-shopping-cart text-lg sm:text-xl"></i>
                         <span x-show="cartCount > 0" 
                               x-text="cartCount"
-                              class="absolute -top-1 -right-1 bg-green-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                              class="absolute top-0 right-0 bg-green-600 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-medium">
                         </span>
                     </a>
                     
                     <!-- Mobile Menu Button -->
-                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden text-gray-700 p-2">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="lg:hidden text-gray-700 p-2">
                         <i class="fas fa-bars text-xl"></i>
                     </button>
                 </div>
             </div>
 
             <!-- Navigation - Desktop -->
-            <nav class="hidden md:block border-t">
-                <ul class="flex items-center justify-center space-x-6 py-3 text-sm">
+            <nav class="hidden lg:block border-t">
+                <ul class="flex items-center justify-center space-x-5 py-2 text-sm">
                     <li><a href="{{ route('home') }}" class="text-gray-700 hover:text-green-600 font-medium">Home</a></li>
                     <li><a href="{{ route('products.index') }}" class="text-gray-700 hover:text-green-600 font-medium">All Products</a></li>
                     @php $categories = \App\Models\Category::whereNull('parent_id')->where('is_active', true)->orderBy('sort_order')->get(); @endphp
@@ -176,7 +184,7 @@
                  x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 -translate-y-2"
                  x-transition:enter-end="opacity-100 translate-y-0"
-                 class="md:hidden border-t py-4">
+                 class="lg:hidden border-t py-3">
                 <!-- Mobile Search -->
                 <form action="{{ route('products.search') }}" method="GET" class="mb-4">
                     <div class="relative">
