@@ -6,6 +6,7 @@ use App\Jobs\SendOrderEmails;
 use App\Models\Cart;
 use App\Models\Coupon;
 use App\Models\Order;
+use App\Models\PaymentMethod;
 use App\Models\Setting;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
@@ -27,7 +28,10 @@ class CheckoutController extends Controller
             ? 0 
             : Setting::defaultShippingCharge();
 
-        return view('frontend.checkout.index', compact('cart', 'user', 'shippingCharge'));
+        // Get active payment methods available for this order amount
+        $paymentMethods = PaymentMethod::availableForAmount($cart->subtotal + $shippingCharge)->get();
+
+        return view('frontend.checkout.index', compact('cart', 'user', 'shippingCharge', 'paymentMethods'));
     }
 
     public function applyCoupon(Request $request)
@@ -79,9 +83,15 @@ class CheckoutController extends Controller
             'billing_state' => 'nullable|required_if:billing_same,false|string',
             'billing_pincode' => 'nullable|required_if:billing_same,false|string|max:10',
             'order_type' => 'nullable|in:retail,bulk,return_gift',
-            'payment_method' => 'required|in:cod,upi',
+            'payment_method' => 'required|string',
             'customer_notes' => 'nullable|string',
         ]);
+
+        // Validate payment method
+        $paymentMethod = PaymentMethod::where('code', $validated['payment_method'])->active()->first();
+        if (!$paymentMethod) {
+            return back()->with('error', 'Invalid payment method selected.');
+        }
 
         $cart = Cart::getCart();
         $cart->load('items.product', 'items.variant');
@@ -110,7 +120,10 @@ class CheckoutController extends Controller
             $discountAmount = $coupon->calculateDiscount($subtotal);
         }
 
-        $totalAmount = $subtotal + $gstAmount + $shippingCharge - $discountAmount;
+        // Calculate payment method extra charge
+        $paymentCharge = $paymentMethod->calculateExtraCharge($subtotal + $gstAmount + $shippingCharge - $discountAmount);
+
+        $totalAmount = $subtotal + $gstAmount + $shippingCharge - $discountAmount + $paymentCharge;
 
         // Billing address
         $billingSame = $request->boolean('billing_same', true);
@@ -138,8 +151,8 @@ class CheckoutController extends Controller
                 'gst_amount' => $gstAmount,
                 'shipping_charge' => $shippingCharge,
                 'total_amount' => $totalAmount,
-                'payment_method' => $validated['payment_method'],
-                'payment_status' => $validated['payment_method'] === 'cod' ? 'pending' : 'pending',
+                'payment_method' => $paymentMethod->code,
+                'payment_status' => 'pending',
                 'status' => 'pending',
                 'customer_notes' => $validated['customer_notes'],
             ]);
@@ -188,16 +201,14 @@ class CheckoutController extends Controller
 
             DB::commit();
 
-            // Send order emails in background
-            SendOrderEmails::dispatch($order->fresh()->load('items.product'));
-
-            // Redirect based on payment method
-            if ($validated['payment_method'] === 'cod') {
+            // Send order emails in background (for COD orders immediately, for online after payment)
+            if ($paymentMethod->isCod()) {
+                SendOrderEmails::dispatch($order->fresh()->load('items.product'));
                 return redirect()->route('checkout.success', $order)
                     ->with('success', 'Order placed successfully!');
             }
 
-            // For UPI/Online payment, redirect to payment page
+            // For online payment methods (Razorpay, UPI, Bank Transfer), redirect to payment page
             return redirect()->route('checkout.payment', $order);
 
         } catch (\Exception $e) {
@@ -213,11 +224,18 @@ class CheckoutController extends Controller
             return redirect()->route('checkout.success', $order);
         }
 
-        return view('frontend.checkout.payment', compact('order'));
+        $paymentMethod = PaymentMethod::where('code', $order->payment_method)->first();
+
+        return view('frontend.checkout.payment', compact('order', 'paymentMethod'));
     }
 
     public function success(Order $order)
     {
+        // Send order emails if not already sent (for online payments)
+        if ($order->payment_status === 'paid') {
+            // Check if emails were already sent (you might want to add a flag for this)
+        }
+
         $order->load('items.product');
         return view('frontend.checkout.success', compact('order'));
     }

@@ -57,6 +57,9 @@ class OrderController extends Controller
         $order->load('user', 'items.product');
         $deliveryPartners = DeliveryPartner::active()->get();
 
+        // Mark order as seen by admin
+        $order->markAsSeen();
+
         return view('admin.orders.show', compact('order', 'deliveryPartners'));
     }
 

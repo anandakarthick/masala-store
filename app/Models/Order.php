@@ -39,6 +39,8 @@ class Order extends Model
         'delivered_at',
         'customer_notes',
         'admin_notes',
+        'is_seen_by_admin',
+        'seen_at',
         'invoice_number',
         'invoice_generated_at',
     ];
@@ -52,6 +54,8 @@ class Order extends Model
         'expected_delivery_date' => 'date',
         'delivered_at' => 'date',
         'invoice_generated_at' => 'datetime',
+        'seen_at' => 'datetime',
+        'is_seen_by_admin' => 'boolean',
     ];
 
     protected static function boot()
@@ -73,6 +77,27 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * Mark order as seen by admin
+     */
+    public function markAsSeen(): void
+    {
+        if (!$this->is_seen_by_admin) {
+            $this->update([
+                'is_seen_by_admin' => true,
+                'seen_at' => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Scope for unseen orders
+     */
+    public function scopeUnseen($query)
+    {
+        return $query->where('is_seen_by_admin', false);
     }
 
     public function scopePending($query)

@@ -19,6 +19,11 @@
             padding: 20px;
         }
         
+        /* Rupee Symbol */
+        .rupee {
+            font-family: 'DejaVu Sans', sans-serif;
+        }
+        
         /* Header */
         .header {
             border-bottom: 3px solid #166534;
@@ -299,11 +304,11 @@
             <table class="header-table">
                 <tr>
                     <td class="logo-section">
-                        <div class="company-name">🌿 {{ $company['name'] }}</div>
+                        <div class="company-name">{{ $company['name'] }}</div>
                         <div class="company-details">
                             @if($company['address']){{ $company['address'] }}<br>@endif
-                            @if($company['phone'])📞 {{ $company['phone'] }} @endif
-                            @if($company['email'])| ✉️ {{ $company['email'] }}@endif
+                            @if($company['phone'])Phone: {{ $company['phone'] }} @endif
+                            @if($company['email'])| Email: {{ $company['email'] }}@endif
                             @if($company['gst'])<br>GSTIN: {{ $company['gst'] }}@endif
                         </div>
                     </td>
@@ -326,8 +331,8 @@
                             {{ $order->shipping_address }}<br>
                             {{ $order->shipping_city }}, {{ $order->shipping_state }}<br>
                             PIN: {{ $order->shipping_pincode }}<br>
-                            📞 {{ $order->customer_phone }}
-                            @if($order->customer_email)<br>✉️ {{ $order->customer_email }}@endif
+                            Phone: {{ $order->customer_phone }}
+                            @if($order->customer_email)<br>Email: {{ $order->customer_email }}@endif
                         </div>
                     </td>
                     <td style="width: 4%;"></td>
@@ -338,7 +343,7 @@
                             {{ $order->shipping_address }}<br>
                             {{ $order->shipping_city }}, {{ $order->shipping_state }}<br>
                             PIN: {{ $order->shipping_pincode }}<br>
-                            📞 {{ $order->customer_phone }}
+                            Phone: {{ $order->customer_phone }}
                         </div>
                     </td>
                 </tr>
@@ -390,8 +395,8 @@
                     </td>
                     <td>{{ $item->product->hsn_code ?? '-' }}</td>
                     <td class="text-center">{{ $item->quantity }}</td>
-                    <td class="text-right">₹{{ number_format($item->unit_price, 2) }}</td>
-                    <td class="text-right">₹{{ number_format($item->unit_price * $item->quantity, 2) }}</td>
+                    <td class="text-right">Rs. {{ number_format($item->unit_price, 2) }}</td>
+                    <td class="text-right">Rs. {{ number_format($item->unit_price * $item->quantity, 2) }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -402,27 +407,27 @@
             <table class="totals-table">
                 <tr>
                     <td class="label">Subtotal:</td>
-                    <td class="value">₹{{ number_format($order->subtotal, 2) }}</td>
+                    <td class="value">Rs. {{ number_format($order->subtotal, 2) }}</td>
                 </tr>
                 @if($order->gst_amount > 0)
                 <tr>
-                    <td class="label">GST:</td>
-                    <td class="value">₹{{ number_format($order->gst_amount, 2) }}</td>
+                    <td class="label">GST ({{ $order->gst_percent ?? 12 }}%):</td>
+                    <td class="value">Rs. {{ number_format($order->gst_amount, 2) }}</td>
                 </tr>
                 @endif
                 <tr>
                     <td class="label">Shipping:</td>
-                    <td class="value">{{ $order->shipping_charge > 0 ? '₹' . number_format($order->shipping_charge, 2) : 'FREE' }}</td>
+                    <td class="value">{{ $order->shipping_charge > 0 ? 'Rs. ' . number_format($order->shipping_charge, 2) : 'FREE' }}</td>
                 </tr>
                 @if($order->discount_amount > 0)
                 <tr>
                     <td class="label">Discount:</td>
-                    <td class="value" style="color: #16a34a;">-₹{{ number_format($order->discount_amount, 2) }}</td>
+                    <td class="value" style="color: #16a34a;">- Rs. {{ number_format($order->discount_amount, 2) }}</td>
                 </tr>
                 @endif
                 <tr class="grand-total">
                     <td class="label">Grand Total:</td>
-                    <td class="value">₹{{ number_format($order->total_amount, 2) }}</td>
+                    <td class="value">Rs. {{ number_format($order->total_amount, 2) }}</td>
                 </tr>
             </table>
         </div>
@@ -430,7 +435,7 @@
         <!-- Amount in Words -->
         <div class="amount-words">
             <div class="amount-words-label">Amount in Words</div>
-            <div class="amount-words-value">{{ ucwords(\NumberFormatter::create('en_IN', \NumberFormatter::SPELLOUT)->format(floor($order->total_amount))) }} Rupees Only</div>
+            <div class="amount-words-value">Indian Rupees {{ ucwords(\NumberFormatter::create('en_IN', \NumberFormatter::SPELLOUT)->format(floor($order->total_amount))) }} Only</div>
         </div>
 
         <!-- Footer -->

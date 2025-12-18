@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CustomerAccountController;
@@ -17,6 +18,8 @@ use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\ProductVariantController as AdminProductVariantController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
+use App\Http\Controllers\Admin\PaymentMethodController as AdminPaymentMethodController;
+use App\Http\Controllers\RazorpayController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -61,6 +64,13 @@ Route::prefix('checkout')->name('checkout.')->group(function () {
     Route::get('/success/{order}', [CheckoutController::class, 'success'])->name('success');
 });
 
+// Razorpay Routes
+Route::prefix('razorpay')->name('razorpay.')->group(function () {
+    Route::post('/create-order', [RazorpayController::class, 'createOrder'])->name('create-order');
+    Route::post('/verify-payment', [RazorpayController::class, 'verifyPayment'])->name('verify-payment');
+});
+Route::post('/razorpay/webhook', [RazorpayController::class, 'webhook'])->name('razorpay.webhook')->withoutMiddleware(['web', 'csrf']);
+
 // Order Tracking
 Route::prefix('track')->name('tracking.')->group(function () {
     Route::get('/', [OrderTrackingController::class, 'index'])->name('index');
@@ -81,6 +91,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
     Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
+    
+    // Google OAuth Routes
+    Route::get('/auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');
+    Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
@@ -115,6 +129,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Notifications (for new order alerts)
     Route::get('/notifications/check-orders', [AdminNotificationController::class, 'checkNewOrders'])->name('notifications.check-orders');
     Route::get('/notifications/pending-count', [AdminNotificationController::class, 'pendingCount'])->name('notifications.pending-count');
+    Route::get('/notifications/unseen-count', [AdminNotificationController::class, 'unseenCount'])->name('notifications.unseen-count');
+    Route::post('/notifications/mark-seen/{order}', [AdminNotificationController::class, 'markAsSeen'])->name('notifications.mark-seen');
+    Route::post('/notifications/mark-all-seen', [AdminNotificationController::class, 'markAllAsSeen'])->name('notifications.mark-all-seen');
 
     // Categories
     Route::resource('categories', AdminCategoryController::class);
@@ -177,4 +194,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::put('/delivery-partners/{partner}', [AdminSettingsController::class, 'updateDeliveryPartner'])->name('delivery-partners.update');
         Route::delete('/delivery-partners/{partner}', [AdminSettingsController::class, 'destroyDeliveryPartner'])->name('delivery-partners.destroy');
     });
+
+    // Payment Methods
+    Route::get('payment-methods', [AdminPaymentMethodController::class, 'index'])->name('payment-methods.index');
+    Route::get('payment-methods/{paymentMethod}/edit', [AdminPaymentMethodController::class, 'edit'])->name('payment-methods.edit');
+    Route::put('payment-methods/{paymentMethod}', [AdminPaymentMethodController::class, 'update'])->name('payment-methods.update');
+    Route::post('payment-methods/{paymentMethod}/toggle', [AdminPaymentMethodController::class, 'toggleStatus'])->name('payment-methods.toggle');
 });

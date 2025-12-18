@@ -24,6 +24,9 @@ class User extends Authenticatable
         'state',
         'pincode',
         'is_active',
+        'google_id',
+        'avatar',
+        'provider',
     ];
 
     protected $hidden = [

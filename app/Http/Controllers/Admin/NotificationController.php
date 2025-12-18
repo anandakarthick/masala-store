@@ -14,15 +14,12 @@ class NotificationController extends Controller
     public function checkNewOrders(Request $request)
     {
         $lastCheckedId = $request->get('last_order_id', 0);
-        $lastCheckedTime = $request->get('last_checked_at');
         
-        $query = Order::where('id', '>', $lastCheckedId);
-        
-        if ($lastCheckedTime) {
-            $query->orWhere('created_at', '>', $lastCheckedTime);
-        }
-        
-        $newOrders = $query->latest()->get();
+        // Get new unseen orders
+        $newOrders = Order::where('id', '>', $lastCheckedId)
+            ->where('is_seen_by_admin', false)
+            ->latest()
+            ->get();
         
         $ordersData = $newOrders->map(function ($order) {
             return [
@@ -30,7 +27,7 @@ class NotificationController extends Controller
                 'order_number' => $order->order_number,
                 'customer_name' => $order->customer_name,
                 'total_amount' => $order->total_amount,
-                'formatted_total' => '₹' . number_format($order->total_amount, 2),
+                'formatted_total' => 'Rs. ' . number_format($order->total_amount, 2),
                 'items_count' => $order->items_count ?? $order->items()->count(),
                 'created_at' => $order->created_at->diffForHumans(),
                 'url' => route('admin.orders.show', $order),
@@ -47,11 +44,11 @@ class NotificationController extends Controller
     }
     
     /**
-     * Get pending orders count for badge
+     * Get unseen orders count for badge (new orders not yet viewed)
      */
-    public function pendingCount()
+    public function unseenCount()
     {
-        $count = Order::where('status', 'pending')->count();
+        $count = Order::where('is_seen_by_admin', false)->count();
         
         return response()->json([
             'count' => $count,
@@ -59,13 +56,45 @@ class NotificationController extends Controller
     }
     
     /**
-     * Mark notification as seen
+     * Get pending orders count for badge
      */
-    public function markAsSeen(Request $request)
+    public function pendingCount()
     {
-        // Store the last seen order ID in session or database
-        $request->session()->put('last_seen_order_id', $request->order_id);
+        $pendingCount = Order::where('status', 'pending')->count();
+        $unseenCount = Order::where('is_seen_by_admin', false)->count();
         
-        return response()->json(['success' => true]);
+        return response()->json([
+            'pending_count' => $pendingCount,
+            'unseen_count' => $unseenCount,
+        ]);
+    }
+    
+    /**
+     * Mark single order as seen
+     */
+    public function markAsSeen(Request $request, Order $order)
+    {
+        $order->markAsSeen();
+        
+        return response()->json([
+            'success' => true,
+            'unseen_count' => Order::where('is_seen_by_admin', false)->count(),
+        ]);
+    }
+    
+    /**
+     * Mark all orders as seen
+     */
+    public function markAllAsSeen()
+    {
+        Order::where('is_seen_by_admin', false)->update([
+            'is_seen_by_admin' => true,
+            'seen_at' => now(),
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'unseen_count' => 0,
+        ]);
     }
 }
