@@ -11,10 +11,11 @@ class SettingsSeeder extends Seeder
     {
         $settings = [
             // General Settings
-            ['key' => 'business_name', 'value' => 'Masala Store', 'type' => 'text', 'group' => 'general'],
-            ['key' => 'business_email', 'value' => 'info@masalastore.com', 'type' => 'text', 'group' => 'general'],
+            ['key' => 'business_name', 'value' => 'SV Masala & Herbal Products', 'type' => 'text', 'group' => 'general'],
+            ['key' => 'business_email', 'value' => 'support@svmasala.com', 'type' => 'text', 'group' => 'general'],
             ['key' => 'business_phone', 'value' => '+91 98765 43210', 'type' => 'text', 'group' => 'general'],
-            ['key' => 'business_address', 'value' => '123 Spice Market, Chennai, Tamil Nadu 600001', 'type' => 'textarea', 'group' => 'general'],
+            ['key' => 'business_address', 'value' => 'Chennai, Tamil Nadu, India', 'type' => 'textarea', 'group' => 'general'],
+            ['key' => 'business_tagline', 'value' => 'Premium Masala, Oils & Herbal Products', 'type' => 'text', 'group' => 'general'],
             ['key' => 'gst_number', 'value' => '33AABCT1234F1ZH', 'type' => 'text', 'group' => 'general'],
             
             // Order Settings
@@ -30,7 +31,7 @@ class SettingsSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
-            Setting::firstOrCreate(
+            Setting::updateOrCreate(
                 ['key' => $setting['key']],
                 $setting
             );

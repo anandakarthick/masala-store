@@ -118,8 +118,8 @@
 
 <p class="message" style="margin-top: 30px; font-size: 14px;">
     If you have any questions about your order, please don't hesitate to contact us at 
-    <a href="mailto:{{ \App\Models\Setting::get('business_email') }}" style="color: #ea580c;">{{ \App\Models\Setting::get('business_email') }}</a> 
-    or call us at <a href="tel:{{ \App\Models\Setting::get('business_phone') }}" style="color: #ea580c;">{{ \App\Models\Setting::get('business_phone') }}</a>.
+    <a href="mailto:{{ \App\Models\Setting::get('business_email') }}" style="color: #166534;">{{ \App\Models\Setting::get('business_email') }}</a> 
+    or call us at <a href="tel:{{ \App\Models\Setting::get('business_phone') }}" style="color: #166534;">{{ \App\Models\Setting::get('business_phone') }}</a>.
 </p>
 
 <p style="font-size: 14px; color: #666; margin-top: 20px;">

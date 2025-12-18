@@ -22,7 +22,7 @@
             background-color: #ffffff;
         }
         .email-header {
-            background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
+            background: linear-gradient(135deg, #166534 0%, #15803d 100%);
             padding: 30px;
             text-align: center;
         }
@@ -32,7 +32,7 @@
         }
         .company-name {
             color: #ffffff;
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
             margin: 0;
         }
@@ -55,29 +55,29 @@
             margin-bottom: 25px;
         }
         .order-box {
-            background-color: #fff7ed;
-            border: 1px solid #fed7aa;
+            background-color: #f0fdf4;
+            border: 1px solid #86efac;
             border-radius: 8px;
             padding: 20px;
             margin: 25px 0;
         }
         .order-number {
             font-size: 14px;
-            color: #9a3412;
+            color: #166534;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
         .order-number span {
             font-size: 20px;
-            color: #ea580c;
+            color: #15803d;
             display: block;
             margin-top: 5px;
         }
         .order-details {
             margin-top: 15px;
             padding-top: 15px;
-            border-top: 1px dashed #fed7aa;
+            border-top: 1px dashed #86efac;
         }
         .detail-row {
             display: table;
@@ -121,7 +121,7 @@
         }
         .items-table .item-variant {
             font-size: 12px;
-            color: #ea580c;
+            color: #15803d;
         }
         .total-section {
             background-color: #fafafa;
@@ -150,7 +150,7 @@
             padding-top: 15px;
             font-size: 18px;
             font-weight: bold;
-            color: #ea580c;
+            color: #166534;
         }
         .address-section {
             background-color: #f8fafc;
@@ -186,7 +186,7 @@
         .btn {
             display: inline-block;
             padding: 14px 30px;
-            background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
+            background: linear-gradient(135deg, #166534 0%, #15803d 100%);
             color: #ffffff !important;
             text-decoration: none;
             border-radius: 8px;
@@ -201,7 +201,7 @@
             text-align: center;
         }
         .footer-logo {
-            color: #ea580c;
+            color: #22c55e;
             font-size: 20px;
             font-weight: bold;
             margin-bottom: 15px;
@@ -244,13 +244,14 @@
         <div class="email-header">
             @php
                 $logo = \App\Models\Setting::logo();
-                $companyName = \App\Models\Setting::get('business_name', 'Masala Store');
+                $companyName = \App\Models\Setting::get('business_name', 'SV Masala & Herbal Products');
+                $tagline = \App\Models\Setting::get('business_tagline', 'Premium Masala, Oils & Herbal Products');
             @endphp
             @if($logo)
                 <img src="{{ $logo }}" alt="{{ $companyName }}" class="logo">
             @endif
-            <h1 class="company-name">{{ $companyName }}</h1>
-            <p class="tagline">Premium Masala, Oils & Gift Packs</p>
+            <h1 class="company-name">🌿 {{ $companyName }}</h1>
+            <p class="tagline">{{ $tagline }}</p>
         </div>
 
         <!-- Body -->
@@ -260,7 +261,7 @@
 
         <!-- Footer -->
         <div class="email-footer">
-            <div class="footer-logo">🌶️ {{ $companyName }}</div>
+            <div class="footer-logo">🌿 {{ $companyName }}</div>
             <p class="footer-text">
                 {{ \App\Models\Setting::get('business_address', '') }}
             </p>

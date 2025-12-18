@@ -21,7 +21,7 @@
         
         /* Header */
         .header {
-            border-bottom: 3px solid #ea580c;
+            border-bottom: 3px solid #166534;
             padding-bottom: 20px;
             margin-bottom: 20px;
         }
@@ -32,9 +32,9 @@
             width: 60%;
         }
         .company-name {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
-            color: #ea580c;
+            color: #166534;
             margin-bottom: 5px;
         }
         .company-details {
@@ -55,7 +55,7 @@
         }
         .invoice-number {
             font-size: 14px;
-            color: #ea580c;
+            color: #166534;
             margin-top: 5px;
         }
         
@@ -73,12 +73,12 @@
         .info-box-title {
             font-size: 11px;
             font-weight: bold;
-            color: #ea580c;
+            color: #166534;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 8px;
             padding-bottom: 5px;
-            border-bottom: 1px solid #fed7aa;
+            border-bottom: 1px solid #86efac;
         }
         .info-box-content {
             font-size: 12px;
@@ -90,7 +90,7 @@
         
         /* Order Details */
         .order-meta {
-            background-color: #fff7ed;
+            background-color: #f0fdf4;
             padding: 15px;
             margin-bottom: 20px;
             border-radius: 5px;
@@ -117,7 +117,7 @@
             margin-bottom: 20px;
         }
         .items-table th {
-            background-color: #ea580c;
+            background-color: #166534;
             color: #ffffff;
             padding: 12px 10px;
             text-align: left;
@@ -143,7 +143,7 @@
         }
         .items-table .item-variant {
             font-size: 10px;
-            color: #ea580c;
+            color: #166534;
         }
         .items-table .item-sku {
             font-size: 10px;
@@ -182,13 +182,13 @@
             width: 120px;
         }
         .totals-table .grand-total td {
-            border-top: 2px solid #ea580c;
+            border-top: 2px solid #166534;
             padding-top: 12px;
             font-size: 16px;
             font-weight: bold;
         }
         .totals-table .grand-total .value {
-            color: #ea580c;
+            color: #166534;
         }
         
         /* Amount in Words */
@@ -254,21 +254,21 @@
             text-align: center;
             margin-top: 30px;
             padding: 15px;
-            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
             border-radius: 5px;
         }
         .thank-you-text {
             font-size: 14px;
-            color: #ea580c;
+            color: #166534;
             font-weight: bold;
         }
         .thank-you-subtext {
             font-size: 11px;
-            color: #78716c;
+            color: #15803d;
             margin-top: 5px;
         }
         
-        /* Watermark for COD */
+        /* Payment Badge */
         .payment-badge {
             display: inline-block;
             padding: 5px 15px;
@@ -299,7 +299,7 @@
             <table class="header-table">
                 <tr>
                     <td class="logo-section">
-                        <div class="company-name">🌶️ {{ $company['name'] }}</div>
+                        <div class="company-name">🌿 {{ $company['name'] }}</div>
                         <div class="company-details">
                             @if($company['address']){{ $company['address'] }}<br>@endif
                             @if($company['phone'])📞 {{ $company['phone'] }} @endif

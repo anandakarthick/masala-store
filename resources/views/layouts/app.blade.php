@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Masala Store') - {{ \App\Models\Setting::businessName() }}</title>
-    <meta name="description" content="@yield('meta_description', 'Premium quality masala, oils, candles and return gifts')">
+    <title>@yield('title', 'Home') - {{ \App\Models\Setting::get('business_name', 'SV Masala & Herbal Products') }}</title>
+    <meta name="description" content="@yield('meta_description', 'Premium quality masala, oils, candles and herbal products from SV Masala')">
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -38,19 +38,19 @@
     </div>
 
     <!-- Top Bar -->
-    <div class="bg-orange-600 text-white text-sm py-2">
+    <div class="bg-green-700 text-white text-sm py-2">
         <div class="container mx-auto px-4 flex justify-between items-center">
             <div class="flex items-center space-x-4">
-                <span><i class="fas fa-phone mr-1"></i> {{ \App\Models\Setting::businessPhone() }}</span>
-                <span class="hidden md:inline"><i class="fas fa-envelope mr-1"></i> {{ \App\Models\Setting::businessEmail() }}</span>
+                <span><i class="fas fa-phone mr-1"></i> {{ \App\Models\Setting::get('business_phone', '+91 98765 43210') }}</span>
+                <span class="hidden md:inline"><i class="fas fa-envelope mr-1"></i> {{ \App\Models\Setting::get('business_email', 'support@svmasala.com') }}</span>
             </div>
             <div class="flex items-center space-x-4">
-                <a href="{{ route('tracking.index') }}" class="hover:text-orange-200">Track Order</a>
+                <a href="{{ route('tracking.index') }}" class="hover:text-green-200">Track Order</a>
                 @auth
-                    <a href="{{ route('account.dashboard') }}" class="hover:text-orange-200">My Account</a>
+                    <a href="{{ route('account.dashboard') }}" class="hover:text-green-200">My Account</a>
                 @else
-                    <a href="{{ route('login') }}" class="hover:text-orange-200">Login</a>
-                    <a href="{{ route('register') }}" class="hover:text-orange-200">Register</a>
+                    <a href="{{ route('login') }}" class="hover:text-green-200">Login</a>
+                    <a href="{{ route('register') }}" class="hover:text-green-200">Register</a>
                 @endauth
             </div>
         </div>
@@ -63,10 +63,10 @@
                 <!-- Logo -->
                 <a href="{{ route('home') }}" class="flex items-center space-x-2">
                     @if(\App\Models\Setting::logo())
-                        <img src="{{ \App\Models\Setting::logo() }}" alt="{{ \App\Models\Setting::businessName() }}" class="h-10">
+                        <img src="{{ \App\Models\Setting::logo() }}" alt="{{ \App\Models\Setting::get('business_name', 'SV Masala') }}" class="h-10">
                     @else
-                        <span class="text-2xl font-bold text-orange-600">
-                            <i class="fas fa-pepper-hot"></i> {{ \App\Models\Setting::businessName() }}
+                        <span class="text-xl font-bold text-green-700">
+                            <i class="fas fa-leaf"></i> {{ \App\Models\Setting::get('business_name', 'SV Masala & Herbal Products') }}
                         </span>
                     @endif
                 </a>
@@ -75,9 +75,9 @@
                 <form action="{{ route('products.search') }}" method="GET" class="hidden md:flex flex-1 max-w-md mx-8">
                     <div class="relative w-full">
                         <input type="text" name="q" placeholder="Search products..." 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                                value="{{ request('q') }}">
-                        <button type="submit" class="absolute right-0 top-0 h-full px-4 text-gray-500 hover:text-orange-600">
+                        <button type="submit" class="absolute right-0 top-0 h-full px-4 text-gray-500 hover:text-green-600">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -85,11 +85,11 @@
 
                 <!-- Cart & Mobile Menu -->
                 <div class="flex items-center space-x-4">
-                    <a href="{{ route('cart.index') }}" class="relative text-gray-700 hover:text-orange-600">
+                    <a href="{{ route('cart.index') }}" class="relative text-gray-700 hover:text-green-600">
                         <i class="fas fa-shopping-cart text-xl"></i>
                         <span x-show="cartCount > 0" 
                               x-text="cartCount"
-                              class="absolute -top-2 -right-2 bg-orange-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                              class="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                         </span>
                     </a>
                     
@@ -100,55 +100,60 @@
             </div>
 
             <!-- Navigation -->
-            <nav class="hidden md:flex items-center space-x-6 py-3 border-t">
-                <a href="{{ route('home') }}" class="text-gray-700 hover:text-orange-600 {{ request()->routeIs('home') ? 'text-orange-600 font-semibold' : '' }}">Home</a>
-                
-                @php $categories = \App\Models\Category::active()->parentCategories()->orderBy('sort_order')->get(); @endphp
-                @foreach($categories as $category)
-                    <a href="{{ route('category.show', $category->slug) }}" 
-                       class="text-gray-700 hover:text-orange-600 {{ request()->is('category/'.$category->slug.'*') ? 'text-orange-600 font-semibold' : '' }}">
-                        {{ $category->name }}
-                    </a>
-                @endforeach
-                
-                <a href="{{ route('products.index') }}" class="text-gray-700 hover:text-orange-600 {{ request()->routeIs('products.index') ? 'text-orange-600 font-semibold' : '' }}">All Products</a>
-                <a href="{{ route('about') }}" class="text-gray-700 hover:text-orange-600 {{ request()->routeIs('about') ? 'text-orange-600 font-semibold' : '' }}">About</a>
-                <a href="{{ route('contact') }}" class="text-gray-700 hover:text-orange-600 {{ request()->routeIs('contact') ? 'text-orange-600 font-semibold' : '' }}">Contact</a>
+            <nav class="hidden md:block border-t">
+                <ul class="flex items-center justify-center space-x-8 py-3">
+                    <li><a href="{{ route('home') }}" class="text-gray-700 hover:text-green-600 font-medium">Home</a></li>
+                    @php $categories = \App\Models\Category::whereNull('parent_id')->where('is_active', true)->orderBy('sort_order')->get(); @endphp
+                    @foreach($categories as $category)
+                        <li class="relative group">
+                            <a href="{{ route('category.show', $category->slug) }}" class="text-gray-700 hover:text-green-600 font-medium flex items-center">
+                                {{ $category->name }}
+                                @if($category->children->count() > 0)
+                                    <i class="fas fa-chevron-down text-xs ml-1"></i>
+                                @endif
+                            </a>
+                            @if($category->children->count() > 0)
+                                <div class="absolute left-0 top-full mt-2 w-48 bg-white shadow-lg rounded-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                    @foreach($category->children as $child)
+                                        <a href="{{ route('category.show', $child->slug) }}" class="block px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600">
+                                            {{ $child->name }}
+                                        </a>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </li>
+                    @endforeach
+                    <li><a href="{{ route('about') }}" class="text-gray-700 hover:text-green-600 font-medium">About</a></li>
+                    <li><a href="{{ route('contact') }}" class="text-gray-700 hover:text-green-600 font-medium">Contact</a></li>
+                </ul>
             </nav>
 
             <!-- Mobile Menu -->
-            <div x-show="mobileMenuOpen" x-cloak class="md:hidden py-4 border-t">
+            <div x-show="mobileMenuOpen" x-cloak class="md:hidden border-t py-4">
                 <form action="{{ route('products.search') }}" method="GET" class="mb-4">
-                    <input type="text" name="q" placeholder="Search products..." 
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    <input type="text" name="q" placeholder="Search..." class="w-full px-4 py-2 border rounded-lg">
                 </form>
-                <div class="flex flex-col space-y-2">
-                    <a href="{{ route('home') }}" class="text-gray-700 hover:text-orange-600 py-2">Home</a>
+                <ul class="space-y-2">
+                    <li><a href="{{ route('home') }}" class="block py-2 text-gray-700">Home</a></li>
                     @foreach($categories as $category)
-                        <a href="{{ route('category.show', $category->slug) }}" class="text-gray-700 hover:text-orange-600 py-2">{{ $category->name }}</a>
+                        <li><a href="{{ route('category.show', $category->slug) }}" class="block py-2 text-gray-700">{{ $category->name }}</a></li>
                     @endforeach
-                    <a href="{{ route('products.index') }}" class="text-gray-700 hover:text-orange-600 py-2">All Products</a>
-                    <a href="{{ route('about') }}" class="text-gray-700 hover:text-orange-600 py-2">About</a>
-                    <a href="{{ route('contact') }}" class="text-gray-700 hover:text-orange-600 py-2">Contact</a>
-                </div>
+                    <li><a href="{{ route('about') }}" class="block py-2 text-gray-700">About</a></li>
+                    <li><a href="{{ route('contact') }}" class="block py-2 text-gray-700">Contact</a></li>
+                </ul>
             </div>
         </div>
     </header>
 
     <!-- Flash Messages -->
     @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 relative" role="alert">
-            <div class="container mx-auto">
-                <span class="block sm:inline">{{ session('success') }}</span>
-            </div>
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 container mx-auto mt-4 rounded">
+            {{ session('success') }}
         </div>
     @endif
-
     @if(session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 relative" role="alert">
-            <div class="container mx-auto">
-                <span class="block sm:inline">{{ session('error') }}</span>
-            </div>
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 container mx-auto mt-4 rounded">
+            {{ session('error') }}
         </div>
     @endif
 
@@ -158,58 +163,58 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-gray-800 text-white mt-12">
+    <footer class="bg-gray-900 text-gray-300 mt-12">
         <div class="container mx-auto px-4 py-12">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <!-- About -->
                 <div>
-                    <h3 class="text-lg font-semibold mb-4">{{ \App\Models\Setting::businessName() }}</h3>
-                    <p class="text-gray-400 text-sm">Premium quality masala, oils, candles and return gifts for all your needs.</p>
-                    <div class="flex space-x-4 mt-4">
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-whatsapp"></i></a>
-                    </div>
+                    <h3 class="text-white text-lg font-bold mb-4">
+                        <i class="fas fa-leaf text-green-500"></i> {{ \App\Models\Setting::get('business_name', 'SV Masala & Herbal Products') }}
+                    </h3>
+                    <p class="text-sm">{{ \App\Models\Setting::get('business_tagline', 'Premium Masala, Oils & Herbal Products') }}</p>
+                    <p class="text-sm mt-2">Your trusted source for authentic spices, natural oils, and herbal products.</p>
                 </div>
 
                 <!-- Quick Links -->
                 <div>
-                    <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
-                    <ul class="space-y-2 text-gray-400 text-sm">
-                        <li><a href="{{ route('home') }}" class="hover:text-white">Home</a></li>
-                        <li><a href="{{ route('products.index') }}" class="hover:text-white">Products</a></li>
-                        <li><a href="{{ route('about') }}" class="hover:text-white">About Us</a></li>
-                        <li><a href="{{ route('contact') }}" class="hover:text-white">Contact</a></li>
-                        <li><a href="{{ route('tracking.index') }}" class="hover:text-white">Track Order</a></li>
+                    <h4 class="text-white font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="{{ route('home') }}" class="hover:text-green-400">Home</a></li>
+                        <li><a href="{{ route('products.index') }}" class="hover:text-green-400">All Products</a></li>
+                        <li><a href="{{ route('about') }}" class="hover:text-green-400">About Us</a></li>
+                        <li><a href="{{ route('contact') }}" class="hover:text-green-400">Contact</a></li>
+                        <li><a href="{{ route('tracking.index') }}" class="hover:text-green-400">Track Order</a></li>
                     </ul>
                 </div>
 
                 <!-- Categories -->
                 <div>
-                    <h3 class="text-lg font-semibold mb-4">Categories</h3>
-                    <ul class="space-y-2 text-gray-400 text-sm">
-                        @foreach($categories as $category)
-                            <li><a href="{{ route('category.show', $category->slug) }}" class="hover:text-white">{{ $category->name }}</a></li>
+                    <h4 class="text-white font-semibold mb-4">Categories</h4>
+                    <ul class="space-y-2 text-sm">
+                        @foreach(\App\Models\Category::whereNull('parent_id')->take(5)->get() as $cat)
+                            <li><a href="{{ route('category.show', $cat->slug) }}" class="hover:text-green-400">{{ $cat->name }}</a></li>
                         @endforeach
                     </ul>
                 </div>
 
                 <!-- Contact -->
                 <div>
-                    <h3 class="text-lg font-semibold mb-4">Contact Us</h3>
-                    <ul class="space-y-2 text-gray-400 text-sm">
-                        <li><i class="fas fa-map-marker-alt mr-2"></i> {{ \App\Models\Setting::businessAddress() }}</li>
-                        <li><i class="fas fa-phone mr-2"></i> {{ \App\Models\Setting::businessPhone() }}</li>
-                        <li><i class="fas fa-envelope mr-2"></i> {{ \App\Models\Setting::businessEmail() }}</li>
+                    <h4 class="text-white font-semibold mb-4">Contact Us</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><i class="fas fa-map-marker-alt mr-2 text-green-500"></i>{{ \App\Models\Setting::get('business_address', 'Chennai, Tamil Nadu') }}</li>
+                        <li><i class="fas fa-phone mr-2 text-green-500"></i>{{ \App\Models\Setting::get('business_phone', '+91 98765 43210') }}</li>
+                        <li><i class="fas fa-envelope mr-2 text-green-500"></i>{{ \App\Models\Setting::get('business_email', 'support@svmasala.com') }}</li>
                     </ul>
+                    <div class="flex space-x-4 mt-4">
+                        <a href="#" class="text-gray-400 hover:text-green-400"><i class="fab fa-facebook text-xl"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-green-400"><i class="fab fa-instagram text-xl"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-green-400"><i class="fab fa-whatsapp text-xl"></i></a>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <div class="border-t border-gray-700 py-4">
-            <div class="container mx-auto px-4 text-center text-gray-400 text-sm">
-                <p>&copy; {{ date('Y') }} {{ \App\Models\Setting::businessName() }}. All rights reserved.</p>
-            </div>
+        <div class="border-t border-gray-800 py-4 text-center text-sm">
+            <p>&copy; {{ date('Y') }} {{ \App\Models\Setting::get('business_name', 'SV Masala & Herbal Products') }}. All rights reserved.</p>
         </div>
     </footer>
 
@@ -224,10 +229,19 @@
                 },
                 
                 init() {
-                    // Listen for add to cart events
                     window.addEventListener('cart-updated', (e) => {
                         this.cartCount = e.detail.count;
                     });
+                    
+                    // Listen for add-to-cart events from product detail page
+                    window.addEventListener('add-to-cart', (e) => {
+                        this.addToCart(e.detail.productId, e.detail.quantity, e.detail.variantId);
+                    });
+                    
+                    // Expose addToCart globally
+                    window.addToCart = (productId, quantity, variantId) => {
+                        this.addToCart(productId, quantity, variantId);
+                    };
                 },
                 
                 showToast(message, type = 'success') {
