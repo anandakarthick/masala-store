@@ -18,11 +18,25 @@
     
     <style>
         [x-cloak] { display: none !important; }
+        .toast-enter { animation: toastIn 0.3s ease-out; }
+        .toast-leave { animation: toastOut 0.3s ease-in forwards; }
+        @keyframes toastIn { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes toastOut { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-100%); opacity: 0; } }
     </style>
     
     @stack('styles')
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col">
+<body class="bg-gray-50 min-h-screen flex flex-col" x-data="cartManager()" x-init="init()">
+    <!-- Toast Notification -->
+    <div x-show="toast.show" x-cloak
+         x-transition:enter="toast-enter"
+         x-transition:leave="toast-leave"
+         :class="toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'"
+         class="fixed top-4 right-4 z-50 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
+        <i :class="toast.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
+        <span x-text="toast.message"></span>
+    </div>
+
     <!-- Top Bar -->
     <div class="bg-orange-600 text-white text-sm py-2">
         <div class="container mx-auto px-4 flex justify-between items-center">
@@ -43,7 +57,7 @@
     </div>
 
     <!-- Header -->
-    <header class="bg-white shadow-md sticky top-0 z-50" x-data="{ mobileMenuOpen: false }">
+    <header class="bg-white shadow-md sticky top-0 z-40" x-data="{ mobileMenuOpen: false }">
         <div class="container mx-auto px-4">
             <div class="flex items-center justify-between py-4">
                 <!-- Logo -->
@@ -73,12 +87,10 @@
                 <div class="flex items-center space-x-4">
                     <a href="{{ route('cart.index') }}" class="relative text-gray-700 hover:text-orange-600">
                         <i class="fas fa-shopping-cart text-xl"></i>
-                        @php $cartCount = \App\Models\Cart::getCart()->total_items; @endphp
-                        @if($cartCount > 0)
-                            <span class="absolute -top-2 -right-2 bg-orange-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                {{ $cartCount }}
-                            </span>
-                        @endif
+                        <span x-show="cartCount > 0" 
+                              x-text="cartCount"
+                              class="absolute -top-2 -right-2 bg-orange-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        </span>
                     </a>
                     
                     <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden text-gray-700">
@@ -201,6 +213,70 @@
         </div>
     </footer>
 
+    <script>
+        function cartManager() {
+            return {
+                cartCount: {{ \App\Models\Cart::getCart()->total_items }},
+                toast: {
+                    show: false,
+                    message: '',
+                    type: 'success'
+                },
+                
+                init() {
+                    // Listen for add to cart events
+                    window.addEventListener('cart-updated', (e) => {
+                        this.cartCount = e.detail.count;
+                    });
+                },
+                
+                showToast(message, type = 'success') {
+                    this.toast.message = message;
+                    this.toast.type = type;
+                    this.toast.show = true;
+                    setTimeout(() => {
+                        this.toast.show = false;
+                    }, 3000);
+                },
+                
+                async addToCart(productId, quantity = 1, variantId = null) {
+                    try {
+                        const body = {
+                            product_id: productId,
+                            quantity: quantity
+                        };
+                        if (variantId) {
+                            body.variant_id = variantId;
+                        }
+                        
+                        const response = await fetch('{{ route("cart.add") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify(body)
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            this.cartCount = data.cart_count;
+                            this.showToast(data.message, 'success');
+                        } else {
+                            this.showToast(data.message || 'Error adding to cart', 'error');
+                        }
+                    } catch (error) {
+                        this.showToast('Error adding to cart', 'error');
+                        console.error('Cart error:', error);
+                    }
+                }
+            }
+        }
+    </script>
+    
     @stack('scripts')
 </body>
 </html>

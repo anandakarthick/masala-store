@@ -119,7 +119,7 @@ class SettingsController extends Controller
     public function deliveryPartners()
     {
         $partners = DeliveryPartner::orderBy('name')->get();
-        return view('admin.settings.delivery-partners', compact('partners'));
+        return view('admin.settings.delivery_partners', compact('partners'));
     }
 
     public function storeDeliveryPartner(Request $request)

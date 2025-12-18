@@ -53,53 +53,89 @@
             </div>
 
             <!-- Product Details -->
-            <div>
+            <div x-data="productDetail({{ json_encode([
+                'hasVariants' => $product->has_variants,
+                'variants' => $product->has_variants ? $product->activeVariants->map(function($v) {
+                    return [
+                        'id' => $v->id,
+                        'name' => $v->name,
+                        'sku' => $v->sku,
+                        'price' => (float) $v->price,
+                        'discount_price' => $v->discount_price ? (float) $v->discount_price : null,
+                        'effective_price' => (float) $v->effective_price,
+                        'stock' => $v->stock_quantity,
+                        'is_default' => $v->is_default,
+                    ];
+                }) : [],
+                'basePrice' => (float) $product->price,
+                'baseDiscountPrice' => $product->discount_price ? (float) $product->discount_price : null,
+                'baseStock' => $product->stock_quantity,
+                'productId' => $product->id,
+            ]) }})">
                 <span class="text-sm text-orange-600 font-medium">{{ $product->category->name }}</span>
                 <h1 class="text-2xl lg:text-3xl font-bold text-gray-800 mt-2">{{ $product->name }}</h1>
                 
                 <!-- SKU -->
-                <p class="text-sm text-gray-500 mt-2">SKU: {{ $product->sku }}</p>
+                <p class="text-sm text-gray-500 mt-2">SKU: <span x-text="selectedVariant ? selectedVariant.sku : '{{ $product->sku }}'"></span></p>
                 
                 <!-- Price -->
                 <div class="mt-4">
-                    @if($product->discount_price)
+                    <template x-if="currentDiscountPrice">
                         <div class="flex items-center gap-3">
-                            <span class="text-3xl font-bold text-orange-600">₹{{ number_format($product->discount_price, 2) }}</span>
-                            <span class="text-xl text-gray-400 line-through">₹{{ number_format($product->price, 2) }}</span>
-                            <span class="bg-red-100 text-red-600 text-sm px-2 py-1 rounded">
-                                Save {{ $product->discount_percentage }}%
-                            </span>
+                            <span class="text-3xl font-bold text-orange-600">₹<span x-text="currentDiscountPrice.toFixed(2)"></span></span>
+                            <span class="text-xl text-gray-400 line-through">₹<span x-text="currentPrice.toFixed(2)"></span></span>
+                            <span class="bg-red-100 text-red-600 text-sm px-2 py-1 rounded" x-text="'Save ' + discountPercent + '%'"></span>
                         </div>
-                    @else
-                        <span class="text-3xl font-bold text-orange-600">₹{{ number_format($product->price, 2) }}</span>
-                    @endif
+                    </template>
+                    <template x-if="!currentDiscountPrice">
+                        <span class="text-3xl font-bold text-orange-600">₹<span x-text="currentPrice.toFixed(2)"></span></span>
+                    </template>
                     
                     @if($product->gst_percentage > 0)
                         <p class="text-sm text-gray-500 mt-1">(Inclusive of {{ $product->gst_percentage }}% GST)</p>
                     @endif
                 </div>
 
-                <!-- Weight -->
-                <div class="mt-4">
-                    <span class="text-gray-600">Weight/Quantity:</span>
-                    <span class="font-medium">{{ $product->weight_display }}</span>
-                </div>
+                <!-- Variants Selection -->
+                @if($product->has_variants && $product->activeVariants->count() > 0)
+                    <div class="mt-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Size/Pack</label>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach($product->activeVariants as $variant)
+                                <button type="button"
+                                        @click="selectVariant({{ $variant->id }})"
+                                        :class="selectedVariantId === {{ $variant->id }} 
+                                            ? 'border-orange-600 bg-orange-50 text-orange-600' 
+                                            : 'border-gray-300 hover:border-orange-400'"
+                                        class="px-4 py-2 border-2 rounded-lg font-medium transition {{ $variant->isOutOfStock() ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                        {{ $variant->isOutOfStock() ? 'disabled' : '' }}>
+                                    {{ $variant->name }}
+                                    @if($variant->isOutOfStock())
+                                        <span class="text-xs text-red-500 block">Out of Stock</span>
+                                    @endif
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
 
                 <!-- Stock Status -->
                 <div class="mt-4">
-                    @if($product->isOutOfStock())
+                    <template x-if="currentStock <= 0">
                         <span class="inline-flex items-center bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm">
                             <i class="fas fa-times-circle mr-1"></i> Out of Stock
                         </span>
-                    @elseif($product->isLowStock())
+                    </template>
+                    <template x-if="currentStock > 0 && currentStock <= 10">
                         <span class="inline-flex items-center bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full text-sm">
-                            <i class="fas fa-exclamation-circle mr-1"></i> Only {{ $product->stock_quantity }} left
+                            <i class="fas fa-exclamation-circle mr-1"></i> Only <span x-text="currentStock"></span> left
                         </span>
-                    @else
+                    </template>
+                    <template x-if="currentStock > 10">
                         <span class="inline-flex items-center bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm">
                             <i class="fas fa-check-circle mr-1"></i> In Stock
                         </span>
-                    @endif
+                    </template>
                 </div>
 
                 <!-- Short Description -->
@@ -108,27 +144,28 @@
                 @endif
 
                 <!-- Add to Cart -->
-                @if(!$product->isOutOfStock())
-                    <form action="{{ route('cart.add') }}" method="POST" class="mt-6">
-                        @csrf
-                        <input type="hidden" name="product_id" value="{{ $product->id }}">
-                        <div class="flex items-center gap-4">
-                            <div class="flex items-center border border-gray-300 rounded-lg">
-                                <button type="button" onclick="decrementQty()" class="px-4 py-2 text-gray-600 hover:bg-gray-100">
-                                    <i class="fas fa-minus"></i>
-                                </button>
-                                <input type="number" name="quantity" id="quantity" value="1" min="1" max="{{ $product->stock_quantity }}"
-                                       class="w-16 text-center border-0 focus:ring-0">
-                                <button type="button" onclick="incrementQty()" class="px-4 py-2 text-gray-600 hover:bg-gray-100">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                            <button type="submit" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-3 px-6 rounded-lg font-semibold">
-                                <i class="fas fa-cart-plus mr-2"></i> Add to Cart
+                <div class="mt-6" x-show="currentStock > 0">
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center border border-gray-300 rounded-lg">
+                            <button type="button" @click="quantity = Math.max(1, quantity - 1)" class="px-4 py-2 text-gray-600 hover:bg-gray-100">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" x-model.number="quantity" min="1" :max="currentStock"
+                                   class="w-16 text-center border-0 focus:ring-0">
+                            <button type="button" @click="quantity = Math.min(currentStock, quantity + 1)" class="px-4 py-2 text-gray-600 hover:bg-gray-100">
+                                <i class="fas fa-plus"></i>
                             </button>
                         </div>
-                    </form>
-                @endif
+                        <button type="button" 
+                                @click="addToCartWithVariant()"
+                                :disabled="hasVariants && !selectedVariantId"
+                                :class="(hasVariants && !selectedVariantId) ? 'bg-gray-400 cursor-not-allowed' : 'bg-orange-600 hover:bg-orange-700'"
+                                class="flex-1 text-white py-3 px-6 rounded-lg font-semibold">
+                            <i class="fas fa-cart-plus mr-2"></i> 
+                            <span x-text="hasVariants && !selectedVariantId ? 'Select a Size' : 'Add to Cart'"></span>
+                        </button>
+                    </div>
+                </div>
 
                 <!-- Features -->
                 <div class="grid grid-cols-2 gap-4 mt-8 pt-6 border-t">
@@ -176,22 +213,87 @@
 
 @push('scripts')
 <script>
-    function incrementQty() {
-        const input = document.getElementById('quantity');
-        const max = parseInt(input.max);
-        const current = parseInt(input.value);
-        if (current < max) {
-            input.value = current + 1;
+function productDetail(config) {
+    return {
+        hasVariants: config.hasVariants,
+        variants: config.variants,
+        selectedVariantId: null,
+        selectedVariant: null,
+        quantity: 1,
+        productId: config.productId,
+        basePrice: config.basePrice,
+        baseDiscountPrice: config.baseDiscountPrice,
+        baseStock: config.baseStock,
+        
+        init() {
+            if (this.hasVariants && this.variants.length > 0) {
+                // Select default variant or first available variant
+                var defaultVariant = this.variants.find(function(v) { return v.is_default && v.stock > 0; });
+                if (!defaultVariant) {
+                    defaultVariant = this.variants.find(function(v) { return v.stock > 0; });
+                }
+                if (defaultVariant) {
+                    this.selectVariant(defaultVariant.id);
+                }
+            }
+        },
+        
+        selectVariant(variantId) {
+            var self = this;
+            this.selectedVariantId = variantId;
+            this.selectedVariant = this.variants.find(function(v) { return v.id === variantId; });
+            this.quantity = 1;
+        },
+        
+        get currentPrice() {
+            if (this.selectedVariant) {
+                return this.selectedVariant.price;
+            }
+            return this.basePrice;
+        },
+        
+        get currentDiscountPrice() {
+            if (this.selectedVariant) {
+                return this.selectedVariant.discount_price;
+            }
+            return this.baseDiscountPrice;
+        },
+        
+        get currentStock() {
+            if (this.selectedVariant) {
+                return this.selectedVariant.stock;
+            }
+            return this.baseStock;
+        },
+        
+        get discountPercent() {
+            if (!this.currentDiscountPrice) return 0;
+            return Math.round(((this.currentPrice - this.currentDiscountPrice) / this.currentPrice) * 100);
+        },
+        
+        addToCartWithVariant() {
+            if (this.hasVariants && !this.selectedVariantId) {
+                alert('Please select a size/variant');
+                return;
+            }
+            
+            // Use the global addToCart function with variant
+            if (typeof addToCart === 'function') {
+                addToCart(this.productId, this.quantity, this.selectedVariantId);
+            } else {
+                // Fallback - call the cart manager
+                var event = new CustomEvent('add-to-cart', { 
+                    detail: { 
+                        productId: this.productId, 
+                        quantity: this.quantity, 
+                        variantId: this.selectedVariantId 
+                    } 
+                });
+                window.dispatchEvent(event);
+            }
         }
     }
-    
-    function decrementQty() {
-        const input = document.getElementById('quantity');
-        const current = parseInt(input.value);
-        if (current > 1) {
-            input.value = current - 1;
-        }
-    }
+}
 </script>
 @endpush
 @endsection

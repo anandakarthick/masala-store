@@ -54,6 +54,33 @@ class CategorySeeder extends Seeder
                     ['name' => 'Festival Specials', 'slug' => 'festival-specials', 'description' => 'Special festival gift items'],
                 ],
             ],
+            [
+                'name' => 'Combo Masala',
+                'slug' => 'combo-masala',
+                'description' => 'Special combo packs of premium masalas at great value',
+                'sort_order' => 5,
+                'children' => [
+                    ['name' => 'Kitchen Essentials Combo', 'slug' => 'kitchen-essentials-combo', 'description' => 'Essential spices for everyday cooking'],
+                    ['name' => 'North Indian Combo', 'slug' => 'north-indian-combo', 'description' => 'Spices for North Indian cuisine'],
+                    ['name' => 'South Indian Combo', 'slug' => 'south-indian-combo', 'description' => 'Spices for South Indian dishes'],
+                    ['name' => 'Biryani Combo', 'slug' => 'biryani-combo', 'description' => 'Complete biryani spice collection'],
+                    ['name' => 'Pickle Masala Combo', 'slug' => 'pickle-masala-combo', 'description' => 'Masalas for homemade pickles'],
+                ],
+            ],
+            [
+                'name' => 'Combo Gift Pack',
+                'slug' => 'combo-gift-pack',
+                'description' => 'Premium gift packs perfect for festivals and special occasions',
+                'sort_order' => 6,
+                'children' => [
+                    ['name' => 'Festival Gift Pack', 'slug' => 'festival-gift-pack', 'description' => 'Special packs for Diwali, Pongal & other festivals'],
+                    ['name' => 'Wedding Gift Pack', 'slug' => 'wedding-gift-pack', 'description' => 'Elegant gift packs for wedding ceremonies'],
+                    ['name' => 'Housewarming Gift Pack', 'slug' => 'housewarming-gift-pack', 'description' => 'Traditional gifts for new home celebrations'],
+                    ['name' => 'Corporate Gift Pack', 'slug' => 'corporate-gift-pack', 'description' => 'Professional gift packs for business gifting'],
+                    ['name' => 'Mini Gift Pack', 'slug' => 'mini-gift-pack', 'description' => 'Small and affordable gift sets'],
+                    ['name' => 'Premium Gift Pack', 'slug' => 'premium-gift-pack', 'description' => 'Luxury gift collections with premium products'],
+                ],
+            ],
         ];
 
         foreach ($categories as $categoryData) {

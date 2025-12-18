@@ -47,15 +47,12 @@
             </div>
             
             @if(!$product->isOutOfStock())
-                <form action="{{ route('cart.add') }}" method="POST" class="inline">
-                    @csrf
-                    <input type="hidden" name="product_id" value="{{ $product->id }}">
-                    <button type="submit" 
-                            class="bg-orange-600 hover:bg-orange-700 text-white p-2 rounded-lg transition"
-                            title="Add to Cart">
-                        <i class="fas fa-cart-plus"></i>
-                    </button>
-                </form>
+                <button type="button" 
+                        @click="addToCart({{ $product->id }})"
+                        class="bg-orange-600 hover:bg-orange-700 text-white p-2 rounded-lg transition"
+                        title="Add to Cart">
+                    <i class="fas fa-cart-plus"></i>
+                </button>
             @endif
         </div>
     </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
@@ -11,7 +12,7 @@ class CartController extends Controller
     public function index()
     {
         $cart = Cart::getCart();
-        $cart->load('items.product.primaryImage');
+        $cart->load('items.product.primaryImage', 'items.variant');
 
         return view('frontend.cart.index', compact('cart'));
     }
@@ -20,23 +21,85 @@ class CartController extends Controller
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
+            'variant_id' => 'nullable|exists:product_variants,id',
             'quantity' => 'nullable|integer|min:1',
         ]);
 
         $product = Product::findOrFail($validated['product_id']);
-
-        if (!$product->is_active || $product->isOutOfStock()) {
-            return back()->with('error', 'This product is not available.');
-        }
-
+        $variantId = $validated['variant_id'] ?? null;
         $quantity = $validated['quantity'] ?? 1;
 
-        if ($quantity > $product->stock_quantity) {
-            return back()->with('error', 'Not enough stock available.');
+        // Check if product requires variant selection
+        if ($product->has_variants && !$variantId) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please select a size/variant.',
+                ], 400);
+            }
+            return back()->with('error', 'Please select a size/variant.');
+        }
+
+        // Validate variant belongs to product
+        if ($variantId) {
+            $variant = ProductVariant::where('id', $variantId)
+                ->where('product_id', $product->id)
+                ->where('is_active', true)
+                ->first();
+
+            if (!$variant) {
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid variant selected.',
+                    ], 400);
+                }
+                return back()->with('error', 'Invalid variant selected.');
+            }
+
+            if ($variant->isOutOfStock()) {
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This variant is out of stock.',
+                    ], 400);
+                }
+                return back()->with('error', 'This variant is out of stock.');
+            }
+
+            if ($quantity > $variant->stock_quantity) {
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Not enough stock available.',
+                    ], 400);
+                }
+                return back()->with('error', 'Not enough stock available.');
+            }
+        } else {
+            if (!$product->is_active || $product->isOutOfStock()) {
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This product is not available.',
+                    ], 400);
+                }
+                return back()->with('error', 'This product is not available.');
+            }
+
+            if ($quantity > $product->stock_quantity) {
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Not enough stock available.',
+                    ], 400);
+                }
+                return back()->with('error', 'Not enough stock available.');
+            }
         }
 
         $cart = Cart::getCart();
-        $cart->addItem($product, $quantity);
+        $cart->addItem($product, $quantity, $variantId);
 
         if ($request->ajax()) {
             return response()->json([
@@ -53,20 +116,42 @@ class CartController extends Controller
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
+            'variant_id' => 'nullable|exists:product_variants,id',
             'quantity' => 'required|integer|min:0',
         ]);
 
         $product = Product::findOrFail($validated['product_id']);
+        $variantId = $validated['variant_id'] ?? null;
 
-        if ($validated['quantity'] > $product->stock_quantity) {
-            return back()->with('error', 'Not enough stock available.');
+        // Check stock
+        if ($variantId) {
+            $variant = ProductVariant::find($variantId);
+            if ($variant && $validated['quantity'] > $variant->stock_quantity) {
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Not enough stock available.',
+                    ], 400);
+                }
+                return back()->with('error', 'Not enough stock available.');
+            }
+        } else {
+            if ($validated['quantity'] > $product->stock_quantity) {
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Not enough stock available.',
+                    ], 400);
+                }
+                return back()->with('error', 'Not enough stock available.');
+            }
         }
 
         $cart = Cart::getCart();
-        $cart->updateItemQuantity($validated['product_id'], $validated['quantity']);
+        $cart->updateItemQuantity($validated['product_id'], $validated['quantity'], $variantId);
 
         if ($request->ajax()) {
-            $cart = $cart->fresh()->load('items.product');
+            $cart = $cart->fresh()->load('items.product', 'items.variant');
             return response()->json([
                 'success' => true,
                 'message' => 'Cart updated.',
@@ -82,10 +167,11 @@ class CartController extends Controller
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
+            'variant_id' => 'nullable|exists:product_variants,id',
         ]);
 
         $cart = Cart::getCart();
-        $cart->removeItem($validated['product_id']);
+        $cart->removeItem($validated['product_id'], $validated['variant_id'] ?? null);
 
         if ($request->ajax()) {
             return response()->json([

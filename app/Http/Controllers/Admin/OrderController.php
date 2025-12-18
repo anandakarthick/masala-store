@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendOrderEmails;
+use App\Jobs\SendOrderStatusEmail;
 use App\Models\DeliveryPartner;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\StockMovement;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\InvoiceService;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -16,7 +19,6 @@ class OrderController extends Controller
     {
         $query = Order::with('user', 'items');
 
-        // Search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -26,22 +28,18 @@ class OrderController extends Controller
             });
         }
 
-        // Status filter
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // Payment status filter
         if ($request->filled('payment_status')) {
             $query->where('payment_status', $request->payment_status);
         }
 
-        // Order type filter
         if ($request->filled('order_type')) {
             $query->where('order_type', $request->order_type);
         }
 
-        // Date filter
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
@@ -64,8 +62,36 @@ class OrderController extends Controller
 
     public function create()
     {
-        $products = Product::active()->inStock()->get();
-        return view('admin.orders.create', compact('products'));
+        $products = Product::active()->get();
+        
+        $productsJson = [];
+        foreach ($products as $p) {
+            if ($p->has_variants) {
+                foreach ($p->activeVariants as $v) {
+                    $productsJson[] = [
+                        'id' => $p->id,
+                        'variant_id' => $v->id,
+                        'name' => $p->name . ' - ' . $v->name,
+                        'sku' => $v->sku,
+                        'price' => (float) $v->effective_price,
+                        'stock' => (int) $v->stock_quantity,
+                    ];
+                }
+            } else {
+                if ($p->stock_quantity > 0) {
+                    $productsJson[] = [
+                        'id' => $p->id,
+                        'variant_id' => null,
+                        'name' => $p->name,
+                        'sku' => $p->sku ?? '',
+                        'price' => (float) $p->effective_price,
+                        'stock' => (int) $p->stock_quantity,
+                    ];
+                }
+            }
+        }
+        
+        return view('admin.orders.create', compact('products', 'productsJson'));
     }
 
     public function store(Request $request)
@@ -79,22 +105,23 @@ class OrderController extends Controller
             'shipping_state' => 'required|string',
             'shipping_pincode' => 'required|string|max:10',
             'order_type' => 'required|in:retail,bulk,return_gift',
-            'payment_method' => 'required|in:cod,upi,razorpay,phonepe,bank_transfer',
+            'payment_method' => 'required|in:cod,upi,bank_transfer',
             'customer_notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
+            'items.*.variant_id' => 'nullable|exists:product_variants,id',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        // Calculate totals
         $subtotal = 0;
         $gstAmount = 0;
         $orderItems = [];
 
         foreach ($validated['items'] as $item) {
             $product = Product::find($item['product_id']);
+            $variant = isset($item['variant_id']) ? ProductVariant::find($item['variant_id']) : null;
             $quantity = $item['quantity'];
-            $unitPrice = $product->effective_price;
+            $unitPrice = $variant ? $variant->effective_price : $product->effective_price;
             $itemTotal = $unitPrice * $quantity;
             $itemGst = $product->calculateGst($itemTotal);
 
@@ -103,8 +130,10 @@ class OrderController extends Controller
 
             $orderItems[] = [
                 'product_id' => $product->id,
+                'variant_id' => $variant ? $variant->id : null,
                 'product_name' => $product->name,
-                'product_sku' => $product->sku,
+                'product_sku' => $variant ? $variant->sku : $product->sku,
+                'variant_name' => $variant ? $variant->name : null,
                 'unit_price' => $unitPrice,
                 'quantity' => $quantity,
                 'gst_amount' => $itemGst,
@@ -112,11 +141,9 @@ class OrderController extends Controller
             ];
         }
 
-        // Shipping charge
         $shippingCharge = $subtotal >= 500 ? 0 : 50;
         $totalAmount = $subtotal + $gstAmount + $shippingCharge;
 
-        // Create order
         $order = Order::create([
             'customer_name' => $validated['customer_name'],
             'customer_email' => $validated['customer_email'],
@@ -135,20 +162,25 @@ class OrderController extends Controller
             'status' => 'confirmed',
         ]);
 
-        // Create order items and update stock
         foreach ($orderItems as $item) {
             $order->items()->create($item);
 
-            // Reduce stock
-            $product = Product::find($item['product_id']);
-            StockMovement::recordMovement(
-                $product,
-                'out',
-                $item['quantity'],
-                "Order #{$order->order_number}",
-                'Stock reduced for order'
-            );
+            if ($item['variant_id']) {
+                ProductVariant::find($item['variant_id'])->decrement('stock_quantity', $item['quantity']);
+            } else {
+                $product = Product::find($item['product_id']);
+                StockMovement::recordMovement(
+                    $product,
+                    'out',
+                    $item['quantity'],
+                    "Order #{$order->order_number}",
+                    'Stock reduced for order'
+                );
+            }
         }
+
+        // Send order emails
+        SendOrderEmails::dispatch($order->fresh()->load('items.product'));
 
         return redirect()->route('admin.orders.show', $order)
             ->with('success', 'Order created successfully.');
@@ -161,24 +193,34 @@ class OrderController extends Controller
         ]);
 
         $oldStatus = $order->status;
-        $order->update(['status' => $validated['status']]);
+        $newStatus = $validated['status'];
+        
+        $order->update(['status' => $newStatus]);
 
         // Handle cancelled order - restore stock
-        if ($validated['status'] === 'cancelled' && $oldStatus !== 'cancelled') {
+        if ($newStatus === 'cancelled' && $oldStatus !== 'cancelled') {
             foreach ($order->items as $item) {
-                StockMovement::recordMovement(
-                    $item->product,
-                    'in',
-                    $item->quantity,
-                    "Order #{$order->order_number} cancelled",
-                    'Stock restored due to order cancellation'
-                );
+                if ($item->variant_id) {
+                    ProductVariant::find($item->variant_id)->increment('stock_quantity', $item->quantity);
+                } else {
+                    StockMovement::recordMovement(
+                        $item->product,
+                        'in',
+                        $item->quantity,
+                        "Order #{$order->order_number} cancelled",
+                        'Stock restored due to order cancellation'
+                    );
+                }
             }
         }
 
-        // Set delivered date
-        if ($validated['status'] === 'delivered') {
+        if ($newStatus === 'delivered') {
             $order->update(['delivered_at' => now()]);
+        }
+
+        // Send status update email in background
+        if ($oldStatus !== $newStatus && $order->customer_email) {
+            SendOrderStatusEmail::dispatch($order->fresh()->load('items.product'), $oldStatus, $newStatus);
         }
 
         return back()->with('success', 'Order status updated.');
@@ -209,20 +251,9 @@ class OrderController extends Controller
         return back()->with('success', 'Delivery information updated.');
     }
 
-    public function generateInvoice(Order $order)
+    public function generateInvoice(Order $order, InvoiceService $invoiceService)
     {
-        if (!$order->invoice_number) {
-            $order->update([
-                'invoice_number' => $order->generateInvoiceNumber(),
-                'invoice_generated_at' => now(),
-            ]);
-        }
-
-        $order->load('items.product');
-
-        $pdf = PDF::loadView('admin.orders.invoice', compact('order'));
-
-        return $pdf->download("Invoice-{$order->invoice_number}.pdf");
+        return $invoiceService->downloadInvoice($order);
     }
 
     public function addNote(Request $request, Order $order)

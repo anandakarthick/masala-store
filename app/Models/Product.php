@@ -32,6 +32,7 @@ class Product extends Model
         'meta_description',
         'is_featured',
         'is_active',
+        'has_variants',
     ];
 
     protected $casts = [
@@ -43,6 +44,7 @@ class Product extends Model
         'expiry_date' => 'date',
         'is_featured' => 'boolean',
         'is_active' => 'boolean',
+        'has_variants' => 'boolean',
     ];
 
     protected static function boot()
@@ -74,6 +76,21 @@ class Product extends Model
         return $this->hasOne(ProductImage::class)->where('is_primary', true);
     }
 
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->orderBy('sort_order')->orderBy('price');
+    }
+
+    public function activeVariants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->where('is_active', true)->orderBy('sort_order')->orderBy('price');
+    }
+
+    public function defaultVariant()
+    {
+        return $this->hasOne(ProductVariant::class)->where('is_default', true);
+    }
+
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class);
@@ -96,7 +113,13 @@ class Product extends Model
 
     public function scopeInStock($query)
     {
-        return $query->where('stock_quantity', '>', 0);
+        return $query->where(function($q) {
+            $q->where('has_variants', false)->where('stock_quantity', '>', 0);
+        })->orWhere(function($q) {
+            $q->where('has_variants', true)->whereHas('variants', function($vq) {
+                $vq->where('is_active', true)->where('stock_quantity', '>', 0);
+            });
+        });
     }
 
     public function scopeLowStock($query)
@@ -111,9 +134,39 @@ class Product extends Model
             ->where('expiry_date', '>', now());
     }
 
+    // Get effective price (from default variant if has variants)
     public function getEffectivePriceAttribute(): float
     {
+        if ($this->has_variants) {
+            $defaultVariant = $this->defaultVariant ?? $this->activeVariants->first();
+            return $defaultVariant ? $defaultVariant->effective_price : ($this->discount_price ?? $this->price);
+        }
         return $this->discount_price ?? $this->price;
+    }
+
+    // Get price range for products with variants
+    public function getPriceRangeAttribute(): array
+    {
+        if (!$this->has_variants || $this->activeVariants->isEmpty()) {
+            return ['min' => $this->effective_price, 'max' => $this->effective_price];
+        }
+        
+        $prices = $this->activeVariants->pluck('effective_price');
+        return [
+            'min' => $prices->min(),
+            'max' => $prices->max(),
+        ];
+    }
+
+    public function getPriceDisplayAttribute(): string
+    {
+        if ($this->has_variants && $this->activeVariants->count() > 1) {
+            $range = $this->price_range;
+            if ($range['min'] != $range['max']) {
+                return '₹' . number_format($range['min'], 2) . ' - ₹' . number_format($range['max'], 2);
+            }
+        }
+        return '₹' . number_format($this->effective_price, 2);
     }
 
     public function getDiscountPercentageAttribute(): float
@@ -136,11 +189,17 @@ class Product extends Model
 
     public function isLowStock(): bool
     {
+        if ($this->has_variants) {
+            return $this->activeVariants->every(fn($v) => $v->isLowStock() || $v->isOutOfStock());
+        }
         return $this->stock_quantity <= $this->low_stock_threshold;
     }
 
     public function isOutOfStock(): bool
     {
+        if ($this->has_variants) {
+            return $this->activeVariants->every(fn($v) => $v->isOutOfStock());
+        }
         return $this->stock_quantity <= 0;
     }
 
@@ -156,6 +215,23 @@ class Product extends Model
 
     public function getWeightDisplayAttribute(): string
     {
+        if ($this->has_variants) {
+            $variants = $this->activeVariants;
+            if ($variants->count() > 1) {
+                return $variants->first()->weight_display . ' - ' . $variants->last()->weight_display;
+            } elseif ($variants->count() == 1) {
+                return $variants->first()->weight_display;
+            }
+        }
         return $this->weight . ' ' . $this->unit;
+    }
+
+    // Get total stock across all variants
+    public function getTotalStockAttribute(): int
+    {
+        if ($this->has_variants) {
+            return $this->activeVariants->sum('stock_quantity');
+        }
+        return $this->stock_quantity;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendOrderEmails;
 use App\Models\Cart;
 use App\Models\Coupon;
 use App\Models\Order;
@@ -15,7 +16,7 @@ class CheckoutController extends Controller
     public function index()
     {
         $cart = Cart::getCart();
-        $cart->load('items.product');
+        $cart->load('items.product', 'items.variant');
 
         if ($cart->items->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
@@ -83,7 +84,7 @@ class CheckoutController extends Controller
         ]);
 
         $cart = Cart::getCart();
-        $cart->load('items.product');
+        $cart->load('items.product', 'items.variant');
 
         if ($cart->items->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
@@ -91,8 +92,9 @@ class CheckoutController extends Controller
 
         // Check stock availability
         foreach ($cart->items as $item) {
-            if ($item->quantity > $item->product->stock_quantity) {
-                return back()->with('error', "Not enough stock for {$item->product->name}.");
+            $stockQty = $item->variant ? $item->variant->stock_quantity : $item->product->stock_quantity;
+            if ($item->quantity > $stockQty) {
+                return back()->with('error', "Not enough stock for {$item->item_name}.");
             }
         }
 
@@ -145,26 +147,34 @@ class CheckoutController extends Controller
             // Create order items and update stock
             foreach ($cart->items as $item) {
                 $product = $item->product;
-                $itemGst = $product->calculateGst($product->effective_price * $item->quantity);
+                $variant = $item->variant;
+                $unitPrice = $item->unit_price;
+                $itemGst = $product->calculateGst($unitPrice * $item->quantity);
 
                 $order->items()->create([
                     'product_id' => $product->id,
+                    'variant_id' => $variant ? $variant->id : null,
                     'product_name' => $product->name,
-                    'product_sku' => $product->sku,
-                    'unit_price' => $product->effective_price,
+                    'product_sku' => $variant ? $variant->sku : $product->sku,
+                    'variant_name' => $variant ? $variant->name : null,
+                    'unit_price' => $unitPrice,
                     'quantity' => $item->quantity,
                     'gst_amount' => $itemGst,
-                    'total_price' => ($product->effective_price * $item->quantity) + $itemGst,
+                    'total_price' => ($unitPrice * $item->quantity) + $itemGst,
                 ]);
 
                 // Reduce stock
-                StockMovement::recordMovement(
-                    $product,
-                    'out',
-                    $item->quantity,
-                    "Order #{$order->order_number}",
-                    'Stock reduced for order'
-                );
+                if ($variant) {
+                    $variant->decrement('stock_quantity', $item->quantity);
+                } else {
+                    StockMovement::recordMovement(
+                        $product,
+                        'out',
+                        $item->quantity,
+                        "Order #{$order->order_number}",
+                        'Stock reduced for order'
+                    );
+                }
             }
 
             // Increment coupon usage
@@ -178,6 +188,9 @@ class CheckoutController extends Controller
 
             DB::commit();
 
+            // Send order emails in background
+            SendOrderEmails::dispatch($order->fresh()->load('items.product'));
+
             // Redirect based on payment method
             if ($validated['payment_method'] === 'cod') {
                 return redirect()->route('checkout.success', $order)
@@ -189,6 +202,7 @@ class CheckoutController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Checkout error: ' . $e->getMessage());
             return back()->with('error', 'Something went wrong. Please try again.');
         }
     }

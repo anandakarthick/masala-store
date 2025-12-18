@@ -30,9 +30,18 @@ class Cart extends Model
         return self::firstOrCreate(['session_id' => $sessionId]);
     }
 
-    public function addItem(Product $product, int $quantity = 1): CartItem
+    public function addItem(Product $product, int $quantity = 1, ?int $variantId = null): CartItem
     {
-        $item = $this->items()->where('product_id', $product->id)->first();
+        // Find existing item with same product and variant
+        $query = $this->items()->where('product_id', $product->id);
+        
+        if ($variantId) {
+            $query->where('variant_id', $variantId);
+        } else {
+            $query->whereNull('variant_id');
+        }
+        
+        $item = $query->first();
 
         if ($item) {
             $item->increment('quantity', $quantity);
@@ -41,13 +50,22 @@ class Cart extends Model
 
         return $this->items()->create([
             'product_id' => $product->id,
+            'variant_id' => $variantId,
             'quantity' => $quantity,
         ]);
     }
 
-    public function updateItemQuantity(int $productId, int $quantity): ?CartItem
+    public function updateItemQuantity(int $productId, int $quantity, ?int $variantId = null): ?CartItem
     {
-        $item = $this->items()->where('product_id', $productId)->first();
+        $query = $this->items()->where('product_id', $productId);
+        
+        if ($variantId) {
+            $query->where('variant_id', $variantId);
+        } else {
+            $query->whereNull('variant_id');
+        }
+        
+        $item = $query->first();
         
         if ($item) {
             if ($quantity <= 0) {
@@ -61,9 +79,17 @@ class Cart extends Model
         return null;
     }
 
-    public function removeItem(int $productId): bool
+    public function removeItem(int $productId, ?int $variantId = null): bool
     {
-        return $this->items()->where('product_id', $productId)->delete() > 0;
+        $query = $this->items()->where('product_id', $productId);
+        
+        if ($variantId) {
+            $query->where('variant_id', $variantId);
+        } else {
+            $query->whereNull('variant_id');
+        }
+        
+        return $query->delete() > 0;
     }
 
     public function clear(): bool
@@ -74,11 +100,16 @@ class Cart extends Model
     public function getSubtotalAttribute(): float
     {
         return $this->items->sum(function ($item) {
-            return $item->product->effective_price * $item->quantity;
+            return $item->unit_price * $item->quantity;
         });
     }
 
     public function getTotalItemsAttribute(): int
+    {
+        return $this->items->count();
+    }
+
+    public function getTotalQuantityAttribute(): int
     {
         return $this->items->sum('quantity');
     }
@@ -86,7 +117,7 @@ class Cart extends Model
     public function getGstAmountAttribute(): float
     {
         return $this->items->sum(function ($item) {
-            $price = $item->product->effective_price * $item->quantity;
+            $price = $item->unit_price * $item->quantity;
             return $item->product->calculateGst($price);
         });
     }
@@ -102,7 +133,7 @@ class Cart extends Model
         if (!$guestCart) return;
 
         foreach ($guestCart->items as $item) {
-            $this->addItem($item->product, $item->quantity);
+            $this->addItem($item->product, $item->quantity, $item->variant_id);
         }
 
         $guestCart->delete();
