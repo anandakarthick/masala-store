@@ -54,28 +54,36 @@ class RefreshProductData extends Command
             [
                 'name' => 'Spices & Masalas',
                 'slug' => 'spices-masalas',
-                'description' => 'Premium quality spices and masala powders for authentic Indian cooking',
+                'description' => 'Discover our range of premium quality homemade spices and masala powders. We offer pure turmeric powder, coriander powder, cumin powder, garam masala, Kashmiri chilli powder, and cardamom powder. All our spices are freshly ground in small batches, 100% natural, and free from chemicals and preservatives.',
+                'meta_title' => 'Buy Homemade Spices & Masala Powders Online | Pure & Natural',
+                'meta_description' => 'Shop premium homemade spices and masala powders - Turmeric, Coriander, Cumin, Garam Masala, Kashmiri Chilli. 100% pure, chemical-free. Free delivery above ₹500.',
                 'sort_order' => 1,
                 'is_active' => true,
             ],
             [
                 'name' => 'Health & Millet Products',
                 'slug' => 'health-millet-products',
-                'description' => 'Nutritious millet-based products and health foods',
+                'description' => 'Explore our nutritious millet-based products and health foods. Our range includes Ragi Powder, Black Urad Dal Powder, and other protein-rich powders. 100% natural with no chemicals or preservatives.',
+                'meta_title' => 'Buy Ragi Powder, Millet Products & Health Foods Online',
+                'meta_description' => 'Shop nutritious millet products - Ragi Powder, Black Urad Dal Powder. Rich in calcium, protein & fiber. 100% natural. Free delivery above ₹500.',
                 'sort_order' => 2,
                 'is_active' => true,
             ],
             [
                 'name' => 'Baby Care',
                 'slug' => 'baby-care',
-                'description' => 'Natural and safe baby care products',
+                'description' => 'Natural and safe baby care products made with traditional herbal ingredients. Our herbal bath powder is gentle on sensitive skin and suitable for babies, kids, and adults.',
+                'meta_title' => 'Natural Herbal Baby Care Products | Safe & Chemical-Free',
+                'meta_description' => 'Shop natural herbal baby care products - Bath powders safe for sensitive skin. 100% chemical-free. Free delivery above ₹500.',
                 'sort_order' => 3,
                 'is_active' => true,
             ],
             [
                 'name' => 'Ayurvedic & Wellness',
                 'slug' => 'ayurvedic-wellness',
-                'description' => 'Traditional Ayurvedic and wellness products',
+                'description' => 'Traditional Ayurvedic and wellness products for natural health care. Our range includes Hair Growth Oil and Knee Pain Relief Oil, prepared using traditional Ayurvedic methods.',
+                'meta_title' => 'Ayurvedic Oils & Wellness Products | Hair Oil, Pain Relief Oil',
+                'meta_description' => 'Shop Ayurvedic wellness products - Hair Growth Oil, Knee Pain Relief Oil. Made with natural herbs. Free delivery above ₹500.',
                 'sort_order' => 4,
                 'is_active' => true,
             ],
@@ -130,6 +138,10 @@ class RefreshProductData extends Command
             $productData['has_variants'] = true;
             $productData['price'] = $basePrice;
             $productData['discount_price'] = $baseDiscountPrice;
+            
+            // Generate SEO meta fields
+            $productData['meta_title'] = 'Buy ' . $productData['name'] . ' Online | 100% Pure & Natural';
+            $productData['meta_description'] = 'Shop ' . $productData['name'] . ' - ' . Str::limit($productData['short_description'], 120) . ' Free delivery above ₹500.';
             
             $product = Product::create($productData);
             $this->info("  ✓ Created product: {$productData['name']}");

@@ -1,10 +1,11 @@
 # robots.txt for SV Masala & Herbal Products
+# https://www.robotstxt.org/robotstxt.html
 
 User-agent: *
 Allow: /
 
 # Sitemap location
-Sitemap: /sitemap.xml
+Sitemap: {{ url('/sitemap.xml') }}
 
 # Disallow admin and private areas
 Disallow: /admin/

@@ -59,6 +59,14 @@ class ProductSeeder extends Seeder
             $productData['price'] = $basePrice;
             $productData['discount_price'] = $baseDiscountPrice;
             
+            // Generate SEO meta fields if not set
+            if (empty($productData['meta_title'])) {
+                $productData['meta_title'] = 'Buy ' . $productData['name'] . ' Online | 100% Pure & Natural';
+            }
+            if (empty($productData['meta_description'])) {
+                $productData['meta_description'] = 'Shop ' . $productData['name'] . ' - ' . Str::limit($productData['short_description'], 120) . ' Free delivery above ₹500.';
+            }
+            
             // Create or update product
             $product = Product::updateOrCreate(
                 ['slug' => $productData['slug']],

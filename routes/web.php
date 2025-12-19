@@ -32,6 +32,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+// SEO Routes - sitemap.xml served from public folder
+// robots.txt is served directly from public folder by web server
+
 // CSRF Token refresh route
 Route::get('/csrf-token', function() {
     return response()->json(['csrf_token' => csrf_token()]);
