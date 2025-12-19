@@ -68,8 +68,8 @@
                                 @click="setPattern(key)"
                                 :class="selectedPattern === key ? 'ring-2 ring-offset-2 ring-green-500' : ''"
                                 class="h-12 rounded-lg transition relative overflow-hidden border border-gray-200 text-xs text-white font-medium flex items-center justify-center"
-                                :style="getPatternPreviewStyle(key)">
-                            <span x-text="pattern.label" class="drop-shadow"></span>
+                                :style="'background: linear-gradient(135deg, ' + colorThemes[selectedTheme]?.primary + ', ' + colorThemes[selectedTheme]?.secondary + ')'">
+                            <span x-text="pattern.label" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.5)"></span>
                         </button>
                     </template>
                 </div>
@@ -101,19 +101,19 @@
                 <div class="space-y-3">
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Headline</label>
-                        <input type="text" x-model="headline" placeholder="Enter headline..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500">
+                        <input type="text" x-model="headline" @input="renderCanvas()" placeholder="Enter headline..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Subheadline (short)</label>
-                        <input type="text" x-model="subheadline" placeholder="Enter subheadline..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Subheadline</label>
+                        <input type="text" x-model="subheadline" @input="renderCanvas()" placeholder="Enter subheadline..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Offer Badge (e.g., "50% OFF")</label>
-                        <input type="text" x-model="offerText" placeholder="50% OFF" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500">
+                        <input type="text" x-model="offerText" @input="renderCanvas()" placeholder="50% OFF" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Button Text</label>
-                        <input type="text" x-model="ctaText" placeholder="Shop Now" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500">
+                        <input type="text" x-model="ctaText" @input="renderCanvas()" placeholder="Shop Now" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500">
                     </div>
                 </div>
             </div>
@@ -126,19 +126,19 @@
                 </h3>
                 <div class="space-y-2">
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" x-model="showProductImage" class="rounded text-green-600 focus:ring-green-500">
+                        <input type="checkbox" x-model="showProductImage" @change="renderCanvas()" class="rounded text-green-600 focus:ring-green-500">
                         <span class="text-sm text-gray-700">Show Product Image</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" x-model="showPrice" class="rounded text-green-600 focus:ring-green-500">
+                        <input type="checkbox" x-model="showPrice" @change="renderCanvas()" class="rounded text-green-600 focus:ring-green-500">
                         <span class="text-sm text-gray-700">Show Price</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" x-model="showLogo" class="rounded text-green-600 focus:ring-green-500">
+                        <input type="checkbox" x-model="showLogo" @change="renderCanvas()" class="rounded text-green-600 focus:ring-green-500">
                         <span class="text-sm text-gray-700">Show Logo</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" x-model="showContact" class="rounded text-green-600 focus:ring-green-500">
+                        <input type="checkbox" x-model="showContact" @change="renderCanvas()" class="rounded text-green-600 focus:ring-green-500">
                         <span class="text-sm text-gray-700">Show Contact Info</span>
                     </label>
                 </div>
@@ -151,7 +151,7 @@
                     Custom Background
                 </h3>
                 <input type="file" id="bgUpload" @change="handleBackgroundUpload($event)" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
-                <button type="button" x-show="customBackground" @click="customBackground = null" class="mt-2 text-xs text-red-600 hover:text-red-700">
+                <button type="button" x-show="customBackground" @click="customBackground = null; renderCanvas()" class="mt-2 text-xs text-red-600 hover:text-red-700">
                     <i class="fas fa-times mr-1"></i> Remove Background
                 </button>
             </div>
@@ -166,115 +166,18 @@
                         Live Preview
                     </h3>
                     <div class="flex gap-2">
-                        <button type="button" @click="downloadBanner('png')" :disabled="isDownloading" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2 disabled:opacity-50">
-                            <i class="fas" :class="isDownloading ? 'fa-spinner fa-spin' : 'fa-download'"></i> Download PNG
+                        <button type="button" @click="downloadBanner('png')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2">
+                            <i class="fas fa-download"></i> Download PNG
                         </button>
-                        <button type="button" @click="downloadBanner('jpg')" :disabled="isDownloading" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm flex items-center gap-2 disabled:opacity-50">
-                            <i class="fas" :class="isDownloading ? 'fa-spinner fa-spin' : 'fa-download'"></i> Download JPG
+                        <button type="button" @click="downloadBanner('jpg')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm flex items-center gap-2">
+                            <i class="fas fa-download"></i> Download JPG
                         </button>
                     </div>
                 </div>
                 
-                <!-- Preview Container -->
+                <!-- Canvas Preview Container -->
                 <div class="flex justify-center items-center bg-gray-200 rounded-lg p-6 min-h-[450px] overflow-auto">
-                    <!-- Banner Preview -->
-                    <div id="banner-preview" :style="getPreviewContainerStyle()">
-                        
-                        <!-- Background SVG -->
-                        <svg style="position:absolute;top:0;left:0;width:100%;height:100%;" preserveAspectRatio="none" x-html="getSvgPattern()"></svg>
-                        
-                        <!-- Custom Background -->
-                        <template x-if="customBackground">
-                            <div style="position:absolute;top:0;left:0;width:100%;height:100%;">
-                                <div :style="'position:absolute;top:0;left:0;width:100%;height:100%;background-image:url(' + customBackground + ');background-size:cover;background-position:center;'"></div>
-                                <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);"></div>
-                            </div>
-                        </template>
-                        
-                        <!-- Main Content Container -->
-                        <div :style="'position:relative;width:100%;height:100%;display:flex;flex-direction:column;padding:' + getPadding() + 'px;box-sizing:border-box;'">
-                            
-                            <!-- TOP ROW: Logo + Offer Badge -->
-                            <div :style="'display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:' + getSpacing() + 'px;'">
-                                <!-- Logo -->
-                                <template x-if="showLogo && logoUrl">
-                                    <div :style="'background:#fff;border-radius:' + (getScale() * 10) + 'px;padding:' + (getScale() * 8) + 'px;box-shadow:0 4px 15px rgba(0,0,0,0.2);'">
-                                        <img :src="logoUrl" :style="'height:' + (getScale() * 40) + 'px;display:block;'" crossorigin="anonymous">
-                                    </div>
-                                </template>
-                                <template x-if="!showLogo || !logoUrl">
-                                    <div></div>
-                                </template>
-                                
-                                <!-- Offer Badge -->
-                                <template x-if="offerText">
-                                    <div :style="'background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;padding:' + (getScale() * 10) + 'px ' + (getScale() * 20) + 'px;border-radius:50px;font-family:Arial,sans-serif;font-weight:800;font-size:' + (getScale() * 18) + 'px;box-shadow:0 4px 15px rgba(239,68,68,0.4);transform:rotate(2deg);'" x-text="offerText"></div>
-                                </template>
-                            </div>
-                            
-                            <!-- MIDDLE: Main Content -->
-                            <div :style="'flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;'">
-                                
-                                <!-- Product Image -->
-                                <template x-if="showProductImage && productData?.image_url">
-                                    <div :style="'margin-bottom:' + (getScale() * 15) + 'px;'">
-                                        <img :src="productData.image_url" 
-                                             :style="'max-height:' + (getScale() * (isVertical() ? 160 : 80)) + 'px;max-width:80%;object-fit:contain;border-radius:' + (getScale() * 12) + 'px;box-shadow:0 8px 30px rgba(0,0,0,0.3);border:3px solid rgba(255,255,255,0.3);'"
-                                             crossorigin="anonymous">
-                                    </div>
-                                </template>
-                                
-                                <!-- Headline -->
-                                <div :style="'font-family:Arial,Helvetica,sans-serif;font-weight:800;color:#fff;font-size:' + (getScale() * (isVertical() ? 32 : 24)) + 'px;line-height:1.2;margin-bottom:' + (getScale() * 10) + 'px;text-shadow:2px 2px 6px rgba(0,0,0,0.4);max-width:90%;'"
-                                     x-text="headline || productData?.name || 'Your Headline'"></div>
-                                
-                                <!-- Subheadline -->
-                                <template x-if="subheadline || productData?.description">
-                                    <div :style="'font-family:Arial,Helvetica,sans-serif;font-weight:400;color:rgba(255,255,255,0.9);font-size:' + (getScale() * (isVertical() ? 16 : 12)) + 'px;line-height:1.4;margin-bottom:' + (getScale() * 15) + 'px;text-shadow:1px 1px 3px rgba(0,0,0,0.3);max-width:85%;'"
-                                         x-text="(subheadline || productData?.description || '').substring(0, 100)"></div>
-                                </template>
-                                
-                                <!-- Price -->
-                                <template x-if="showPrice && productData">
-                                    <div :style="'background:rgba(255,255,255,0.2);border-radius:50px;padding:' + (getScale() * 10) + 'px ' + (getScale() * 25) + 'px;margin-bottom:' + (getScale() * 15) + 'px;'">
-                                        <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
-                                            <template x-if="productData.discount_price && productData.discount_price != productData.price">
-                                                <span :style="'font-family:Arial,sans-serif;color:rgba(255,255,255,0.6);text-decoration:line-through;font-size:' + (getScale() * 16) + 'px;'" x-text="'₹' + formatPrice(productData.price)"></span>
-                                            </template>
-                                            <span :style="'font-family:Arial,sans-serif;font-weight:800;color:#fff;font-size:' + (getScale() * (isVertical() ? 32 : 24)) + 'px;'" x-text="'₹' + formatPrice(productData.discount_price || productData.price)"></span>
-                                        </div>
-                                        <template x-if="productData.weight_display">
-                                            <div :style="'font-family:Arial,sans-serif;color:rgba(255,255,255,0.8);font-size:' + (getScale() * 11) + 'px;text-align:center;margin-top:4px;'" x-text="productData.weight_display"></div>
-                                        </template>
-                                    </div>
-                                </template>
-                                
-                                <!-- CTA Button -->
-                                <template x-if="ctaText">
-                                    <div :style="'background:#fff;color:' + colorThemes[selectedTheme]?.primary + ';padding:' + (getScale() * 12) + 'px ' + (getScale() * 35) + 'px;border-radius:50px;font-family:Arial,sans-serif;font-weight:700;font-size:' + (getScale() * 16) + 'px;box-shadow:0 6px 20px rgba(0,0,0,0.25);display:inline-flex;align-items:center;gap:8px;'">
-                                        <span x-text="ctaText"></span>
-                                        <span>→</span>
-                                    </div>
-                                </template>
-                            </div>
-                            
-                            <!-- BOTTOM ROW: Contact Info -->
-                            <template x-if="showContact && businessPhone">
-                                <div :style="'display:flex;justify-content:flex-start;margin-top:' + getSpacing() + 'px;'">
-                                    <div :style="'background:rgba(0,0,0,0.3);border-radius:' + (getScale() * 10) + 'px;padding:' + (getScale() * 10) + 'px ' + (getScale() * 15) + 'px;'">
-                                        <div :style="'font-family:Arial,sans-serif;color:#fff;font-size:' + (getScale() * 13) + 'px;display:flex;align-items:center;gap:8px;'">
-                                            <span>📞</span>
-                                            <span x-text="businessPhone"></span>
-                                        </div>
-                                        <div :style="'font-family:Arial,sans-serif;color:#fff;font-size:' + (getScale() * 12) + 'px;display:flex;align-items:center;gap:8px;margin-top:4px;'">
-                                            <span>🌐</span>
-                                            <span x-text="businessWebsite"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
+                    <canvas id="bannerCanvas" class="shadow-2xl rounded-lg" style="max-width: 100%; height: auto;"></canvas>
                 </div>
                 
                 <!-- Tips -->
@@ -291,8 +194,6 @@
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
 <script>
 function bannerGenerator() {
     return {
@@ -300,7 +201,7 @@ function bannerGenerator() {
         colorThemes: @json($colorThemes),
         businessName: @json($businessName),
         businessPhone: @json($businessPhone),
-        businessWebsite: window.location.origin.replace('http://', '').replace('https://', ''),
+        businessWebsite: window.location.host,
         logoUrl: @json($logoUrl),
         
         backgroundPatterns: {
@@ -308,17 +209,13 @@ function bannerGenerator() {
             'radial': { label: 'Radial' },
             'circles': { label: 'Circles' },
             'dots': { label: 'Dots' },
-            'waves': { label: 'Waves' },
-            'geometric': { label: 'Geo' },
             'diagonal': { label: 'Lines' },
-            'spotlight': { label: 'Spot' },
         },
         
         selectedSize: 'instagram_post',
         selectedTheme: 'green_fresh',
         selectedPattern: 'radial',
         selectedProduct: '',
-        selectedTemplate: 'product_showcase',
         
         headline: '',
         subheadline: '',
@@ -332,78 +229,65 @@ function bannerGenerator() {
         
         productData: null,
         customBackground: null,
-        isDownloading: false,
+        customBgImage: null,
+        logoImage: null,
+        productImage: null,
         
-        setSize(size) { this.selectedSize = size; },
-        setTheme(theme) { this.selectedTheme = theme; },
-        setPattern(pattern) { this.selectedPattern = pattern; },
+        init() {
+            // Load logo image
+            if (this.logoUrl) {
+                this.logoImage = new Image();
+                this.logoImage.crossOrigin = 'anonymous';
+                this.logoImage.onload = () => this.renderCanvas();
+                this.logoImage.src = this.logoUrl;
+            }
+            
+            // Initial render
+            this.$nextTick(() => {
+                this.renderCanvas();
+            });
+        },
+        
+        setSize(size) { 
+            this.selectedSize = size; 
+            this.renderCanvas();
+        },
+        
+        setTheme(theme) { 
+            this.selectedTheme = theme; 
+            this.renderCanvas();
+        },
+        
+        setPattern(pattern) { 
+            this.selectedPattern = pattern; 
+            this.renderCanvas();
+        },
         
         isVertical() {
             const size = this.bannerSizes[this.selectedSize];
             return size && size.height > size.width;
         },
         
-        getScale() {
-            const size = this.bannerSizes[this.selectedSize];
-            const previewWidth = Math.min(500, size.width);
-            return previewWidth / 500;
-        },
-        
-        getPadding() {
-            return this.getScale() * (this.isVertical() ? 25 : 20);
-        },
-        
-        getSpacing() {
-            return this.getScale() * 10;
-        },
-        
         formatPrice(price) {
-            if (!price) return '0';
+            if (!price) return '0.00';
             return parseFloat(price).toFixed(2);
         },
         
         clearProduct() {
             this.selectedProduct = '';
             this.productData = null;
+            this.productImage = null;
             this.headline = '';
             this.subheadline = '';
             this.offerText = '';
-        },
-        
-        getPatternPreviewStyle(key) {
-            const theme = this.colorThemes[this.selectedTheme];
-            return { background: `linear-gradient(135deg, ${theme?.primary} 0%, ${theme?.secondary} 100%)` };
-        },
-        
-        getSvgPattern() {
-            const theme = this.colorThemes[this.selectedTheme];
-            const p = theme?.primary || '#16a34a';
-            const s = theme?.secondary || '#22c55e';
-            
-            const patterns = {
-                'solid': `<defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${p}"/><stop offset="100%" stop-color="${s}"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g1)"/>`,
-                
-                'radial': `<defs><radialGradient id="g1" cx="50%" cy="50%" r="70%"><stop offset="0%" stop-color="${s}"/><stop offset="100%" stop-color="${p}"/></radialGradient></defs><rect width="100%" height="100%" fill="url(#g1)"/><circle cx="85%" cy="15%" r="20%" fill="${s}" opacity="0.3"/><circle cx="15%" cy="85%" r="15%" fill="${s}" opacity="0.2"/>`,
-                
-                'circles': `<defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${p}"/><stop offset="100%" stop-color="${s}"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g1)"/><circle cx="10%" cy="20%" r="15%" fill="white" opacity="0.1"/><circle cx="90%" cy="10%" r="20%" fill="white" opacity="0.08"/><circle cx="80%" cy="80%" r="25%" fill="white" opacity="0.1"/><circle cx="5%" cy="75%" r="12%" fill="white" opacity="0.12"/>`,
-                
-                'dots': `<defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${p}"/><stop offset="100%" stop-color="${s}"/></linearGradient><pattern id="dots" width="30" height="30" patternUnits="userSpaceOnUse"><circle cx="15" cy="15" r="3" fill="white" opacity="0.15"/></pattern></defs><rect width="100%" height="100%" fill="url(#g1)"/><rect width="100%" height="100%" fill="url(#dots)"/>`,
-                
-                'waves': `<defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${p}"/><stop offset="100%" stop-color="${s}"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g1)"/><ellipse cx="50%" cy="110%" rx="80%" ry="30%" fill="white" opacity="0.08"/><ellipse cx="50%" cy="120%" rx="70%" ry="25%" fill="white" opacity="0.05"/>`,
-                
-                'geometric': `<defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${p}"/><stop offset="100%" stop-color="${s}"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g1)"/><polygon points="0,0 30%,0 0,30%" fill="white" opacity="0.1"/><polygon points="100%,100% 70%,100% 100%,70%" fill="white" opacity="0.1"/>`,
-                
-                'diagonal': `<defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${p}"/><stop offset="100%" stop-color="${s}"/></linearGradient><pattern id="lines" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="20" stroke="white" stroke-width="1" opacity="0.1"/></pattern></defs><rect width="100%" height="100%" fill="url(#g1)"/><rect width="100%" height="100%" fill="url(#lines)"/>`,
-                
-                'spotlight': `<defs><radialGradient id="g1" cx="30%" cy="30%" r="80%"><stop offset="0%" stop-color="${s}"/><stop offset="100%" stop-color="${p}"/></radialGradient></defs><rect width="100%" height="100%" fill="url(#g1)"/><circle cx="25%" cy="25%" r="30%" fill="white" opacity="0.1"/>`,
-            };
-            
-            return patterns[this.selectedPattern] || patterns['solid'];
+            this.renderCanvas();
         },
         
         async loadProductDetails() {
             if (!this.selectedProduct) {
                 this.productData = null;
+                this.productImage = null;
+                this.renderCanvas();
                 return;
             }
             
@@ -412,12 +296,27 @@ function bannerGenerator() {
                 this.productData = await response.json();
                 
                 this.headline = this.productData.name || '';
-                this.subheadline = (this.productData.description || '').substring(0, 80);
+                this.subheadline = (this.productData.description || '').substring(0, 60);
                 
                 if (this.productData.discount_percentage > 0) {
                     this.offerText = Math.round(this.productData.discount_percentage) + '% OFF';
                 } else {
                     this.offerText = '';
+                }
+                
+                // Load product image
+                if (this.productData.image_url) {
+                    this.productImage = new Image();
+                    this.productImage.crossOrigin = 'anonymous';
+                    this.productImage.onload = () => this.renderCanvas();
+                    this.productImage.onerror = () => {
+                        this.productImage = null;
+                        this.renderCanvas();
+                    };
+                    this.productImage.src = this.productData.image_url;
+                } else {
+                    this.productImage = null;
+                    this.renderCanvas();
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -428,54 +327,471 @@ function bannerGenerator() {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (e) => { this.customBackground = e.target.result; };
+                reader.onload = (e) => {
+                    this.customBackground = e.target.result;
+                    this.customBgImage = new Image();
+                    this.customBgImage.onload = () => this.renderCanvas();
+                    this.customBgImage.src = this.customBackground;
+                };
                 reader.readAsDataURL(file);
             }
         },
         
-        getPreviewContainerStyle() {
-            const size = this.bannerSizes[this.selectedSize];
-            const maxW = 500, maxH = 600;
-            const scale = Math.min(maxW / size.width, maxH / size.height, 1);
+        renderCanvas() {
+            const canvas = document.getElementById('bannerCanvas');
+            if (!canvas) return;
             
-            return {
-                width: (size.width * scale) + 'px',
-                height: (size.height * scale) + 'px',
-                position: 'relative',
-                overflow: 'hidden',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
-                borderRadius: '8px',
-                backgroundColor: '#000'
-            };
+            const ctx = canvas.getContext('2d');
+            const size = this.bannerSizes[this.selectedSize];
+            const theme = this.colorThemes[this.selectedTheme];
+            
+            const W = size.width;
+            const H = size.height;
+            
+            // Set canvas size
+            canvas.width = W;
+            canvas.height = H;
+            
+            // Scale for display
+            const maxDisplayWidth = 500;
+            const maxDisplayHeight = 600;
+            const displayScale = Math.min(maxDisplayWidth / W, maxDisplayHeight / H, 1);
+            canvas.style.width = (W * displayScale) + 'px';
+            canvas.style.height = (H * displayScale) + 'px';
+            
+            // Draw background
+            this.drawBackground(ctx, W, H, theme);
+            
+            // Draw custom background if set
+            if (this.customBgImage) {
+                ctx.drawImage(this.customBgImage, 0, 0, W, H);
+                ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                ctx.fillRect(0, 0, W, H);
+            }
+            
+            // Calculate padding
+            const padding = Math.min(W, H) * 0.05;
+            const isVert = this.isVertical();
+            
+            // Font sizes based on canvas size
+            const baseSize = Math.min(W, H);
+            const headlineSize = baseSize * (isVert ? 0.07 : 0.08);
+            const subheadlineSize = baseSize * (isVert ? 0.035 : 0.04);
+            const priceSize = baseSize * (isVert ? 0.065 : 0.07);
+            const oldPriceSize = baseSize * (isVert ? 0.035 : 0.04);
+            const buttonSize = baseSize * (isVert ? 0.04 : 0.045);
+            const badgeSize = baseSize * (isVert ? 0.04 : 0.045);
+            const contactSize = baseSize * (isVert ? 0.028 : 0.032);
+            
+            let currentY = padding;
+            
+            // TOP SECTION: Logo and Offer Badge
+            const topSectionHeight = baseSize * 0.1;
+            
+            // Draw Logo
+            if (this.showLogo && this.logoImage && this.logoImage.complete) {
+                const logoHeight = topSectionHeight * 0.8;
+                const logoWidth = (this.logoImage.width / this.logoImage.height) * logoHeight;
+                const logoX = padding;
+                const logoY = padding;
+                
+                // White background for logo
+                ctx.fillStyle = '#ffffff';
+                this.roundRect(ctx, logoX - 8, logoY - 8, logoWidth + 16, logoHeight + 16, 12);
+                ctx.fill();
+                
+                ctx.drawImage(this.logoImage, logoX, logoY, logoWidth, logoHeight);
+            }
+            
+            // Draw Offer Badge
+            if (this.offerText) {
+                ctx.font = `800 ${badgeSize}px Arial, sans-serif`;
+                const badgeText = this.offerText;
+                const badgeMetrics = ctx.measureText(badgeText);
+                const badgePadX = badgeSize * 0.8;
+                const badgePadY = badgeSize * 0.5;
+                const badgeW = badgeMetrics.width + badgePadX * 2;
+                const badgeH = badgeSize + badgePadY * 2;
+                const badgeX = W - padding - badgeW;
+                const badgeY = padding;
+                
+                // Red gradient badge
+                const badgeGrad = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeW, badgeY + badgeH);
+                badgeGrad.addColorStop(0, '#ef4444');
+                badgeGrad.addColorStop(1, '#dc2626');
+                ctx.fillStyle = badgeGrad;
+                this.roundRect(ctx, badgeX, badgeY, badgeW, badgeH, badgeH / 2);
+                ctx.fill();
+                
+                // Badge text
+                ctx.fillStyle = '#ffffff';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(badgeText, badgeX + badgeW / 2, badgeY + badgeH / 2);
+            }
+            
+            currentY = padding + topSectionHeight + padding;
+            
+            // MIDDLE SECTION
+            const bottomSectionHeight = this.showContact ? baseSize * 0.12 : 0;
+            const middleSectionHeight = H - currentY - bottomSectionHeight - padding * 2;
+            const middleCenterY = currentY + middleSectionHeight / 2;
+            
+            // Calculate total content height to center it
+            let contentHeight = 0;
+            const productImgHeight = isVert ? baseSize * 0.25 : baseSize * 0.2;
+            
+            if (this.showProductImage && this.productImage) contentHeight += productImgHeight + padding;
+            contentHeight += headlineSize * 1.5; // headline
+            if (this.subheadline || this.productData?.description) contentHeight += subheadlineSize * 2 + padding;
+            if (this.showPrice && this.productData) contentHeight += priceSize * 2 + padding;
+            if (this.ctaText) contentHeight += buttonSize * 2.5;
+            
+            let drawY = middleCenterY - contentHeight / 2;
+            
+            // Draw Product Image
+            if (this.showProductImage && this.productImage && this.productImage.complete) {
+                const imgMaxH = productImgHeight;
+                const imgMaxW = W * 0.6;
+                const imgRatio = this.productImage.width / this.productImage.height;
+                let imgW, imgH;
+                
+                if (imgRatio > imgMaxW / imgMaxH) {
+                    imgW = imgMaxW;
+                    imgH = imgW / imgRatio;
+                } else {
+                    imgH = imgMaxH;
+                    imgW = imgH * imgRatio;
+                }
+                
+                const imgX = (W - imgW) / 2;
+                
+                // Shadow
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 20;
+                ctx.shadowOffsetY = 10;
+                
+                // White border
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                this.roundRect(ctx, imgX - 4, drawY - 4, imgW + 8, imgH + 8, 16);
+                ctx.fill();
+                
+                // Reset shadow
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // Clip and draw image
+                ctx.save();
+                this.roundRect(ctx, imgX, drawY, imgW, imgH, 12);
+                ctx.clip();
+                ctx.drawImage(this.productImage, imgX, drawY, imgW, imgH);
+                ctx.restore();
+                
+                drawY += imgH + padding * 1.5;
+            }
+            
+            // Draw Headline
+            const headlineText = this.headline || this.productData?.name || 'Your Headline';
+            ctx.font = `800 ${headlineSize}px Arial, sans-serif`;
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            
+            // Word wrap headline
+            const headlineLines = this.wrapText(ctx, headlineText, W - padding * 4);
+            headlineLines.forEach((line, i) => {
+                ctx.fillText(line, W / 2, drawY + i * headlineSize * 1.2);
+            });
+            drawY += headlineLines.length * headlineSize * 1.2 + padding * 0.8;
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+            
+            // Draw Subheadline
+            const subText = this.subheadline || (this.productData?.description || '').substring(0, 60);
+            if (subText) {
+                ctx.font = `400 ${subheadlineSize}px Arial, sans-serif`;
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 4;
+                
+                const subLines = this.wrapText(ctx, subText, W - padding * 4);
+                subLines.forEach((line, i) => {
+                    ctx.fillText(line, W / 2, drawY + i * subheadlineSize * 1.4);
+                });
+                drawY += subLines.length * subheadlineSize * 1.4 + padding;
+                
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+            }
+            
+            // Draw Price
+            if (this.showPrice && this.productData) {
+                const currentPrice = this.formatPrice(this.productData.discount_price || this.productData.price);
+                const originalPrice = this.productData.discount_price ? this.formatPrice(this.productData.price) : null;
+                
+                // Price background
+                ctx.fillStyle = 'rgba(255,255,255,0.15)';
+                const priceBoxW = W * 0.6;
+                const priceBoxH = priceSize * 2.2;
+                const priceBoxX = (W - priceBoxW) / 2;
+                this.roundRect(ctx, priceBoxX, drawY, priceBoxW, priceBoxH, priceBoxH / 2);
+                ctx.fill();
+                
+                const priceCenterY = drawY + priceBoxH / 2;
+                
+                // Draw prices
+                if (originalPrice && originalPrice !== currentPrice) {
+                    // Original price (strikethrough)
+                    ctx.font = `400 ${oldPriceSize}px Arial, sans-serif`;
+                    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                    const oldPriceText = '₹' + originalPrice;
+                    const oldPriceWidth = ctx.measureText(oldPriceText).width;
+                    const oldPriceX = W / 2 - oldPriceWidth / 2 - priceSize * 1.5;
+                    ctx.fillText(oldPriceText, W / 2 - priceSize * 0.8, priceCenterY - oldPriceSize * 0.3);
+                    
+                    // Strikethrough line
+                    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(W / 2 - priceSize * 0.8 - oldPriceWidth / 2 - 5, priceCenterY - oldPriceSize * 0.3);
+                    ctx.lineTo(W / 2 - priceSize * 0.8 + oldPriceWidth / 2 + 5, priceCenterY - oldPriceSize * 0.3);
+                    ctx.stroke();
+                    
+                    // Current price
+                    ctx.font = `800 ${priceSize}px Arial, sans-serif`;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText('₹' + currentPrice, W / 2 + priceSize * 0.5, priceCenterY);
+                } else {
+                    // Just current price
+                    ctx.font = `800 ${priceSize}px Arial, sans-serif`;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText('₹' + currentPrice, W / 2, priceCenterY);
+                }
+                
+                // Weight display
+                if (this.productData.weight_display) {
+                    ctx.font = `400 ${contactSize}px Arial, sans-serif`;
+                    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                    ctx.fillText(this.productData.weight_display, W / 2, drawY + priceBoxH + contactSize);
+                    drawY += priceBoxH + contactSize * 1.5 + padding;
+                } else {
+                    drawY += priceBoxH + padding;
+                }
+            }
+            
+            // Draw CTA Button
+            if (this.ctaText) {
+                ctx.font = `700 ${buttonSize}px Arial, sans-serif`;
+                const btnText = this.ctaText + '  →';
+                const btnMetrics = ctx.measureText(btnText);
+                const btnPadX = buttonSize * 1.5;
+                const btnPadY = buttonSize * 0.7;
+                const btnW = btnMetrics.width + btnPadX * 2;
+                const btnH = buttonSize + btnPadY * 2;
+                const btnX = (W - btnW) / 2;
+                
+                // Button shadow
+                ctx.shadowColor = 'rgba(0,0,0,0.25)';
+                ctx.shadowBlur = 15;
+                ctx.shadowOffsetY = 6;
+                
+                // Button background
+                ctx.fillStyle = '#ffffff';
+                this.roundRect(ctx, btnX, drawY, btnW, btnH, btnH / 2);
+                ctx.fill();
+                
+                // Reset shadow
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // Button text
+                ctx.fillStyle = theme.primary;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(btnText, W / 2, drawY + btnH / 2);
+            }
+            
+            // BOTTOM SECTION: Contact Info
+            if (this.showContact && this.businessPhone) {
+                const contactY = H - padding - bottomSectionHeight;
+                const contactBoxW = W * 0.5;
+                const contactBoxH = bottomSectionHeight * 0.8;
+                
+                // Contact background
+                ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                this.roundRect(ctx, padding, contactY, contactBoxW, contactBoxH, 12);
+                ctx.fill();
+                
+                ctx.font = `400 ${contactSize}px Arial, sans-serif`;
+                ctx.fillStyle = '#ffffff';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                
+                // Phone
+                ctx.fillText('📞  ' + this.businessPhone, padding + 15, contactY + contactBoxH * 0.35);
+                
+                // Website
+                ctx.fillText('🌐  ' + this.businessWebsite, padding + 15, contactY + contactBoxH * 0.7);
+            }
         },
         
-        async downloadBanner(format) {
-            if (this.isDownloading) return;
-            this.isDownloading = true;
+        drawBackground(ctx, W, H, theme) {
+            const p = theme.primary;
+            const s = theme.secondary;
             
-            const element = document.getElementById('banner-preview');
-            const size = this.bannerSizes[this.selectedSize];
-            const scale = size.width / element.offsetWidth;
-            
-            try {
-                const canvas = await html2canvas(element, {
-                    scale: scale,
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: null,
-                    logging: false,
-                });
-                
-                const link = document.createElement('a');
-                link.download = `banner_${this.selectedSize}_${Date.now()}.${format}`;
-                link.href = canvas.toDataURL(format === 'png' ? 'image/png' : 'image/jpeg', 0.95);
-                link.click();
-            } catch (err) {
-                console.error('Download error:', err);
-                alert('Error downloading. Please try again.');
-            } finally {
-                this.isDownloading = false;
+            // Create gradient
+            let grad;
+            switch(this.selectedPattern) {
+                case 'radial':
+                    grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W, H) * 0.7);
+                    grad.addColorStop(0, s);
+                    grad.addColorStop(1, p);
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, W, H);
+                    
+                    // Decorative circles
+                    ctx.fillStyle = s + '40';
+                    ctx.beginPath();
+                    ctx.arc(W * 0.85, H * 0.15, W * 0.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = s + '30';
+                    ctx.beginPath();
+                    ctx.arc(W * 0.15, H * 0.85, W * 0.15, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                    
+                case 'circles':
+                    grad = ctx.createLinearGradient(0, 0, W, H);
+                    grad.addColorStop(0, p);
+                    grad.addColorStop(1, s);
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, W, H);
+                    
+                    // Multiple circles
+                    const circles = [
+                        {x: 0.1, y: 0.2, r: 0.15},
+                        {x: 0.9, y: 0.1, r: 0.2},
+                        {x: 0.8, y: 0.8, r: 0.25},
+                        {x: 0.05, y: 0.75, r: 0.12},
+                        {x: 0.5, y: 0.5, r: 0.08},
+                    ];
+                    circles.forEach(c => {
+                        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                        ctx.beginPath();
+                        ctx.arc(W * c.x, H * c.y, Math.min(W, H) * c.r, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    break;
+                    
+                case 'dots':
+                    grad = ctx.createLinearGradient(0, 0, W, H);
+                    grad.addColorStop(0, p);
+                    grad.addColorStop(1, s);
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, W, H);
+                    
+                    // Dot pattern
+                    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+                    const dotSpacing = Math.min(W, H) * 0.05;
+                    const dotRadius = dotSpacing * 0.15;
+                    for (let x = dotSpacing; x < W; x += dotSpacing) {
+                        for (let y = dotSpacing; y < H; y += dotSpacing) {
+                            ctx.beginPath();
+                            ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                    break;
+                    
+                case 'diagonal':
+                    grad = ctx.createLinearGradient(0, 0, W, H);
+                    grad.addColorStop(0, p);
+                    grad.addColorStop(1, s);
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, W, H);
+                    
+                    // Diagonal lines
+                    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+                    ctx.lineWidth = 2;
+                    const lineSpacing = Math.min(W, H) * 0.04;
+                    for (let i = -H; i < W + H; i += lineSpacing) {
+                        ctx.beginPath();
+                        ctx.moveTo(i, 0);
+                        ctx.lineTo(i + H, H);
+                        ctx.stroke();
+                    }
+                    break;
+                    
+                default: // solid
+                    grad = ctx.createLinearGradient(0, 0, W, H);
+                    grad.addColorStop(0, p);
+                    grad.addColorStop(1, s);
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, W, H);
             }
+        },
+        
+        roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        },
+        
+        wrapText(ctx, text, maxWidth) {
+            const words = text.split(' ');
+            const lines = [];
+            let currentLine = '';
+            
+            words.forEach(word => {
+                const testLine = currentLine + (currentLine ? ' ' : '') + word;
+                const metrics = ctx.measureText(testLine);
+                
+                if (metrics.width > maxWidth && currentLine) {
+                    lines.push(currentLine);
+                    currentLine = word;
+                } else {
+                    currentLine = testLine;
+                }
+            });
+            
+            if (currentLine) {
+                lines.push(currentLine);
+            }
+            
+            return lines.length > 0 ? lines : [text];
+        },
+        
+        downloadBanner(format) {
+            const canvas = document.getElementById('bannerCanvas');
+            const link = document.createElement('a');
+            link.download = `banner_${this.selectedSize}_${Date.now()}.${format}`;
+            
+            if (format === 'png') {
+                link.href = canvas.toDataURL('image/png', 1.0);
+            } else {
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+            }
+            
+            link.click();
         }
     };
 }
