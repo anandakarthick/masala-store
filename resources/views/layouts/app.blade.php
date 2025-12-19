@@ -39,7 +39,22 @@
     <meta name="geo.placename" content="Chennai">
     <meta name="theme-color" content="#16a34a">
     
-    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    @php
+        $faviconUrl = \App\Models\Setting::favicon();
+        $logoUrl = \App\Models\Setting::logo();
+    @endphp
+    
+    @if($faviconUrl)
+        <link rel="icon" type="image/png" href="{{ $faviconUrl }}">
+        <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
+    @else
+        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    @endif
+    
+    @if($logoUrl)
+        <meta property="og:image" content="{{ $logoUrl }}">
+        <meta name="twitter:image" content="{{ $logoUrl }}">
+    @endif
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,26 +63,13 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    @yield('structured_data')
-    
     <script type="application/ld+json">
     {
-        "@context": "https://schema.org",
-        "@type": "Organization",
+        "{{"@"}}context": "https://schema.org",
+        "{{"@"}}type": "Organization",
         "name": "{{ $businessName }}",
         "url": "{{ $siteUrl }}",
-        "description": "{{ $businessTagline }}",
-        "address": {
-            "@type": "PostalAddress",
-            "addressLocality": "Chennai",
-            "addressRegion": "Tamil Nadu",
-            "addressCountry": "IN"
-        },
-        "contactPoint": {
-            "@type": "ContactPoint",
-            "telephone": "{{ $businessPhone }}",
-            "contactType": "customer service"
-        }
+        "description": "{{ $businessTagline }}"
     }
     </script>
     
@@ -81,14 +83,12 @@
     @stack('styles')
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col" x-data="cartManager()" x-init="init()">
-    <!-- Toast Notification -->
     <div x-show="toast.show" x-cloak
          :class="toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'"
          class="fixed top-4 right-4 z-50 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
         <span x-text="toast.message"></span>
     </div>
 
-    <!-- Top Bar -->
     <div class="bg-green-700 text-white text-xs sm:text-sm py-1.5">
         <div class="container mx-auto px-2 sm:px-4">
             <div class="flex justify-between items-center">
@@ -113,11 +113,9 @@
         </div>
     </div>
 
-    <!-- Header -->
     <header class="bg-white shadow-md sticky top-0 z-40" x-data="{ mobileMenuOpen: false }">
         <div class="container mx-auto px-2 sm:px-4">
             <div class="flex items-center justify-between py-2 sm:py-3">
-                <!-- Logo -->
                 <a href="{{ route('home') }}" class="flex items-center">
                     @if(\App\Models\Setting::logo())
                         <img src="{{ \App\Models\Setting::logo() }}" alt="{{ $businessName }}" class="h-8 sm:h-10">
@@ -130,7 +128,6 @@
                     @endif
                 </a>
 
-                <!-- Desktop Search -->
                 <form action="{{ route('products.search') }}" method="GET" class="hidden lg:flex flex-1 max-w-md mx-4">
                     <div class="relative w-full">
                         <input type="text" name="q" placeholder="Search masala, spices, oils..." 
@@ -142,7 +139,6 @@
                     </div>
                 </form>
 
-                <!-- Header Icons -->
                 <div class="flex items-center gap-1 sm:gap-2">
                     <a href="{{ route('products.search') }}" class="lg:hidden text-gray-700 hover:text-green-600 p-2">
                         <i class="fas fa-search text-lg"></i>
@@ -162,7 +158,6 @@
                 $navCategories = \App\Models\Category::whereNull('parent_id')->where('is_active', true)->orderBy('sort_order')->get();
             @endphp
             
-            <!-- Desktop Navigation -->
             <nav class="hidden lg:block border-t">
                 <ul class="flex items-center justify-center space-x-5 py-2 text-sm">
                     <li><a href="{{ route('home') }}" class="text-gray-700 hover:text-green-600 font-medium">Home</a></li>
@@ -175,12 +170,10 @@
                 </ul>
             </nav>
 
-            <!-- Mobile Navigation -->
             <div x-show="mobileMenuOpen" x-cloak class="lg:hidden border-t py-3">
                 <form action="{{ route('products.search') }}" method="GET" class="mb-4">
                     <div class="relative">
-                        <input type="text" name="q" placeholder="Search products..." 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <input type="text" name="q" placeholder="Search products..." class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                         <button type="submit" class="absolute right-0 top-0 h-full px-4 text-gray-500">
                             <i class="fas fa-search"></i>
                         </button>
@@ -212,7 +205,6 @@
         </div>
     </header>
 
-    <!-- Flash Messages -->
     @if(session('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 container mx-auto mt-4 rounded">
             {{ session('success') }}
@@ -225,12 +217,10 @@
         </div>
     @endif
 
-    <!-- Main Content -->
     <main class="flex-1">
         @yield('content')
     </main>
 
-    <!-- Footer -->
     <footer class="bg-gray-900 text-gray-300 mt-12">
         <div class="container mx-auto px-4 py-12">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -270,36 +260,40 @@
         </div>
     </footer>
 
-    <!-- Scripts -->
     <script>
-        const csrfHelper = {
-            getToken() { 
-                return document.querySelector('meta[name="csrf-token"]')?.content || ''; 
+        var csrfHelper = {
+            getToken: function() { 
+                var meta = document.querySelector('meta[name="csrf-token"]');
+                return meta ? meta.content : ''; 
             },
-            updateToken(t) { 
-                const m = document.querySelector('meta[name="csrf-token"]'); 
+            updateToken: function(t) { 
+                var m = document.querySelector('meta[name="csrf-token"]'); 
                 if(m) m.content = t; 
             },
-            async refreshToken() {
-                try {
-                    const r = await fetch('{{ route("csrf.token") }}', { 
-                        method: 'GET', 
-                        headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}, 
-                        credentials: 'same-origin' 
-                    });
+            refreshToken: function() {
+                var self = this;
+                return fetch('{{ route("csrf.token") }}', { 
+                    method: 'GET', 
+                    headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}, 
+                    credentials: 'same-origin' 
+                }).then(function(r) {
                     if(r.ok) { 
-                        const d = await r.json(); 
-                        if(d.csrf_token) { 
-                            this.updateToken(d.csrf_token); 
-                            return d.csrf_token; 
-                        } 
+                        return r.json().then(function(d) { 
+                            if(d.csrf_token) { 
+                                self.updateToken(d.csrf_token); 
+                                return d.csrf_token; 
+                            }
+                            return null;
+                        });
                     }
-                } catch(e) { 
+                    return null;
+                }).catch(function(e) { 
                     console.error('CSRF refresh failed:', e); 
-                }
-                return null;
+                    return null;
+                });
             },
-            async fetchWithCSRF(url, options) {
+            fetchWithCSRF: function(url, options) {
+                var self = this;
                 options = options || {};
                 options.headers = { 
                     'Content-Type': 'application/json', 
@@ -308,18 +302,20 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 };
                 options.credentials = 'same-origin';
-                let r = await fetch(url, options);
-                if(r.status === 419) {
-                    const t = await this.refreshToken();
-                    if(t) { 
-                        options.headers['X-CSRF-TOKEN'] = t; 
-                        r = await fetch(url, options); 
-                    } else { 
-                        setTimeout(function() { window.location.reload(); }, 1000); 
-                        return null; 
+                return fetch(url, options).then(function(r) {
+                    if(r.status === 419) {
+                        return self.refreshToken().then(function(t) {
+                            if(t) { 
+                                options.headers['X-CSRF-TOKEN'] = t; 
+                                return fetch(url, options); 
+                            } else { 
+                                setTimeout(function() { window.location.reload(); }, 1000); 
+                                return null; 
+                            }
+                        });
                     }
-                }
-                return r;
+                    return r;
+                });
             }
         };
         
@@ -335,32 +331,33 @@
                     window.addToCart = function(p, q, v) { self.addToCart(p, q, v); };
                 },
                 showToast: function(msg, type) {
+                    var self = this;
                     this.toast.show = true;
                     this.toast.message = msg;
                     this.toast.type = type || 'success';
-                    var self = this;
                     setTimeout(function() { self.toast.show = false; }, 3000);
                 },
-                addToCart: async function(productId, quantity, variantId) {
-                    try {
-                        var body = { product_id: productId, quantity: quantity || 1 };
-                        if(variantId) body.variant_id = variantId;
-                        var r = await csrfHelper.fetchWithCSRF('{{ route("cart.add") }}', { 
-                            method: 'POST', 
-                            body: JSON.stringify(body) 
-                        });
+                addToCart: function(productId, quantity, variantId) {
+                    var self = this;
+                    var body = { product_id: productId, quantity: quantity || 1 };
+                    if(variantId) body.variant_id = variantId;
+                    csrfHelper.fetchWithCSRF('{{ route("cart.add") }}', { 
+                        method: 'POST', 
+                        body: JSON.stringify(body) 
+                    }).then(function(r) {
                         if(!r) return;
-                        var d = await r.json();
-                        if(d.success) { 
-                            this.cartCount = d.cart_count; 
-                            this.showToast(d.message, 'success'); 
-                        } else {
-                            this.showToast(d.message || 'Error adding to cart', 'error');
+                        return r.json();
+                    }).then(function(d) {
+                        if(d && d.success) { 
+                            self.cartCount = d.cart_count; 
+                            self.showToast(d.message, 'success'); 
+                        } else if(d) {
+                            self.showToast(d.message || 'Error adding to cart', 'error');
                         }
-                    } catch(e) { 
-                        this.showToast('Session expired. Refreshing...', 'error'); 
+                    }).catch(function(e) { 
+                        self.showToast('Session expired. Refreshing...', 'error'); 
                         setTimeout(function() { window.location.reload(); }, 1500); 
-                    }
+                    });
                 }
             };
         }

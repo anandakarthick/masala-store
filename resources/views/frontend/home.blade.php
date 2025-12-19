@@ -10,10 +10,6 @@
 @section('meta_description', $companyName . ' - Buy premium quality homemade masala powders, Indian spices, turmeric, coriander, garam masala, herbal oils & natural products online. 100% pure, chemical-free. Free delivery on orders above ₹500.')
 @section('meta_keywords', 'buy masala online, homemade spices, turmeric powder, coriander powder, cumin powder, garam masala, kashmiri chilli powder, cardamom powder, herbal products, ayurvedic oils, hair growth oil, natural products India, organic spices Chennai')
 
-@section('og_type', 'website')
-@section('og_title', $companyName . ' - Premium Homemade Masala & Herbal Products')
-@section('og_description', 'Buy authentic homemade masala powders, Indian spices & herbal products. 100% pure and natural. Free delivery above ₹500.')
-
 @section('content')
 <!-- Hero Slider -->
 @if($banners->count() > 0)
@@ -70,7 +66,6 @@
         @endif
     </section>
 @else
-    <!-- Default Hero -->
     <section class="bg-gradient-to-r from-green-600 to-green-800 text-white py-12 md:py-16" aria-label="Welcome banner">
         <div class="container mx-auto px-4 text-center">
             <h1 class="text-3xl md:text-4xl font-bold mb-3">Welcome to {{ $companyName }}</h1>
@@ -198,9 +193,9 @@
         <div class="max-w-4xl mx-auto text-center">
             <h2 id="about-products-heading" class="text-xl md:text-2xl font-bold mb-4">Premium Homemade Masala & Herbal Products</h2>
             <div class="text-gray-600 text-sm leading-relaxed space-y-3">
-                <p>Welcome to <strong>{{ $companyName }}</strong>, your trusted destination for authentic homemade masala powders, Indian spices, and natural herbal products. We specialize in providing 100% pure, chemical-free spices including <strong>Turmeric Powder</strong>, <strong>Coriander Powder</strong>, <strong>Cumin Powder</strong>, <strong>Garam Masala</strong>, <strong>Kashmiri Chilli Powder</strong>, and <strong>Cardamom Powder</strong>.</p>
-                <p>Our products are freshly ground in small batches to preserve their natural aroma, flavor, and health benefits. We also offer nutritious <strong>Ragi Powder</strong>, <strong>Black Urad Dal Powder</strong>, and natural <strong>Bath Powders</strong> for the whole family. For your wellness needs, explore our range of <strong>Ayurvedic oils</strong> including Hair Growth Oil and Knee Pain Relief Oil.</p>
-                <p>All our products are made using traditional recipes with no preservatives, artificial colors, or chemicals. Experience the authentic taste of Indian spices delivered right to your doorstep with free shipping on orders above ₹500.</p>
+                <p>Welcome to <strong>{{ $companyName }}</strong>, your trusted destination for authentic homemade masala powders, Indian spices, and natural herbal products.</p>
+                <p>Our products are freshly ground in small batches to preserve their natural aroma, flavor, and health benefits.</p>
+                <p>All our products are made using traditional recipes with no preservatives, artificial colors, or chemicals.</p>
             </div>
         </div>
     </div>

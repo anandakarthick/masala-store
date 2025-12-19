@@ -8,69 +8,8 @@
 @endphp
 
 @section('title', 'Contact Us - ' . $businessName)
-@section('meta_description', 'Contact ' . $businessName . ' for inquiries about our homemade masala powders, spices, and herbal products. Call us at ' . $businessPhone . ' or email us. We\'re here to help!')
-@section('meta_keywords', 'contact ' . $businessName . ', masala shop contact, spice seller Chennai, herbal products inquiry, customer support')
-
-@section('canonical', route('contact'))
-
-@section('structured_data')
-<!-- ContactPage Schema -->
-<script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "ContactPage",
-    "name": "Contact {{ $businessName }}",
-    "description": "Get in touch with {{ $businessName }} for inquiries about our homemade masala powders, spices, and herbal products.",
-    "url": "{{ route('contact') }}",
-    "mainEntity": {
-        "@type": "Organization",
-        "name": "{{ $businessName }}",
-        "url": "{{ config('app.url') }}",
-        "logo": "{{ \App\Models\Setting::logo() ?? asset('images/logo.png') }}",
-        "address": {
-            "@type": "PostalAddress",
-            "streetAddress": "{{ $businessAddress }}",
-            "addressLocality": "Chennai",
-            "addressRegion": "Tamil Nadu",
-            "postalCode": "600001",
-            "addressCountry": "IN"
-        },
-        "contactPoint": [
-            {
-                "@type": "ContactPoint",
-                "telephone": "{{ $businessPhone }}",
-                "contactType": "customer service",
-                "email": "{{ $businessEmail }}",
-                "availableLanguage": ["English", "Tamil", "Hindi"],
-                "areaServed": "IN"
-            }
-        ]
-    }
-}
-</script>
-
-<!-- BreadcrumbList Schema -->
-<script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-        {
-            "@type": "ListItem",
-            "position": 1,
-            "name": "Home",
-            "item": "{{ route('home') }}"
-        },
-        {
-            "@type": "ListItem",
-            "position": 2,
-            "name": "Contact Us",
-            "item": "{{ route('contact') }}"
-        }
-    ]
-}
-</script>
-@endsection
+@section('meta_description', 'Contact ' . $businessName . ' for inquiries about our homemade masala powders, spices, and herbal products. Call us at ' . $businessPhone . ' or email us.')
+@section('meta_keywords', 'contact ' . $businessName . ', masala shop contact, spice seller Chennai, herbal products inquiry')
 
 @section('content')
 <div class="container mx-auto px-4 py-12">
@@ -150,14 +89,18 @@
                             <input type="text" id="name" name="name" value="{{ old('name') }}" required
                                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500"
                                    autocomplete="name">
-                            @error('name')<p class="text-red-500 text-sm mt-1">{{ $message }}</p>@enderror
+                            @error('name')
+                                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                         <div>
                             <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
                             <input type="email" id="email" name="email" value="{{ old('email') }}" required
                                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500"
                                    autocomplete="email">
-                            @error('email')<p class="text-red-500 text-sm mt-1">{{ $message }}</p>@enderror
+                            @error('email')
+                                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
 
@@ -172,7 +115,9 @@
                             <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
                             <input type="text" id="subject" name="subject" value="{{ old('subject') }}" required
                                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
-                            @error('subject')<p class="text-red-500 text-sm mt-1">{{ $message }}</p>@enderror
+                            @error('subject')
+                                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
 
@@ -180,7 +125,9 @@
                         <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Message *</label>
                         <textarea id="message" name="message" rows="5" required
                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">{{ old('message') }}</textarea>
-                        @error('message')<p class="text-red-500 text-sm mt-1">{{ $message }}</p>@enderror
+                        @error('message')
+                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold">
@@ -191,28 +138,22 @@
         </section>
     </div>
 
-    <!-- FAQ Section for SEO -->
+    <!-- FAQ Section -->
     <section class="mt-12 max-w-4xl mx-auto" aria-labelledby="faq-heading">
         <div class="bg-white rounded-lg shadow-md p-8">
             <h2 id="faq-heading" class="text-2xl font-bold text-gray-800 mb-6">Frequently Asked Questions</h2>
             <div class="space-y-4">
-                <div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
-                    <h3 class="font-semibold text-gray-800" itemprop="name">What are your delivery timelines?</h3>
-                    <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
-                        <p class="text-gray-600 mt-1" itemprop="text">We typically deliver within 3-5 business days for orders within India. Orders above ₹500 qualify for free delivery.</p>
-                    </div>
+                <div>
+                    <h3 class="font-semibold text-gray-800">What are your delivery timelines?</h3>
+                    <p class="text-gray-600 mt-1">We typically deliver within 3-5 business days for orders within India. Orders above ₹500 qualify for free delivery.</p>
                 </div>
-                <div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
-                    <h3 class="font-semibold text-gray-800" itemprop="name">Are your products 100% natural?</h3>
-                    <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
-                        <p class="text-gray-600 mt-1" itemprop="text">Yes, all our products are 100% natural, homemade, and free from chemicals, preservatives, and artificial colors. We use only pure, traditional ingredients.</p>
-                    </div>
+                <div>
+                    <h3 class="font-semibold text-gray-800">Are your products 100% natural?</h3>
+                    <p class="text-gray-600 mt-1">Yes, all our products are 100% natural, homemade, and free from chemicals, preservatives, and artificial colors. We use only pure, traditional ingredients.</p>
                 </div>
-                <div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
-                    <h3 class="font-semibold text-gray-800" itemprop="name">How can I track my order?</h3>
-                    <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
-                        <p class="text-gray-600 mt-1" itemprop="text">You can track your order using our <a href="{{ route('tracking.index') }}" class="text-green-600 hover:underline">order tracking page</a>. Simply enter your order number to see the current status.</p>
-                    </div>
+                <div>
+                    <h3 class="font-semibold text-gray-800">How can I track my order?</h3>
+                    <p class="text-gray-600 mt-1">You can track your order using our <a href="{{ route('tracking.index') }}" class="text-green-600 hover:underline">order tracking page</a>. Simply enter your order number to see the current status.</p>
                 </div>
             </div>
         </div>

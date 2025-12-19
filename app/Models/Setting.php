@@ -66,6 +66,17 @@ class Setting extends Model
         return $logo ? asset('storage/' . $logo) : null;
     }
 
+    public static function favicon(): ?string
+    {
+        $favicon = self::get('favicon');
+        if ($favicon) {
+            return asset('storage/' . $favicon);
+        }
+        // Fallback to logo if no favicon is set
+        $logo = self::get('logo');
+        return $logo ? asset('storage/' . $logo) : null;
+    }
+
     public static function currency(): string
     {
         return self::get('currency', '₹');

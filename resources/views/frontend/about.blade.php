@@ -9,61 +9,6 @@
 @section('meta_description', 'Learn about ' . $businessName . '. We are your trusted source for 100% pure, homemade masala powders, Indian spices, herbal products & ayurvedic oils. Chemical-free, preservative-free products made with love.')
 @section('meta_keywords', 'about ' . $businessName . ', homemade masala company, Indian spices seller, natural herbal products, ayurvedic products Chennai, pure spices India')
 
-@section('canonical', route('about'))
-
-@section('structured_data')
-<!-- AboutPage Schema -->
-<script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "AboutPage",
-    "name": "About {{ $businessName }}",
-    "description": "Learn about {{ $businessName }} - Your trusted source for 100% pure, homemade masala powders, Indian spices, herbal products & ayurvedic oils.",
-    "url": "{{ route('about') }}",
-    "mainEntity": {
-        "@type": "Organization",
-        "name": "{{ $businessName }}",
-        "description": "{{ $businessTagline }}",
-        "url": "{{ config('app.url') }}",
-        "logo": "{{ \App\Models\Setting::logo() ?? asset('images/logo.png') }}",
-        "address": {
-            "@type": "PostalAddress",
-            "addressLocality": "Chennai",
-            "addressRegion": "Tamil Nadu",
-            "addressCountry": "IN"
-        },
-        "contactPoint": {
-            "@type": "ContactPoint",
-            "telephone": "{{ \App\Models\Setting::get('business_phone') }}",
-            "contactType": "customer service"
-        }
-    }
-}
-</script>
-
-<!-- BreadcrumbList Schema -->
-<script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-        {
-            "@type": "ListItem",
-            "position": 1,
-            "name": "Home",
-            "item": "{{ route('home') }}"
-        },
-        {
-            "@type": "ListItem",
-            "position": 2,
-            "name": "About Us",
-            "item": "{{ route('about') }}"
-        }
-    ]
-}
-</script>
-@endsection
-
 @section('content')
 <div class="container mx-auto px-4 py-12">
     <!-- Breadcrumb -->

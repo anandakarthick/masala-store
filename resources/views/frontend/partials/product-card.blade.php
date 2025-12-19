@@ -24,7 +24,7 @@
             @endif
             
             @if($product->discount_percentage > 0)
-                <span class="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded" aria-label="{{ $product->discount_percentage }}% discount">
+                <span class="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded">
                     -{{ $product->discount_percentage }}%
                 </span>
             @endif
@@ -74,8 +74,7 @@
             @if(!$product->isOutOfStock())
                 @if($product->has_variants)
                     <a href="{{ route('products.show', $product->slug) }}" 
-                       class="w-full flex items-center justify-center gap-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition text-xs font-medium"
-                       aria-label="View options for {{ $product->name }}">
+                       class="w-full flex items-center justify-center gap-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition text-xs font-medium">
                         <i class="fas fa-eye" aria-hidden="true"></i> Select Options
                     </a>
                 @else

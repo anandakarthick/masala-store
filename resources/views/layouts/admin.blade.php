@@ -6,6 +6,16 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin') - {{ \App\Models\Setting::get('business_name', 'SV Masala & Herbal Products') }}</title>
     
+    @php
+        $faviconUrl = \App\Models\Setting::favicon();
+    @endphp
+    
+    @if($faviconUrl)
+        <link rel="icon" type="image/png" href="{{ $faviconUrl }}">
+    @else
+        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    @endif
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     

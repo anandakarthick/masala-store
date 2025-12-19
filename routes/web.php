@@ -24,6 +24,16 @@ use App\Http\Controllers\Admin\VariantAttributeController as AdminVariantAttribu
 use App\Http\Controllers\RazorpayController;
 use Illuminate\Support\Facades\Route;
 
+// Test route for debugging - no blade
+Route::get('/test-no-blade', function () {
+    return response('Laravel is working! No blade template used.', 200);
+});
+
+// Test route for debugging blade
+Route::get('/test-blade', function () {
+    return view('test');
+});
+
 /*
 |--------------------------------------------------------------------------
 | Frontend Routes
