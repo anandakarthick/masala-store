@@ -151,7 +151,7 @@
                     Custom Background
                 </h3>
                 <input type="file" id="bgUpload" @change="handleBackgroundUpload($event)" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
-                <button type="button" x-show="customBackground" @click="customBackground = null; renderCanvas()" class="mt-2 text-xs text-red-600 hover:text-red-700">
+                <button type="button" x-show="customBackground" @click="customBackground = null; customBgImage = null; renderCanvas()" class="mt-2 text-xs text-red-600 hover:text-red-700">
                     <i class="fas fa-times mr-1"></i> Remove Background
                 </button>
             </div>
@@ -234,7 +234,6 @@ function bannerGenerator() {
         productImage: null,
         
         init() {
-            // Load logo image
             if (this.logoUrl) {
                 this.logoImage = new Image();
                 this.logoImage.crossOrigin = 'anonymous';
@@ -242,7 +241,6 @@ function bannerGenerator() {
                 this.logoImage.src = this.logoUrl;
             }
             
-            // Initial render
             this.$nextTick(() => {
                 this.renderCanvas();
             });
@@ -268,11 +266,6 @@ function bannerGenerator() {
             return size && size.height > size.width;
         },
         
-        formatPrice(price) {
-            if (!price) return '0.00';
-            return parseFloat(price).toFixed(2);
-        },
-        
         clearProduct() {
             this.selectedProduct = '';
             this.productData = null;
@@ -296,7 +289,7 @@ function bannerGenerator() {
                 this.productData = await response.json();
                 
                 this.headline = this.productData.name || '';
-                this.subheadline = (this.productData.description || '').substring(0, 60);
+                this.subheadline = (this.productData.description || '').substring(0, 50);
                 
                 if (this.productData.discount_percentage > 0) {
                     this.offerText = Math.round(this.productData.discount_percentage) + '% OFF';
@@ -304,7 +297,6 @@ function bannerGenerator() {
                     this.offerText = '';
                 }
                 
-                // Load product image
                 if (this.productData.image_url) {
                     this.productImage = new Image();
                     this.productImage.crossOrigin = 'anonymous';
@@ -348,132 +340,94 @@ function bannerGenerator() {
             const W = size.width;
             const H = size.height;
             
-            // Set canvas size
             canvas.width = W;
             canvas.height = H;
             
-            // Scale for display
+            // Display scale
             const maxDisplayWidth = 500;
             const maxDisplayHeight = 600;
             const displayScale = Math.min(maxDisplayWidth / W, maxDisplayHeight / H, 1);
             canvas.style.width = (W * displayScale) + 'px';
             canvas.style.height = (H * displayScale) + 'px';
             
+            // Clear canvas
+            ctx.clearRect(0, 0, W, H);
+            
             // Draw background
             this.drawBackground(ctx, W, H, theme);
             
-            // Draw custom background if set
+            // Draw custom background
             if (this.customBgImage) {
-                ctx.drawImage(this.customBgImage, 0, 0, W, H);
-                ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                const imgRatio = this.customBgImage.width / this.customBgImage.height;
+                const canvasRatio = W / H;
+                let drawW, drawH, drawX, drawY;
+                
+                if (imgRatio > canvasRatio) {
+                    drawH = H;
+                    drawW = H * imgRatio;
+                    drawX = (W - drawW) / 2;
+                    drawY = 0;
+                } else {
+                    drawW = W;
+                    drawH = W / imgRatio;
+                    drawX = 0;
+                    drawY = (H - drawH) / 2;
+                }
+                
+                ctx.drawImage(this.customBgImage, drawX, drawY, drawW, drawH);
+                ctx.fillStyle = 'rgba(0,0,0,0.45)';
                 ctx.fillRect(0, 0, W, H);
             }
             
-            // Calculate padding
-            const padding = Math.min(W, H) * 0.05;
+            // Calculate sizes
+            const padding = Math.min(W, H) * 0.045;
             const isVert = this.isVertical();
-            
-            // Font sizes based on canvas size
             const baseSize = Math.min(W, H);
-            const headlineSize = baseSize * (isVert ? 0.07 : 0.08);
-            const subheadlineSize = baseSize * (isVert ? 0.035 : 0.04);
-            const priceSize = baseSize * (isVert ? 0.065 : 0.07);
-            const oldPriceSize = baseSize * (isVert ? 0.035 : 0.04);
-            const buttonSize = baseSize * (isVert ? 0.04 : 0.045);
-            const badgeSize = baseSize * (isVert ? 0.04 : 0.045);
-            const contactSize = baseSize * (isVert ? 0.028 : 0.032);
+            
+            // Font sizes - FIXED for consistency
+            const headlineSize = Math.round(baseSize * (isVert ? 0.058 : 0.068));
+            const subheadlineSize = Math.round(baseSize * (isVert ? 0.028 : 0.034));
+            const newPriceSize = Math.round(baseSize * (isVert ? 0.065 : 0.075));
+            const oldPriceSize = Math.round(baseSize * (isVert ? 0.038 : 0.045));
+            const buttonSize = Math.round(baseSize * (isVert ? 0.034 : 0.04));
+            const badgeSize = Math.round(baseSize * (isVert ? 0.034 : 0.04));
+            const contactSize = Math.round(baseSize * (isVert ? 0.024 : 0.028));
+            const weightSize = Math.round(baseSize * 0.022);
             
             let currentY = padding;
             
-            // TOP SECTION: Logo and Offer Badge
-            const topSectionHeight = baseSize * 0.1;
+            // ========== TOP SECTION: Logo & Offer Badge ==========
+            const topHeight = baseSize * 0.07;
             
-            // Draw Logo
+            // Logo
             if (this.showLogo && this.logoImage && this.logoImage.complete) {
-                const logoHeight = topSectionHeight * 0.8;
-                const logoWidth = (this.logoImage.width / this.logoImage.height) * logoHeight;
-                const logoX = padding;
-                const logoY = padding;
+                const logoH = topHeight;
+                const logoW = (this.logoImage.width / this.logoImage.height) * logoH;
                 
-                // White background for logo
+                // White bg
                 ctx.fillStyle = '#ffffff';
-                this.roundRect(ctx, logoX - 8, logoY - 8, logoWidth + 16, logoHeight + 16, 12);
+                this.roundRect(ctx, padding - 5, padding - 5, logoW + 10, logoH + 10, 8);
                 ctx.fill();
                 
-                ctx.drawImage(this.logoImage, logoX, logoY, logoWidth, logoHeight);
+                ctx.drawImage(this.logoImage, padding, padding, logoW, logoH);
             }
             
-            // Draw Offer Badge
+            // Offer Badge
             if (this.offerText) {
-                ctx.font = `800 ${badgeSize}px Arial, sans-serif`;
-                const badgeText = this.offerText;
-                const badgeMetrics = ctx.measureText(badgeText);
-                const badgePadX = badgeSize * 0.8;
-                const badgePadY = badgeSize * 0.5;
-                const badgeW = badgeMetrics.width + badgePadX * 2;
-                const badgeH = badgeSize + badgePadY * 2;
+                ctx.font = `bold ${badgeSize}px Arial`;
+                const badgeW = ctx.measureText(this.offerText).width + badgeSize * 1.4;
+                const badgeH = badgeSize * 1.8;
                 const badgeX = W - padding - badgeW;
                 const badgeY = padding;
                 
-                // Red gradient badge
-                const badgeGrad = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeW, badgeY + badgeH);
-                badgeGrad.addColorStop(0, '#ef4444');
-                badgeGrad.addColorStop(1, '#dc2626');
-                ctx.fillStyle = badgeGrad;
-                this.roundRect(ctx, badgeX, badgeY, badgeW, badgeH, badgeH / 2);
-                ctx.fill();
-                
-                // Badge text
-                ctx.fillStyle = '#ffffff';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(badgeText, badgeX + badgeW / 2, badgeY + badgeH / 2);
-            }
-            
-            currentY = padding + topSectionHeight + padding;
-            
-            // MIDDLE SECTION
-            const bottomSectionHeight = this.showContact ? baseSize * 0.12 : 0;
-            const middleSectionHeight = H - currentY - bottomSectionHeight - padding * 2;
-            const middleCenterY = currentY + middleSectionHeight / 2;
-            
-            // Calculate total content height to center it
-            let contentHeight = 0;
-            const productImgHeight = isVert ? baseSize * 0.25 : baseSize * 0.2;
-            
-            if (this.showProductImage && this.productImage) contentHeight += productImgHeight + padding;
-            contentHeight += headlineSize * 1.5; // headline
-            if (this.subheadline || this.productData?.description) contentHeight += subheadlineSize * 2 + padding;
-            if (this.showPrice && this.productData) contentHeight += priceSize * 2 + padding;
-            if (this.ctaText) contentHeight += buttonSize * 2.5;
-            
-            let drawY = middleCenterY - contentHeight / 2;
-            
-            // Draw Product Image
-            if (this.showProductImage && this.productImage && this.productImage.complete) {
-                const imgMaxH = productImgHeight;
-                const imgMaxW = W * 0.6;
-                const imgRatio = this.productImage.width / this.productImage.height;
-                let imgW, imgH;
-                
-                if (imgRatio > imgMaxW / imgMaxH) {
-                    imgW = imgMaxW;
-                    imgH = imgW / imgRatio;
-                } else {
-                    imgH = imgMaxH;
-                    imgW = imgH * imgRatio;
-                }
-                
-                const imgX = (W - imgW) / 2;
-                
                 // Shadow
-                ctx.shadowColor = 'rgba(0,0,0,0.3)';
-                ctx.shadowBlur = 20;
-                ctx.shadowOffsetY = 10;
+                ctx.shadowColor = 'rgba(0,0,0,0.25)';
+                ctx.shadowBlur = 8;
+                ctx.shadowOffsetY = 3;
                 
-                // White border
-                ctx.fillStyle = 'rgba(255,255,255,0.3)';
-                this.roundRect(ctx, imgX - 4, drawY - 4, imgW + 8, imgH + 8, 16);
+                // Red bg
+                ctx.fillStyle = '#e53935';
+                this.roundRect(ctx, badgeX, badgeY, badgeW, badgeH, badgeH / 2);
                 ctx.fill();
                 
                 // Reset shadow
@@ -481,135 +435,208 @@ function bannerGenerator() {
                 ctx.shadowBlur = 0;
                 ctx.shadowOffsetY = 0;
                 
-                // Clip and draw image
-                ctx.save();
-                this.roundRect(ctx, imgX, drawY, imgW, imgH, 12);
-                ctx.clip();
-                ctx.drawImage(this.productImage, imgX, drawY, imgW, imgH);
-                ctx.restore();
-                
-                drawY += imgH + padding * 1.5;
+                // Text
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `bold ${badgeSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.offerText, badgeX + badgeW / 2, badgeY + badgeH / 2);
             }
             
-            // Draw Headline
-            const headlineText = this.headline || this.productData?.name || 'Your Headline';
-            ctx.font = `800 ${headlineSize}px Arial, sans-serif`;
+            currentY = padding + topHeight + padding * 1.5;
+            
+            // ========== MIDDLE SECTION ==========
+            const bottomH = this.showContact ? baseSize * 0.09 : padding;
+            const middleH = H - currentY - bottomH - padding;
+            const centerY = currentY + middleH / 2;
+            
+            // Calculate content height
+            let contentH = 0;
+            const imgH = isVert ? baseSize * 0.2 : baseSize * 0.16;
+            const gap = padding * 0.7;
+            
+            if (this.showProductImage && this.productImage) contentH += imgH + gap;
+            contentH += headlineSize * 1.4; // headline
+            if (this.subheadline || this.productData?.description) contentH += subheadlineSize * 2 + gap;
+            if (this.showPrice && this.productData) contentH += newPriceSize * 2.2 + gap;
+            if (this.ctaText) contentH += buttonSize * 2.5;
+            
+            let drawY = centerY - contentH / 2;
+            if (drawY < currentY) drawY = currentY;
+            
+            // Product Image
+            if (this.showProductImage && this.productImage && this.productImage.complete) {
+                const maxImgH = imgH;
+                const maxImgW = W * 0.5;
+                const imgRatio = this.productImage.width / this.productImage.height;
+                let iW, iH;
+                
+                if (imgRatio > maxImgW / maxImgH) {
+                    iW = maxImgW;
+                    iH = iW / imgRatio;
+                } else {
+                    iH = maxImgH;
+                    iW = iH * imgRatio;
+                }
+                
+                const imgX = (W - iW) / 2;
+                
+                // Shadow
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 20;
+                ctx.shadowOffsetY = 8;
+                
+                // Border
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                this.roundRect(ctx, imgX - 4, drawY - 4, iW + 8, iH + 8, 14);
+                ctx.fill();
+                
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // Image
+                ctx.save();
+                this.roundRect(ctx, imgX, drawY, iW, iH, 10);
+                ctx.clip();
+                ctx.drawImage(this.productImage, imgX, drawY, iW, iH);
+                ctx.restore();
+                
+                drawY += iH + gap * 1.2;
+            }
+            
+            // Headline
+            ctx.font = `bold ${headlineSize}px Arial`;
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
             ctx.shadowColor = 'rgba(0,0,0,0.4)';
             ctx.shadowBlur = 6;
-            ctx.shadowOffsetX = 2;
             ctx.shadowOffsetY = 2;
             
-            // Word wrap headline
-            const headlineLines = this.wrapText(ctx, headlineText, W - padding * 4);
-            headlineLines.forEach((line, i) => {
+            const headText = this.headline || this.productData?.name || 'Your Headline';
+            const headLines = this.wrapText(ctx, headText, W - padding * 4);
+            headLines.forEach((line, i) => {
                 ctx.fillText(line, W / 2, drawY + i * headlineSize * 1.2);
             });
-            drawY += headlineLines.length * headlineSize * 1.2 + padding * 0.8;
+            drawY += headLines.length * headlineSize * 1.2 + gap * 0.8;
             
-            // Reset shadow
             ctx.shadowColor = 'transparent';
             ctx.shadowBlur = 0;
-            ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
             
-            // Draw Subheadline
-            const subText = this.subheadline || (this.productData?.description || '').substring(0, 60);
+            // Subheadline
+            const subText = this.subheadline || (this.productData?.description || '').substring(0, 50);
             if (subText) {
-                ctx.font = `400 ${subheadlineSize}px Arial, sans-serif`;
-                ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                ctx.shadowColor = 'rgba(0,0,0,0.3)';
-                ctx.shadowBlur = 4;
+                ctx.font = `${subheadlineSize}px Arial`;
+                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                ctx.shadowColor = 'rgba(0,0,0,0.2)';
+                ctx.shadowBlur = 3;
                 
-                const subLines = this.wrapText(ctx, subText, W - padding * 4);
+                const subLines = this.wrapText(ctx, subText, W - padding * 5);
                 subLines.forEach((line, i) => {
                     ctx.fillText(line, W / 2, drawY + i * subheadlineSize * 1.4);
                 });
-                drawY += subLines.length * subheadlineSize * 1.4 + padding;
+                drawY += subLines.length * subheadlineSize * 1.4 + gap;
                 
                 ctx.shadowColor = 'transparent';
                 ctx.shadowBlur = 0;
             }
             
-            // Draw Price
+            // ========== PRICE SECTION - FIXED ==========
             if (this.showPrice && this.productData) {
-                const currentPrice = this.formatPrice(this.productData.discount_price || this.productData.price);
-                const originalPrice = this.productData.discount_price ? this.formatPrice(this.productData.price) : null;
+                const currentPrice = parseFloat(this.productData.discount_price || this.productData.price);
+                const originalPrice = parseFloat(this.productData.price);
+                const hasDiscount = this.productData.discount_price && currentPrice !== originalPrice;
                 
-                // Price background
+                // Price box background
+                const boxW = W * 0.52;
+                const boxH = newPriceSize * 2.2;
+                const boxX = (W - boxW) / 2;
+                
                 ctx.fillStyle = 'rgba(255,255,255,0.15)';
-                const priceBoxW = W * 0.6;
-                const priceBoxH = priceSize * 2.2;
-                const priceBoxX = (W - priceBoxW) / 2;
-                this.roundRect(ctx, priceBoxX, drawY, priceBoxW, priceBoxH, priceBoxH / 2);
+                this.roundRect(ctx, boxX, drawY, boxW, boxH, boxH / 2);
                 ctx.fill();
                 
-                const priceCenterY = drawY + priceBoxH / 2;
+                ctx.textBaseline = 'middle';
+                const boxCenterY = drawY + boxH / 2;
                 
-                // Draw prices
-                if (originalPrice && originalPrice !== currentPrice) {
-                    // Original price (strikethrough)
-                    ctx.font = `400 ${oldPriceSize}px Arial, sans-serif`;
+                if (hasDiscount) {
+                    // Side by side: OLD PRICE (left) | NEW PRICE (right)
+                    const oldText = '₹' + Math.round(originalPrice);
+                    const newText = '₹' + Math.round(currentPrice);
+                    
+                    // Measure widths
+                    ctx.font = `${oldPriceSize}px Arial`;
+                    const oldW = ctx.measureText(oldText).width;
+                    
+                    ctx.font = `bold ${newPriceSize}px Arial`;
+                    const newW = ctx.measureText(newText).width;
+                    
+                    const totalW = oldW + 25 + newW; // 25px gap between prices
+                    const startX = (W - totalW) / 2;
+                    
+                    // Draw OLD price (left, with strikethrough)
+                    ctx.font = `${oldPriceSize}px Arial`;
                     ctx.fillStyle = 'rgba(255,255,255,0.5)';
-                    const oldPriceText = '₹' + originalPrice;
-                    const oldPriceWidth = ctx.measureText(oldPriceText).width;
-                    const oldPriceX = W / 2 - oldPriceWidth / 2 - priceSize * 1.5;
-                    ctx.fillText(oldPriceText, W / 2 - priceSize * 0.8, priceCenterY - oldPriceSize * 0.3);
+                    ctx.textAlign = 'left';
+                    ctx.fillText(oldText, startX, boxCenterY);
                     
                     // Strikethrough line
-                    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
-                    ctx.moveTo(W / 2 - priceSize * 0.8 - oldPriceWidth / 2 - 5, priceCenterY - oldPriceSize * 0.3);
-                    ctx.lineTo(W / 2 - priceSize * 0.8 + oldPriceWidth / 2 + 5, priceCenterY - oldPriceSize * 0.3);
+                    ctx.moveTo(startX - 3, boxCenterY);
+                    ctx.lineTo(startX + oldW + 3, boxCenterY);
                     ctx.stroke();
                     
-                    // Current price
-                    ctx.font = `800 ${priceSize}px Arial, sans-serif`;
+                    // Draw NEW price (right, bold)
+                    ctx.font = `bold ${newPriceSize}px Arial`;
                     ctx.fillStyle = '#ffffff';
-                    ctx.fillText('₹' + currentPrice, W / 2 + priceSize * 0.5, priceCenterY);
+                    ctx.textAlign = 'left';
+                    ctx.fillText(newText, startX + oldW + 25, boxCenterY);
+                    
                 } else {
-                    // Just current price
-                    ctx.font = `800 ${priceSize}px Arial, sans-serif`;
+                    // Single price centered
+                    ctx.font = `bold ${newPriceSize}px Arial`;
                     ctx.fillStyle = '#ffffff';
-                    ctx.fillText('₹' + currentPrice, W / 2, priceCenterY);
+                    ctx.textAlign = 'center';
+                    ctx.fillText('₹' + Math.round(currentPrice), W / 2, boxCenterY);
                 }
+                
+                drawY += boxH;
                 
                 // Weight display
                 if (this.productData.weight_display) {
-                    ctx.font = `400 ${contactSize}px Arial, sans-serif`;
-                    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-                    ctx.fillText(this.productData.weight_display, W / 2, drawY + priceBoxH + contactSize);
-                    drawY += priceBoxH + contactSize * 1.5 + padding;
-                } else {
-                    drawY += priceBoxH + padding;
+                    ctx.font = `${weightSize}px Arial`;
+                    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(this.productData.weight_display, W / 2, drawY + 6);
+                    drawY += weightSize + 12;
                 }
+                
+                drawY += gap;
             }
             
-            // Draw CTA Button
+            // CTA Button
             if (this.ctaText) {
-                ctx.font = `700 ${buttonSize}px Arial, sans-serif`;
+                ctx.font = `bold ${buttonSize}px Arial`;
                 const btnText = this.ctaText + '  →';
-                const btnMetrics = ctx.measureText(btnText);
-                const btnPadX = buttonSize * 1.5;
-                const btnPadY = buttonSize * 0.7;
-                const btnW = btnMetrics.width + btnPadX * 2;
-                const btnH = buttonSize + btnPadY * 2;
+                const btnW = ctx.measureText(btnText).width + buttonSize * 2.5;
+                const btnH = buttonSize * 2.3;
                 const btnX = (W - btnW) / 2;
                 
-                // Button shadow
+                // Shadow
                 ctx.shadowColor = 'rgba(0,0,0,0.25)';
-                ctx.shadowBlur = 15;
-                ctx.shadowOffsetY = 6;
+                ctx.shadowBlur = 12;
+                ctx.shadowOffsetY = 5;
                 
-                // Button background
+                // Button bg
                 ctx.fillStyle = '#ffffff';
                 this.roundRect(ctx, btnX, drawY, btnW, btnH, btnH / 2);
                 ctx.fill();
                 
-                // Reset shadow
                 ctx.shadowColor = 'transparent';
                 ctx.shadowBlur = 0;
                 ctx.shadowOffsetY = 0;
@@ -621,36 +648,32 @@ function bannerGenerator() {
                 ctx.fillText(btnText, W / 2, drawY + btnH / 2);
             }
             
-            // BOTTOM SECTION: Contact Info
+            // ========== BOTTOM SECTION: Contact ==========
             if (this.showContact && this.businessPhone) {
-                const contactY = H - padding - bottomSectionHeight;
-                const contactBoxW = W * 0.5;
-                const contactBoxH = bottomSectionHeight * 0.8;
+                const contactBoxH = bottomH * 0.75;
+                const contactBoxW = W * 0.45;
+                const contactX = padding;
+                const contactY = H - padding - contactBoxH;
                 
-                // Contact background
-                ctx.fillStyle = 'rgba(0,0,0,0.25)';
-                this.roundRect(ctx, padding, contactY, contactBoxW, contactBoxH, 12);
+                ctx.fillStyle = 'rgba(0,0,0,0.28)';
+                this.roundRect(ctx, contactX, contactY, contactBoxW, contactBoxH, 10);
                 ctx.fill();
                 
-                ctx.font = `400 ${contactSize}px Arial, sans-serif`;
+                ctx.font = `${contactSize}px Arial`;
                 ctx.fillStyle = '#ffffff';
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'middle';
                 
-                // Phone
-                ctx.fillText('📞  ' + this.businessPhone, padding + 15, contactY + contactBoxH * 0.35);
-                
-                // Website
-                ctx.fillText('🌐  ' + this.businessWebsite, padding + 15, contactY + contactBoxH * 0.7);
+                ctx.fillText('📞  ' + this.businessPhone, contactX + 12, contactY + contactBoxH * 0.35);
+                ctx.fillText('🌐  ' + this.businessWebsite, contactX + 12, contactY + contactBoxH * 0.68);
             }
         },
         
         drawBackground(ctx, W, H, theme) {
             const p = theme.primary;
             const s = theme.secondary;
-            
-            // Create gradient
             let grad;
+            
             switch(this.selectedPattern) {
                 case 'radial':
                     grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W, H) * 0.7);
@@ -660,14 +683,14 @@ function bannerGenerator() {
                     ctx.fillRect(0, 0, W, H);
                     
                     // Decorative circles
-                    ctx.fillStyle = s + '40';
+                    ctx.fillStyle = s + '45';
                     ctx.beginPath();
-                    ctx.arc(W * 0.85, H * 0.15, W * 0.2, 0, Math.PI * 2);
+                    ctx.arc(W * 0.85, H * 0.1, W * 0.15, 0, Math.PI * 2);
                     ctx.fill();
                     
                     ctx.fillStyle = s + '30';
                     ctx.beginPath();
-                    ctx.arc(W * 0.15, H * 0.85, W * 0.15, 0, Math.PI * 2);
+                    ctx.arc(W * 0.1, H * 0.9, W * 0.12, 0, Math.PI * 2);
                     ctx.fill();
                     break;
                     
@@ -678,15 +701,7 @@ function bannerGenerator() {
                     ctx.fillStyle = grad;
                     ctx.fillRect(0, 0, W, H);
                     
-                    // Multiple circles
-                    const circles = [
-                        {x: 0.1, y: 0.2, r: 0.15},
-                        {x: 0.9, y: 0.1, r: 0.2},
-                        {x: 0.8, y: 0.8, r: 0.25},
-                        {x: 0.05, y: 0.75, r: 0.12},
-                        {x: 0.5, y: 0.5, r: 0.08},
-                    ];
-                    circles.forEach(c => {
+                    [{x:0.08,y:0.12,r:0.1},{x:0.92,y:0.08,r:0.14},{x:0.88,y:0.88,r:0.18},{x:0.05,y:0.82,r:0.08}].forEach(c => {
                         ctx.fillStyle = 'rgba(255,255,255,0.1)';
                         ctx.beginPath();
                         ctx.arc(W * c.x, H * c.y, Math.min(W, H) * c.r, 0, Math.PI * 2);
@@ -701,14 +716,12 @@ function bannerGenerator() {
                     ctx.fillStyle = grad;
                     ctx.fillRect(0, 0, W, H);
                     
-                    // Dot pattern
-                    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-                    const dotSpacing = Math.min(W, H) * 0.05;
-                    const dotRadius = dotSpacing * 0.15;
-                    for (let x = dotSpacing; x < W; x += dotSpacing) {
-                        for (let y = dotSpacing; y < H; y += dotSpacing) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+                    const sp = Math.min(W, H) * 0.04;
+                    for (let x = sp; x < W; x += sp) {
+                        for (let y = sp; y < H; y += sp) {
                             ctx.beginPath();
-                            ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
+                            ctx.arc(x, y, sp * 0.1, 0, Math.PI * 2);
                             ctx.fill();
                         }
                     }
@@ -721,11 +734,10 @@ function bannerGenerator() {
                     ctx.fillStyle = grad;
                     ctx.fillRect(0, 0, W, H);
                     
-                    // Diagonal lines
-                    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+                    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
                     ctx.lineWidth = 2;
-                    const lineSpacing = Math.min(W, H) * 0.04;
-                    for (let i = -H; i < W + H; i += lineSpacing) {
+                    const ls = Math.min(W, H) * 0.03;
+                    for (let i = -H; i < W + H; i += ls) {
                         ctx.beginPath();
                         ctx.moveTo(i, 0);
                         ctx.lineTo(i + H, H);
@@ -733,7 +745,7 @@ function bannerGenerator() {
                     }
                     break;
                     
-                default: // solid
+                default:
                     grad = ctx.createLinearGradient(0, 0, W, H);
                     grad.addColorStop(0, p);
                     grad.addColorStop(1, s);
@@ -756,41 +768,30 @@ function bannerGenerator() {
             ctx.closePath();
         },
         
-        wrapText(ctx, text, maxWidth) {
+        wrapText(ctx, text, maxW) {
             const words = text.split(' ');
             const lines = [];
-            let currentLine = '';
+            let line = '';
             
             words.forEach(word => {
-                const testLine = currentLine + (currentLine ? ' ' : '') + word;
-                const metrics = ctx.measureText(testLine);
-                
-                if (metrics.width > maxWidth && currentLine) {
-                    lines.push(currentLine);
-                    currentLine = word;
+                const test = line + (line ? ' ' : '') + word;
+                if (ctx.measureText(test).width > maxW && line) {
+                    lines.push(line);
+                    line = word;
                 } else {
-                    currentLine = testLine;
+                    line = test;
                 }
             });
             
-            if (currentLine) {
-                lines.push(currentLine);
-            }
-            
-            return lines.length > 0 ? lines : [text];
+            if (line) lines.push(line);
+            return lines.length ? lines : [text];
         },
         
         downloadBanner(format) {
             const canvas = document.getElementById('bannerCanvas');
             const link = document.createElement('a');
             link.download = `banner_${this.selectedSize}_${Date.now()}.${format}`;
-            
-            if (format === 'png') {
-                link.href = canvas.toDataURL('image/png', 1.0);
-            } else {
-                link.href = canvas.toDataURL('image/jpeg', 0.95);
-            }
-            
+            link.href = format === 'png' ? canvas.toDataURL('image/png', 1.0) : canvas.toDataURL('image/jpeg', 0.95);
             link.click();
         }
     };
