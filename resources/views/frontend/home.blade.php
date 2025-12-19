@@ -14,146 +14,72 @@
 @section('og_title', $companyName . ' - Premium Homemade Masala & Herbal Products')
 @section('og_description', 'Buy authentic homemade masala powders, Indian spices & herbal products. 100% pure and natural. Free delivery above ₹500.')
 
-@section('structured_data')
-<!-- Organization Schema -->
-<script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "{{ $companyName }}",
-    "url": "{{ $siteUrl }}",
-    "logo": "{{ \App\Models\Setting::logo() ?? asset('images/logo.png') }}",
-    "description": "{{ $tagline }}",
-    "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Chennai",
-        "addressRegion": "Tamil Nadu",
-        "addressCountry": "IN"
-    },
-    "contactPoint": {
-        "@type": "ContactPoint",
-        "telephone": "{{ \App\Models\Setting::get('business_phone') }}",
-        "contactType": "customer service"
-    }
-}
-</script>
-
-<!-- WebSite Schema -->
-<script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "{{ $companyName }}",
-    "url": "{{ $siteUrl }}",
-    "potentialAction": {
-        "@type": "SearchAction",
-        "target": "{{ route('products.search') }}?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-    }
-}
-</script>
-
-<!-- ItemList Schema for Featured Products -->
-@if($featuredProducts->count() > 0)
-<script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    "name": "Featured Products",
-    "description": "Our best-selling homemade masala and herbal products",
-    "numberOfItems": {{ $featuredProducts->count() }},
-    "itemListElement": [
-        @foreach($featuredProducts as $index => $product)
-        {
-            "@type": "ListItem",
-            "position": {{ $index + 1 }},
-            "item": {
-                "@type": "Product",
-                "name": "{{ $product->name }}",
-                "url": "{{ route('products.show', $product->slug) }}",
-                "image": "{{ $product->primary_image_url ?? asset('images/no-image.jpg') }}",
-                "description": "{{ Str::limit($product->short_description, 150) }}",
-                "offers": {
-                    "@type": "Offer",
-                    "price": "{{ $product->effective_price }}",
-                    "priceCurrency": "INR",
-                    "availability": "{{ $product->isOutOfStock() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock' }}"
-                }
-            }
-        }@if(!$loop->last),@endif
-        @endforeach
-    ]
-}
-</script>
-@endif
-@endsection
-
 @section('content')
 <!-- Hero Slider -->
 @if($banners->count() > 0)
-<section x-data="{ current: 0, banners: {{ $banners->count() }} }" class="relative" aria-label="Featured promotions">
-    <div class="overflow-hidden">
-        @foreach($banners as $index => $banner)
-            <div x-show="current === {{ $index }}" 
-                 x-transition:enter="transition ease-out duration-500"
-                 x-transition:enter-start="opacity-0 transform translate-x-full"
-                 x-transition:enter-end="opacity-100 transform translate-x-0"
-                 class="relative h-48 md:h-72 lg:h-80 bg-cover bg-center" 
-                 style="background-image: url('{{ $banner->image_url }}')"
-                 role="img"
-                 aria-label="{{ $banner->title }}">
-                <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                    <div class="text-center text-white px-4">
-                        <h2 class="text-2xl md:text-4xl font-bold mb-3">{{ $banner->title }}</h2>
-                        @if($banner->subtitle)
-                            <p class="text-base md:text-lg mb-4">{{ $banner->subtitle }}</p>
-                        @endif
-                        @if($banner->link)
-                            <a href="{{ $banner->link }}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold text-sm inline-block">
-                                {{ $banner->button_text ?? 'Shop Now' }}
-                            </a>
-                        @endif
+    <section x-data="{ current: 0, banners: {{ $banners->count() }} }" class="relative" aria-label="Featured promotions">
+        <div class="overflow-hidden">
+            @foreach($banners as $index => $banner)
+                <div x-show="current === {{ $index }}" 
+                     x-transition:enter="transition ease-out duration-500"
+                     x-transition:enter-start="opacity-0 transform translate-x-full"
+                     x-transition:enter-end="opacity-100 transform translate-x-0"
+                     class="relative h-48 md:h-72 lg:h-80 bg-cover bg-center" 
+                     style="background-image: url('{{ $banner->image_url }}')"
+                     role="img"
+                     aria-label="{{ $banner->title }}">
+                    <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                        <div class="text-center text-white px-4">
+                            <h2 class="text-2xl md:text-4xl font-bold mb-3">{{ $banner->title }}</h2>
+                            @if($banner->subtitle)
+                                <p class="text-base md:text-lg mb-4">{{ $banner->subtitle }}</p>
+                            @endif
+                            @if($banner->link)
+                                <a href="{{ $banner->link }}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold text-sm inline-block">
+                                    {{ $banner->button_text ?? 'Shop Now' }}
+                                </a>
+                            @endif
+                        </div>
                     </div>
                 </div>
-            </div>
-        @endforeach
-    </div>
-    
-    @if($banners->count() > 1)
-        <button @click="current = current === 0 ? banners - 1 : current - 1" 
-                class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 hover:bg-opacity-75 rounded-full p-1.5"
-                aria-label="Previous slide">
-            <i class="fas fa-chevron-left text-gray-800" aria-hidden="true"></i>
-        </button>
-        <button @click="current = current === banners - 1 ? 0 : current + 1" 
-                class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 hover:bg-opacity-75 rounded-full p-1.5"
-                aria-label="Next slide">
-            <i class="fas fa-chevron-right text-gray-800" aria-hidden="true"></i>
-        </button>
-        
-        <div class="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2" role="tablist">
-            @foreach($banners as $index => $banner)
-                <button @click="current = {{ $index }}" 
-                        :class="current === {{ $index }} ? 'bg-green-600' : 'bg-white bg-opacity-50'"
-                        class="w-2 h-2 rounded-full"
-                        role="tab"
-                        aria-label="Slide {{ $index + 1 }}"
-                        :aria-selected="current === {{ $index }}"></button>
             @endforeach
         </div>
-    @endif
-</section>
+        
+        @if($banners->count() > 1)
+            <button @click="current = current === 0 ? banners - 1 : current - 1" 
+                    class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 hover:bg-opacity-75 rounded-full p-1.5"
+                    aria-label="Previous slide">
+                <i class="fas fa-chevron-left text-gray-800" aria-hidden="true"></i>
+            </button>
+            <button @click="current = current === banners - 1 ? 0 : current + 1" 
+                    class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 hover:bg-opacity-75 rounded-full p-1.5"
+                    aria-label="Next slide">
+                <i class="fas fa-chevron-right text-gray-800" aria-hidden="true"></i>
+            </button>
+            
+            <div class="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2" role="tablist">
+                @foreach($banners as $index => $banner)
+                    <button @click="current = {{ $index }}" 
+                            :class="current === {{ $index }} ? 'bg-green-600' : 'bg-white bg-opacity-50'"
+                            class="w-2 h-2 rounded-full"
+                            role="tab"
+                            aria-label="Slide {{ $index + 1 }}"
+                            :aria-selected="current === {{ $index }}"></button>
+                @endforeach
+            </div>
+        @endif
+    </section>
 @else
-<!-- Default Hero -->
-<section class="bg-gradient-to-r from-green-600 to-green-800 text-white py-12 md:py-16" aria-label="Welcome banner">
-    <div class="container mx-auto px-4 text-center">
-        <h1 class="text-3xl md:text-4xl font-bold mb-3">Welcome to {{ $companyName }}</h1>
-        <p class="text-lg mb-6">{{ $tagline }}</p>
-        <a href="{{ route('products.index') }}" class="bg-white text-green-600 hover:bg-gray-100 px-6 py-2 rounded-lg font-semibold text-sm inline-block">
-            Shop Now
-        </a>
-    </div>
-</section>
+    <!-- Default Hero -->
+    <section class="bg-gradient-to-r from-green-600 to-green-800 text-white py-12 md:py-16" aria-label="Welcome banner">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold mb-3">Welcome to {{ $companyName }}</h1>
+            <p class="text-lg mb-6">{{ $tagline }}</p>
+            <a href="{{ route('products.index') }}" class="bg-white text-green-600 hover:bg-gray-100 px-6 py-2 rounded-lg font-semibold text-sm inline-block">
+                Shop Now
+            </a>
+        </div>
+    </section>
 @endif
 
 <!-- Categories Section -->
@@ -166,17 +92,7 @@
                    class="group bg-gray-50 rounded-lg p-4 text-center hover:bg-green-50 hover:shadow-md transition"
                    title="Shop {{ $category->name }}">
                     <div class="w-12 h-12 md:w-14 md:h-14 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center group-hover:bg-green-200 transition">
-                        @if($category->slug === 'spices-masalas')
-                            <i class="fas fa-pepper-hot text-xl md:text-2xl text-green-600" aria-hidden="true"></i>
-                        @elseif($category->slug === 'health-millet-products')
-                            <i class="fas fa-seedling text-xl md:text-2xl text-green-600" aria-hidden="true"></i>
-                        @elseif($category->slug === 'baby-care')
-                            <i class="fas fa-baby text-xl md:text-2xl text-green-600" aria-hidden="true"></i>
-                        @elseif($category->slug === 'ayurvedic-wellness')
-                            <i class="fas fa-spa text-xl md:text-2xl text-green-600" aria-hidden="true"></i>
-                        @else
-                            <i class="fas fa-leaf text-xl md:text-2xl text-green-600" aria-hidden="true"></i>
-                        @endif
+                        <i class="fas fa-leaf text-xl md:text-2xl text-green-600" aria-hidden="true"></i>
                     </div>
                     <h3 class="font-semibold text-gray-800 group-hover:text-green-600 text-sm md:text-base">{{ $category->name }}</h3>
                     <p class="text-xs text-gray-500 mt-1">{{ $category->active_products_count ?? $category->products_count ?? 0 }} Products</p>
@@ -188,21 +104,21 @@
 
 <!-- Featured Products -->
 @if($featuredProducts->count() > 0)
-<section class="py-8 bg-gray-50" aria-labelledby="featured-heading">
-    <div class="container mx-auto px-4">
-        <div class="flex justify-between items-center mb-5">
-            <h2 id="featured-heading" class="text-xl md:text-2xl font-bold">Featured Products</h2>
-            <a href="{{ route('products.index') }}?featured=1" class="text-green-600 hover:text-green-700 font-medium text-sm">
-                View All <i class="fas fa-arrow-right ml-1" aria-hidden="true"></i>
-            </a>
+    <section class="py-8 bg-gray-50" aria-labelledby="featured-heading">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center mb-5">
+                <h2 id="featured-heading" class="text-xl md:text-2xl font-bold">Featured Products</h2>
+                <a href="{{ route('products.index') }}?featured=1" class="text-green-600 hover:text-green-700 font-medium text-sm">
+                    View All <i class="fas fa-arrow-right ml-1" aria-hidden="true"></i>
+                </a>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+                @foreach($featuredProducts as $product)
+                    @include('frontend.partials.product-card', ['product' => $product])
+                @endforeach
+            </div>
         </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-            @foreach($featuredProducts as $product)
-                @include('frontend.partials.product-card', ['product' => $product])
-            @endforeach
-        </div>
-    </div>
-</section>
+    </section>
 @endif
 
 <!-- USP Banner -->
@@ -222,21 +138,21 @@
 
 <!-- New Arrivals -->
 @if($newArrivals->count() > 0)
-<section class="py-8 bg-white" aria-labelledby="new-arrivals-heading">
-    <div class="container mx-auto px-4">
-        <div class="flex justify-between items-center mb-5">
-            <h2 id="new-arrivals-heading" class="text-xl md:text-2xl font-bold">New Arrivals</h2>
-            <a href="{{ route('products.index') }}?sort=latest" class="text-green-600 hover:text-green-700 font-medium text-sm">
-                View All <i class="fas fa-arrow-right ml-1" aria-hidden="true"></i>
-            </a>
+    <section class="py-8 bg-white" aria-labelledby="new-arrivals-heading">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center mb-5">
+                <h2 id="new-arrivals-heading" class="text-xl md:text-2xl font-bold">New Arrivals</h2>
+                <a href="{{ route('products.index') }}?sort=latest" class="text-green-600 hover:text-green-700 font-medium text-sm">
+                    View All <i class="fas fa-arrow-right ml-1" aria-hidden="true"></i>
+                </a>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+                @foreach($newArrivals as $product)
+                    @include('frontend.partials.product-card', ['product' => $product])
+                @endforeach
+            </div>
         </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-            @foreach($newArrivals as $product)
-                @include('frontend.partials.product-card', ['product' => $product])
-            @endforeach
-        </div>
-    </div>
-</section>
+    </section>
 @endif
 
 <!-- Why Choose Us -->

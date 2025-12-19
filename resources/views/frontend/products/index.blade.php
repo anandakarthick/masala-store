@@ -14,11 +14,7 @@
     ? $currentCategory->name . ', buy ' . $currentCategory->name . ' online, homemade ' . $currentCategory->name . ', natural products, ' . $businessName
     : 'buy masala online, homemade spices, turmeric powder, coriander powder, garam masala, herbal products, ayurvedic oils, natural products India')
 
-@if($currentCategory)
-@section('canonical', route('category.show', $currentCategory->slug))
-@else
-@section('canonical', route('products.index'))
-@endif
+@section('canonical', $currentCategory ? route('category.show', $currentCategory->slug) : route('products.index'))
 
 @section('structured_data')
 <!-- BreadcrumbList Schema -->
