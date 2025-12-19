@@ -183,6 +183,17 @@
                     </li>
                     
                     <li class="pt-4">
+                        <span x-show="sidebarOpen" class="px-3 text-xs text-gray-400 uppercase">Marketing</span>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.banner-generator.index') }}" 
+                           class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-700 {{ request()->routeIs('admin.banner-generator.*') ? 'bg-green-600' : '' }}">
+                            <i class="fas fa-image w-6"></i>
+                            <span x-show="sidebarOpen" class="ml-3">Banner Generator</span>
+                        </a>
+                    </li>
+                    
+                    <li class="pt-4">
                         <span x-show="sidebarOpen" class="px-3 text-xs text-gray-400 uppercase">Channels</span>
                     </li>
                     <li>

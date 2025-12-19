@@ -223,6 +223,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::delete('/delivery-partners/{partner}', [AdminSettingsController::class, 'destroyDeliveryPartner'])->name('delivery-partners.destroy');
     });
 
+    // Banner Generator
+    Route::prefix('banner-generator')->name('banner-generator.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\BannerController::class, 'index'])->name('index');
+        Route::get('/product-details', [App\Http\Controllers\Admin\BannerController::class, 'getProductDetails'])->name('product-details');
+        Route::get('/category-details', [App\Http\Controllers\Admin\BannerController::class, 'getCategoryDetails'])->name('category-details');
+    });
+
     // Payment Methods
     Route::get('payment-methods', [AdminPaymentMethodController::class, 'index'])->name('payment-methods.index');
     Route::get('payment-methods/{paymentMethod}/edit', [AdminPaymentMethodController::class, 'edit'])->name('payment-methods.edit');
