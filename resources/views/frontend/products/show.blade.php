@@ -265,6 +265,84 @@
                         <span>Chemical-Free</span>
                     </div>
                 </div>
+
+                <!-- Share Product -->
+                @php
+                    $shareUrl = urlencode($productUrl);
+                    $shareTitle = urlencode($product->name . ' - ' . $businessName);
+                    $shareText = urlencode($product->name . ' - ₹' . number_format($product->effective_price, 2) . '. ' . Str::limit(strip_tags($product->short_description ?? $product->description ?? ''), 100));
+                    $whatsappNumber = \App\Models\Setting::get('whatsapp_number', '');
+                    $whatsappMessage = urlencode('Hi! I am interested in this product: ' . $product->name . ' (₹' . number_format($product->effective_price, 2) . ')\n\n' . $productUrl);
+                @endphp
+                <div class="mt-4 pt-4 border-t">
+                    <p class="text-sm font-medium text-gray-700 mb-2">Share this product:</p>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <!-- WhatsApp Share -->
+                        <a href="https://wa.me/?text={{ $shareText }}%20{{ $shareUrl }}" 
+                           target="_blank" rel="noopener noreferrer"
+                           class="inline-flex items-center gap-1.5 bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-full text-xs font-medium transition"
+                           title="Share on WhatsApp">
+                            <i class="fab fa-whatsapp text-sm"></i> WhatsApp
+                        </a>
+                        
+                        <!-- Order on WhatsApp -->
+                        @if($whatsappNumber)
+                            <a href="https://wa.me/91{{ $whatsappNumber }}?text={{ $whatsappMessage }}" 
+                               target="_blank" rel="noopener noreferrer"
+                               class="inline-flex items-center gap-1.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-3 py-1.5 rounded-full text-xs font-medium transition"
+                               title="Order via WhatsApp">
+                                <i class="fab fa-whatsapp text-sm"></i> Order on WhatsApp
+                            </a>
+                        @endif
+                        
+                        <!-- Facebook Share -->
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ $shareUrl }}" 
+                           target="_blank" rel="noopener noreferrer"
+                           class="inline-flex items-center justify-center w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-sm transition"
+                           title="Share on Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        
+                        <!-- Twitter/X Share -->
+                        <a href="https://twitter.com/intent/tweet?text={{ $shareTitle }}&url={{ $shareUrl }}" 
+                           target="_blank" rel="noopener noreferrer"
+                           class="inline-flex items-center justify-center w-8 h-8 bg-black hover:bg-gray-800 text-white rounded-full text-sm transition"
+                           title="Share on X (Twitter)">
+                            <i class="fab fa-x-twitter"></i>
+                        </a>
+                        
+                        <!-- Telegram Share -->
+                        <a href="https://t.me/share/url?url={{ $shareUrl }}&text={{ $shareTitle }}" 
+                           target="_blank" rel="noopener noreferrer"
+                           class="inline-flex items-center justify-center w-8 h-8 bg-sky-500 hover:bg-sky-600 text-white rounded-full text-sm transition"
+                           title="Share on Telegram">
+                            <i class="fab fa-telegram-plane"></i>
+                        </a>
+                        
+                        <!-- Pinterest Share -->
+                        <a href="https://pinterest.com/pin/create/button/?url={{ $shareUrl }}&media={{ urlencode($productImage) }}&description={{ $shareTitle }}" 
+                           target="_blank" rel="noopener noreferrer"
+                           class="inline-flex items-center justify-center w-8 h-8 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm transition"
+                           title="Pin on Pinterest">
+                            <i class="fab fa-pinterest-p"></i>
+                        </a>
+                        
+                        <!-- Email Share -->
+                        <a href="mailto:?subject={{ $shareTitle }}&body=Check%20out%20this%20product:%20{{ $shareUrl }}" 
+                           class="inline-flex items-center justify-center w-8 h-8 bg-gray-600 hover:bg-gray-700 text-white rounded-full text-sm transition"
+                           title="Share via Email">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                        
+                        <!-- Copy Link -->
+                        <button type="button" 
+                                onclick="copyProductLink()"
+                                class="inline-flex items-center justify-center w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full text-sm transition"
+                                title="Copy Link">
+                            <i class="fas fa-link"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -294,6 +372,50 @@
 
 @push('scripts')
 <script>
+function copyProductLink() {
+    var url = '{{ $productUrl }}';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function() {
+            showCopyToast('Link copied to clipboard!');
+        }).catch(function() {
+            fallbackCopy(url);
+        });
+    } else {
+        fallbackCopy(url);
+    }
+}
+
+function fallbackCopy(text) {
+    var textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        showCopyToast('Link copied to clipboard!');
+    } catch (err) {
+        showCopyToast('Failed to copy link', 'error');
+    }
+    document.body.removeChild(textArea);
+}
+
+function showCopyToast(message, type) {
+    type = type || 'success';
+    var toast = document.createElement('div');
+    toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg text-white text-sm font-medium z-50 transition-opacity duration-300 ' + 
+                      (type === 'success' ? 'bg-green-600' : 'bg-red-600');
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(function() {
+        toast.style.opacity = '0';
+        setTimeout(function() {
+            document.body.removeChild(toast);
+        }, 300);
+    }, 2000);
+}
+
 function productDetail(config) {
     return {
         hasVariants: config.hasVariants,
