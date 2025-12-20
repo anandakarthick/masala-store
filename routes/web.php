@@ -52,6 +52,7 @@ Route::get('/csrf-token', function() {
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 Route::post('/contact', [HomeController::class, 'submitContact'])->name('contact.submit');
+Route::get('/page/{slug}', [App\Http\Controllers\PageController::class, 'show'])->name('page.show');
 
 // Products
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
@@ -225,7 +226,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/delivery-partners', [AdminSettingsController::class, 'storeDeliveryPartner'])->name('delivery-partners.store');
         Route::put('/delivery-partners/{partner}', [AdminSettingsController::class, 'updateDeliveryPartner'])->name('delivery-partners.update');
         Route::delete('/delivery-partners/{partner}', [AdminSettingsController::class, 'destroyDeliveryPartner'])->name('delivery-partners.destroy');
+        
+        // Social Media & WhatsApp
+        Route::get('/social-media', [App\Http\Controllers\Admin\SocialMediaController::class, 'index'])->name('social-media');
+        Route::post('/social-media/links', [App\Http\Controllers\Admin\SocialMediaController::class, 'storeLink'])->name('social-media.store');
+        Route::put('/social-media/links/{link}', [App\Http\Controllers\Admin\SocialMediaController::class, 'updateLink'])->name('social-media.update');
+        Route::delete('/social-media/links/{link}', [App\Http\Controllers\Admin\SocialMediaController::class, 'destroyLink'])->name('social-media.destroy');
+        Route::put('/social-media/whatsapp', [App\Http\Controllers\Admin\SocialMediaController::class, 'updateWhatsApp'])->name('social-media.whatsapp');
     });
+
+    // Pages (Privacy Policy, Terms, etc.)
+    Route::resource('pages', App\Http\Controllers\Admin\PageController::class);
 
     // Banner Generator
     Route::prefix('banner-generator')->name('banner-generator.')->group(function () {

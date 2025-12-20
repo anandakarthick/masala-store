@@ -15,6 +15,17 @@
         $siteUrl = config('app.url', url('/'));
         $defaultDescription = $businessTagline . '. Buy authentic Indian spices online.';
         $defaultKeywords = 'homemade masala, Indian spices, turmeric powder, coriander powder, garam masala';
+        
+        // WhatsApp Settings
+        $whatsappNumber = \App\Models\Setting::get('whatsapp_number', '');
+        $whatsappEnabled = \App\Models\Setting::get('whatsapp_enabled', '1');
+        $whatsappMessage = \App\Models\Setting::get('whatsapp_default_message', 'Hello! I would like to place an order.');
+        
+        // Social Media Links
+        $socialLinks = \App\Models\SocialMediaLink::active()->get();
+        
+        // Footer Pages
+        $footerPages = \App\Models\Page::active()->footer()->get();
     @endphp
     
     <title>@yield('title', 'Home') - {{ $businessName }}</title>
@@ -78,6 +89,11 @@
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
+        .whatsapp-float { animation: whatsapp-pulse 2s infinite; }
+        @keyframes whatsapp-pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 6px 20px rgba(37, 211, 102, 0.6); }
+        }
     </style>
     
     @stack('styles')
@@ -89,16 +105,40 @@
         <span x-text="toast.message"></span>
     </div>
 
+    <!-- Top Bar -->
     <div class="bg-green-700 text-white text-xs sm:text-sm py-1.5">
         <div class="container mx-auto px-2 sm:px-4">
             <div class="flex justify-between items-center">
-                <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Left: Phone & Social -->
+                <div class="flex items-center gap-2 sm:gap-4">
                     <a href="tel:{{ $businessPhone }}" class="flex items-center hover:text-green-200">
                         <i class="fas fa-phone text-xs mr-1"></i>
                         <span class="hidden sm:inline">{{ $businessPhone }}</span>
                     </a>
+                    
+                    <!-- Social Media Links in Top Bar -->
+                    @if($socialLinks->count() > 0)
+                        <div class="hidden md:flex items-center gap-2 border-l border-green-600 pl-3">
+                            @foreach($socialLinks->take(5) as $social)
+                                <a href="{{ $social->url }}" target="_blank" rel="noopener" 
+                                   class="hover:text-green-200 transition" title="{{ $social->name }}">
+                                    <i class="{{ $social->icon }}"></i>
+                                </a>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
+                
+                <!-- Right: WhatsApp, Track, Account -->
                 <div class="flex items-center gap-2 sm:gap-3">
+                    @if($whatsappEnabled == '1' && $whatsappNumber)
+                        <a href="https://wa.me/91{{ $whatsappNumber }}?text={{ urlencode($whatsappMessage) }}" 
+                           target="_blank" rel="noopener"
+                           class="hidden sm:flex items-center gap-1 bg-green-600 hover:bg-green-500 px-2 py-0.5 rounded-full text-xs">
+                            <i class="fab fa-whatsapp"></i>
+                            <span>Order on WhatsApp</span>
+                        </a>
+                    @endif
                     <a href="{{ route('tracking.index') }}" class="hover:text-green-200 flex items-center">
                         <i class="fas fa-truck text-xs"></i>
                         <span class="hidden md:inline ml-1">Track</span>
@@ -198,6 +238,15 @@
                     <li class="border-t pt-2 mt-2"><a href="{{ route('about') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50"><i class="fas fa-info-circle w-5 mr-2"></i>About</a></li>
                     <li><a href="{{ route('contact') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50"><i class="fas fa-envelope w-5 mr-2"></i>Contact</a></li>
                     <li class="border-t pt-2 mt-2"><a href="{{ route('tracking.index') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50"><i class="fas fa-truck w-5 mr-2"></i>Track Order</a></li>
+                    @if($whatsappEnabled == '1' && $whatsappNumber)
+                        <li>
+                            <a href="https://wa.me/91{{ $whatsappNumber }}?text={{ urlencode($whatsappMessage) }}" 
+                               target="_blank" rel="noopener"
+                               class="block py-2 px-3 rounded bg-green-500 text-white font-medium">
+                                <i class="fab fa-whatsapp w-5 mr-2"></i>Order on WhatsApp
+                            </a>
+                        </li>
+                    @endif
                     @auth
                         <li><a href="{{ route('account.dashboard') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50"><i class="fas fa-user w-5 mr-2"></i>My Account</a></li>
                         <li>
@@ -231,13 +280,31 @@
         @yield('content')
     </main>
 
+    <!-- Footer -->
     <footer class="bg-gray-900 text-gray-300 mt-12">
         <div class="container mx-auto px-4 py-12">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Company Info -->
                 <div>
                     <h3 class="text-white text-lg font-bold mb-4"><i class="fas fa-leaf text-green-500"></i> {{ $businessName }}</h3>
-                    <p class="text-sm">{{ $businessTagline }}</p>
+                    <p class="text-sm mb-4">{{ $businessTagline }}</p>
+                    
+                    <!-- Social Media Links -->
+                    @if($socialLinks->count() > 0)
+                        <div class="flex items-center gap-3 mt-4">
+                            @foreach($socialLinks as $social)
+                                <a href="{{ $social->url }}" target="_blank" rel="noopener" 
+                                   class="w-9 h-9 rounded-full flex items-center justify-center transition transform hover:scale-110"
+                                   style="background-color: {{ $social->color ?? '#6B7280' }}"
+                                   title="{{ $social->name }}">
+                                    <i class="{{ $social->icon }} text-white"></i>
+                                </a>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
+                
+                <!-- Quick Links -->
                 <div>
                     <h4 class="text-white font-semibold mb-4">Quick Links</h4>
                     <ul class="space-y-2 text-sm">
@@ -248,6 +315,8 @@
                         <li><a href="{{ route('contact') }}" class="hover:text-green-400">Contact</a></li>
                     </ul>
                 </div>
+                
+                <!-- Categories -->
                 <div>
                     <h4 class="text-white font-semibold mb-4">Categories</h4>
                     <ul class="space-y-2 text-sm">
@@ -256,20 +325,58 @@
                         @endforeach
                     </ul>
                 </div>
+                
+                <!-- Contact -->
                 <div>
                     <h4 class="text-white font-semibold mb-4">Contact Us</h4>
                     <ul class="space-y-2 text-sm">
                         <li><i class="fas fa-map-marker-alt mr-2 text-green-500"></i>{{ $businessAddress }}</li>
                         <li><a href="tel:{{ $businessPhone }}" class="hover:text-green-400"><i class="fas fa-phone mr-2 text-green-500"></i>{{ $businessPhone }}</a></li>
                         <li><a href="mailto:{{ $businessEmail }}" class="hover:text-green-400"><i class="fas fa-envelope mr-2 text-green-500"></i>{{ $businessEmail }}</a></li>
+                        @if($whatsappEnabled == '1' && $whatsappNumber)
+                            <li>
+                                <a href="https://wa.me/91{{ $whatsappNumber }}?text={{ urlencode($whatsappMessage) }}" 
+                                   target="_blank" rel="noopener" class="hover:text-green-400">
+                                    <i class="fab fa-whatsapp mr-2 text-green-500"></i>WhatsApp Order
+                                </a>
+                            </li>
+                        @endif
                     </ul>
                 </div>
             </div>
         </div>
-        <div class="border-t border-gray-800 py-4 text-center text-sm">
-            <p>&copy; {{ date('Y') }} {{ $businessName }}. All rights reserved.</p>
+        
+        <!-- Footer Bottom -->
+        <div class="border-t border-gray-800 py-4">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-3 text-sm">
+                    <p>&copy; {{ date('Y') }} {{ $businessName }}. All rights reserved.</p>
+                    
+                    <!-- Legal Pages Links -->
+                    @if($footerPages->count() > 0)
+                        <div class="flex items-center gap-4">
+                            @foreach($footerPages as $page)
+                                <a href="{{ route('page.show', $page->slug) }}" class="hover:text-green-400">{{ $page->title }}</a>
+                                @if(!$loop->last)
+                                    <span class="text-gray-600">|</span>
+                                @endif
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
     </footer>
+
+    <!-- Floating WhatsApp Button -->
+    @if($whatsappEnabled == '1' && $whatsappNumber)
+        <a href="https://wa.me/91{{ $whatsappNumber }}?text={{ urlencode($whatsappMessage) }}" 
+           target="_blank" rel="noopener"
+           class="fixed bottom-6 right-6 z-50 w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg whatsapp-float"
+           title="Order on WhatsApp">
+            <i class="fab fa-whatsapp text-2xl"></i>
+        </a>
+    @endif
 
     <script>
         var csrfHelper = {

@@ -208,17 +208,38 @@
                         <span x-show="sidebarOpen" class="px-3 text-xs text-gray-400 uppercase">Settings</span>
                     </li>
                     <li>
+                        <a href="{{ route('admin.settings.index') }}" 
+                           class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-700 {{ request()->routeIs('admin.settings.index') ? 'bg-green-600' : '' }}">
+                            <i class="fas fa-cog w-6"></i>
+                            <span x-show="sidebarOpen" class="ml-3">General Settings</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.settings.banners') }}" 
+                           class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-700 {{ request()->routeIs('admin.settings.banners') ? 'bg-green-600' : '' }}">
+                            <i class="fas fa-images w-6"></i>
+                            <span x-show="sidebarOpen" class="ml-3">Store Banners</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.settings.social-media') }}" 
+                           class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-700 {{ request()->routeIs('admin.settings.social-media') ? 'bg-green-600' : '' }}">
+                            <i class="fab fa-whatsapp w-6"></i>
+                            <span x-show="sidebarOpen" class="ml-3">WhatsApp & Social</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.pages.index') }}" 
+                           class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-700 {{ request()->routeIs('admin.pages.*') ? 'bg-green-600' : '' }}">
+                            <i class="fas fa-file-alt w-6"></i>
+                            <span x-show="sidebarOpen" class="ml-3">Pages</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('admin.payment-methods.index') }}" 
                            class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-700 {{ request()->routeIs('admin.payment-methods.*') ? 'bg-green-600' : '' }}">
                             <i class="fas fa-credit-card w-6"></i>
                             <span x-show="sidebarOpen" class="ml-3">Payment Methods</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('admin.settings.index') }}" 
-                           class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-700 {{ request()->routeIs('admin.settings.*') ? 'bg-green-600' : '' }}">
-                            <i class="fas fa-cog w-6"></i>
-                            <span x-show="sidebarOpen" class="ml-3">Settings</span>
                         </a>
                     </li>
                 </ul>
