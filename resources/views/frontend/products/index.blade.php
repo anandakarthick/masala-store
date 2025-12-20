@@ -2,7 +2,9 @@
 
 @php
     $businessName = \App\Models\Setting::get('business_name', 'SV Masala & Herbal Products');
-    $pageTitle = $currentCategory ? $currentCategory->name . ' - Buy Online' : 'All Products - Buy Masala & Herbal Products Online';
+    $pageTitle = $currentCategory 
+        ? ($currentCategory->meta_title ?? $currentCategory->name . ' - Buy Online') 
+        : 'All Products - Buy Masala & Herbal Products Online';
     $pageDescription = $currentCategory 
         ? ($currentCategory->meta_description ?? 'Buy ' . $currentCategory->name . ' online from ' . $businessName . '. 100% pure, homemade, chemical-free products. Free delivery above ₹500.')
         : 'Shop premium homemade masala powders, Indian spices, herbal products & ayurvedic oils. 100% pure and natural. Free delivery on orders above ₹500.';

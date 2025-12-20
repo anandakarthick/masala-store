@@ -77,22 +77,87 @@
     </section>
 @endif
 
-<!-- Categories Section -->
-<section class="py-8 bg-white" aria-labelledby="categories-heading">
+<!-- Categories Section with Images -->
+<section class="py-10 bg-white" aria-labelledby="categories-heading">
     <div class="container mx-auto px-4">
-        <h2 id="categories-heading" class="text-xl md:text-2xl font-bold text-center mb-6">Shop by Category</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
+        <div class="text-center mb-8">
+            <h2 id="categories-heading" class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Shop by Category</h2>
+            <p class="text-gray-500 text-sm">Explore our wide range of natural & homemade products</p>
+        </div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             @foreach($categories as $category)
                 <a href="{{ route('category.show', $category->slug) }}" 
-                   class="group bg-gray-50 rounded-lg p-4 text-center hover:bg-green-50 hover:shadow-md transition"
+                   class="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                    title="Shop {{ $category->name }}">
-                    <div class="w-12 h-12 md:w-14 md:h-14 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center group-hover:bg-green-200 transition">
-                        <i class="fas fa-leaf text-xl md:text-2xl text-green-600" aria-hidden="true"></i>
+                    
+                    <!-- Category Image -->
+                    <div class="aspect-square relative">
+                        @if($category->image_url)
+                            <img src="{{ $category->image_url }}" 
+                                 alt="{{ $category->name }}" 
+                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        @else
+                            <!-- Default gradient background with icon -->
+                            <div class="w-full h-full flex items-center justify-center {{ $loop->index % 4 == 0 ? 'bg-gradient-to-br from-green-400 to-green-600' : ($loop->index % 4 == 1 ? 'bg-gradient-to-br from-amber-400 to-orange-500' : ($loop->index % 4 == 2 ? 'bg-gradient-to-br from-pink-400 to-rose-500' : 'bg-gradient-to-br from-purple-400 to-indigo-500')) }}">
+                                @php
+                                    $icons = [
+                                        'spice' => 'fa-pepper-hot',
+                                        'masala' => 'fa-mortar-pestle',
+                                        'health' => 'fa-heartbeat',
+                                        'millet' => 'fa-seedling',
+                                        'baby' => 'fa-baby',
+                                        'ayurvedic' => 'fa-leaf',
+                                        'wellness' => 'fa-spa',
+                                        'oil' => 'fa-tint',
+                                        'herbal' => 'fa-pagelines',
+                                    ];
+                                    $icon = 'fa-leaf';
+                                    $categoryNameLower = strtolower($category->name);
+                                    foreach($icons as $key => $iconClass) {
+                                        if(str_contains($categoryNameLower, $key)) {
+                                            $icon = $iconClass;
+                                            break;
+                                        }
+                                    }
+                                @endphp
+                                <i class="fas {{ $icon }} text-white text-5xl md:text-6xl opacity-90" aria-hidden="true"></i>
+                            </div>
+                        @endif
+                        
+                        <!-- Overlay -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
                     </div>
-                    <h3 class="font-semibold text-gray-800 group-hover:text-green-600 text-sm md:text-base">{{ $category->name }}</h3>
-                    <p class="text-xs text-gray-500 mt-1">{{ $category->active_products_count ?? $category->products_count ?? 0 }} Products</p>
+                    
+                    <!-- Category Info -->
+                    <div class="absolute bottom-0 left-0 right-0 p-4 text-white">
+                        <h3 class="font-bold text-lg md:text-xl mb-1 group-hover:text-green-300 transition-colors">
+                            {{ $category->name }}
+                        </h3>
+                        <p class="text-sm text-gray-200 opacity-90">
+                            {{ $category->active_products_count ?? $category->products_count ?? 0 }} Products
+                        </p>
+                        
+                        <!-- Arrow indicator -->
+                        <div class="mt-2 flex items-center text-green-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <span>Explore</span>
+                            <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Hover border effect -->
+                    <div class="absolute inset-0 border-4 border-transparent group-hover:border-green-500 rounded-2xl transition-colors duration-300"></div>
                 </a>
             @endforeach
+        </div>
+        
+        <!-- View All Categories Link -->
+        <div class="text-center mt-8">
+            <a href="{{ route('products.index') }}" 
+               class="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-semibold transition-colors">
+                View All Products
+                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+            </a>
         </div>
     </div>
 </section>

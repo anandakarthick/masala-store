@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\Banner;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BannerController extends Controller
 {
@@ -16,6 +18,8 @@ class BannerController extends Controller
         'instagram_post' => ['width' => 1080, 'height' => 1080, 'label' => 'Instagram Post', 'icon' => 'fab fa-instagram'],
         'facebook_post' => ['width' => 1200, 'height' => 630, 'label' => 'Facebook Post', 'icon' => 'fab fa-facebook'],
         'facebook_story' => ['width' => 1080, 'height' => 1920, 'label' => 'Facebook Story', 'icon' => 'fab fa-facebook'],
+        'website_banner' => ['width' => 1920, 'height' => 600, 'label' => 'Website Banner', 'icon' => 'fas fa-globe'],
+        'website_mobile' => ['width' => 800, 'height' => 400, 'label' => 'Website Mobile', 'icon' => 'fas fa-mobile-alt'],
         'google_display_square' => ['width' => 300, 'height' => 250, 'label' => 'Google Ads Square', 'icon' => 'fab fa-google'],
         'google_display_rect' => ['width' => 336, 'height' => 280, 'label' => 'Google Ads Rectangle', 'icon' => 'fab fa-google'],
         'google_display_leaderboard' => ['width' => 728, 'height' => 90, 'label' => 'Google Ads Leaderboard', 'icon' => 'fab fa-google'],
@@ -102,6 +106,89 @@ class BannerController extends Controller
             'name' => $category->name,
             'description' => $category->description,
             'products_count' => $category->products_count,
+        ]);
+    }
+
+    /**
+     * Save generated banner to store banners
+     */
+    public function saveToStore(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|string', // Base64 image data
+            'title' => 'required|string|max:255',
+            'subtitle' => 'nullable|string|max:255',
+            'link' => 'nullable|string|max:500',
+            'button_text' => 'nullable|string|max:50',
+            'position' => 'required|in:home_slider,home_banner,category_banner,popup',
+            'is_active' => 'boolean',
+        ]);
+
+        // Decode base64 image
+        $imageData = $request->image;
+        
+        // Remove data URL prefix if present
+        if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $matches)) {
+            $extension = $matches[1];
+            $imageData = substr($imageData, strpos($imageData, ',') + 1);
+        } else {
+            $extension = 'png';
+        }
+        
+        $imageData = base64_decode($imageData);
+        
+        if ($imageData === false) {
+            return response()->json(['success' => false, 'message' => 'Invalid image data'], 400);
+        }
+
+        // Generate unique filename
+        $filename = 'banners/generated_' . time() . '_' . uniqid() . '.' . $extension;
+        
+        // Store the image
+        Storage::disk('public')->put($filename, $imageData);
+
+        // Create banner record
+        $banner = Banner::create([
+            'title' => $request->title,
+            'subtitle' => $request->subtitle,
+            'image' => $filename,
+            'link' => $request->link,
+            'button_text' => $request->button_text ?? 'Shop Now',
+            'position' => $request->position,
+            'sort_order' => Banner::where('position', $request->position)->max('sort_order') + 1,
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Banner saved to store successfully!',
+            'banner' => [
+                'id' => $banner->id,
+                'title' => $banner->title,
+                'image_url' => $banner->image_url,
+            ]
+        ]);
+    }
+
+    /**
+     * Get all store banners
+     */
+    public function getStoreBanners()
+    {
+        $banners = Banner::orderBy('position')->orderBy('sort_order')->get();
+        
+        return response()->json([
+            'success' => true,
+            'banners' => $banners->map(function($banner) {
+                return [
+                    'id' => $banner->id,
+                    'title' => $banner->title,
+                    'subtitle' => $banner->subtitle,
+                    'image_url' => $banner->image_url,
+                    'position' => $banner->position,
+                    'is_active' => $banner->is_active,
+                ];
+            })
         ]);
     }
 }

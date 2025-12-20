@@ -165,6 +165,11 @@
                     @foreach($navCategories as $category)
                         <li><a href="{{ route('category.show', $category->slug) }}" class="text-gray-700 hover:text-green-600 font-medium">{{ $category->name }}</a></li>
                     @endforeach
+                    <li>
+                        <a href="{{ route('products.offers') }}" class="inline-flex items-center gap-1 bg-gradient-to-r from-red-500 to-orange-500 text-white px-3 py-1 rounded-full font-medium hover:from-red-600 hover:to-orange-600 transition-all text-xs">
+                            <i class="fas fa-fire animate-pulse"></i> Offers
+                        </a>
+                    </li>
                     <li><a href="{{ route('about') }}" class="text-gray-700 hover:text-green-600 font-medium">About</a></li>
                     <li><a href="{{ route('contact') }}" class="text-gray-700 hover:text-green-600 font-medium">Contact</a></li>
                 </ul>
@@ -182,6 +187,11 @@
                 <ul class="space-y-1">
                     <li><a href="{{ route('home') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50"><i class="fas fa-home w-5 mr-2"></i>Home</a></li>
                     <li><a href="{{ route('products.index') }}" class="block py-2 px-3 rounded text-green-600 bg-green-50 font-medium"><i class="fas fa-th-large w-5 mr-2"></i>All Products</a></li>
+                    <li>
+                        <a href="{{ route('products.offers') }}" class="block py-2 px-3 rounded bg-gradient-to-r from-red-500 to-orange-500 text-white font-medium">
+                            <i class="fas fa-fire w-5 mr-2 animate-pulse"></i>🔥 Special Offers
+                        </a>
+                    </li>
                     @foreach($navCategories as $category)
                         <li><a href="{{ route('category.show', $category->slug) }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50"><i class="fas fa-tag w-5 mr-2"></i>{{ $category->name }}</a></li>
                     @endforeach
@@ -233,6 +243,7 @@
                     <ul class="space-y-2 text-sm">
                         <li><a href="{{ route('home') }}" class="hover:text-green-400">Home</a></li>
                         <li><a href="{{ route('products.index') }}" class="hover:text-green-400">All Products</a></li>
+                        <li><a href="{{ route('products.offers') }}" class="hover:text-green-400 flex items-center gap-1"><i class="fas fa-fire text-orange-400"></i> Offers</a></li>
                         <li><a href="{{ route('about') }}" class="hover:text-green-400">About Us</a></li>
                         <li><a href="{{ route('contact') }}" class="hover:text-green-400">Contact</a></li>
                     </ul>

@@ -56,6 +56,7 @@ Route::post('/contact', [HomeController::class, 'submitContact'])->name('contact
 // Products
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/search', [ProductController::class, 'search'])->name('products.search');
+Route::get('/products/offers', [ProductController::class, 'offers'])->name('products.offers');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/category/{category:slug}', [ProductController::class, 'category'])->name('category.show');
 
@@ -231,6 +232,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/', [App\Http\Controllers\Admin\BannerController::class, 'index'])->name('index');
         Route::get('/product-details', [App\Http\Controllers\Admin\BannerController::class, 'getProductDetails'])->name('product-details');
         Route::get('/category-details', [App\Http\Controllers\Admin\BannerController::class, 'getCategoryDetails'])->name('category-details');
+        Route::post('/save-to-store', [App\Http\Controllers\Admin\BannerController::class, 'saveToStore'])->name('save-to-store');
+        Route::get('/store-banners', [App\Http\Controllers\Admin\BannerController::class, 'getStoreBanners'])->name('store-banners');
     });
 
     // Payment Methods

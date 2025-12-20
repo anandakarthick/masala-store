@@ -132,4 +132,39 @@ class ProductController extends Controller
 
         return view('frontend.products.search', compact('products', 'search'));
     }
+
+    public function offers(Request $request)
+    {
+        $query = Product::active()
+            ->whereNotNull('discount_price')
+            ->where('discount_price', '>', 0)
+            ->whereColumn('discount_price', '<', 'price')
+            ->with('primaryImage', 'category', 'activeVariants');
+
+        // Sorting
+        $sort = $request->get('sort', 'discount');
+        switch ($sort) {
+            case 'price_low':
+                $query->orderBy('discount_price', 'asc');
+                break;
+            case 'price_high':
+                $query->orderBy('discount_price', 'desc');
+                break;
+            case 'name':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'latest':
+                $query->latest();
+                break;
+            case 'discount':
+            default:
+                // Order by discount percentage (highest first)
+                $query->orderByRaw('((price - discount_price) / price * 100) DESC');
+        }
+
+        $products = $query->paginate(12);
+        $categories = Category::active()->whereNull('parent_id')->withCount('activeProducts')->get();
+
+        return view('frontend.products.offers', compact('products', 'categories'));
+    }
 }
