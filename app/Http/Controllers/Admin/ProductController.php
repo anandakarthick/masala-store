@@ -260,6 +260,10 @@ class ProductController extends Controller
         Storage::disk('public')->delete($image->image_path);
         $image->delete();
 
+        if (request()->ajax() || request()->wantsJson() || request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Image deleted successfully.']);
+        }
+
         return back()->with('success', 'Image deleted successfully.');
     }
 
@@ -270,7 +274,27 @@ class ProductController extends Controller
 
         $image->update(['is_primary' => true]);
 
+        if (request()->ajax() || request()->wantsJson() || request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Primary image updated.']);
+        }
+
         return back()->with('success', 'Primary image updated.');
+    }
+
+    public function reorderImages(Request $request, Product $product)
+    {
+        $request->validate([
+            'order' => 'required|array',
+            'order.*' => 'integer|exists:product_images,id'
+        ]);
+
+        foreach ($request->order as $index => $imageId) {
+            ProductImage::where('id', $imageId)
+                ->where('product_id', $product->id)
+                ->update(['sort_order' => $index]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Image order updated.']);
     }
 
     public function updateStock(Request $request, Product $product)

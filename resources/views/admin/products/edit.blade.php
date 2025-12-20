@@ -219,43 +219,127 @@
                 </div>
             </div>
 
-            <!-- Images -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold mb-4">Product Images</h3>
+            <!-- Product Images - Enhanced with Drag & Drop -->
+            <div class="bg-white rounded-lg shadow-md p-6" x-data="imageManager()">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">
+                        <i class="fas fa-images text-green-600 mr-2"></i>Product Images
+                    </h3>
+                    <span class="text-xs text-gray-500">Drag to reorder • Click star to set primary</span>
+                </div>
                 
                 @if($product->images->count() > 0)
-                    <div class="grid grid-cols-4 gap-4 mb-4">
-                        @foreach($product->images as $image)
-                            <div class="relative group">
-                                <img src="{{ $image->url }}" alt="" class="w-full h-24 object-cover rounded-lg {{ $image->is_primary ? 'ring-2 ring-green-500' : '' }}">
-                                <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition rounded-lg flex items-center justify-center space-x-2">
-                                    @if(!$image->is_primary)
-                                        <form action="{{ route('admin.products.set-primary-image', $image) }}" method="POST" class="inline">
-                                            @csrf
-                                            <button type="submit" class="text-white hover:text-green-400" title="Set as primary">
-                                                <i class="fas fa-star"></i>
-                                            </button>
-                                        </form>
-                                    @endif
-                                    <form action="{{ route('admin.products.delete-image', $image) }}" method="POST" class="inline" onsubmit="return confirm('Delete this image?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-white hover:text-red-400" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                    <!-- Image Grid with Drag & Drop -->
+                    <div id="image-sortable" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
+                        @foreach($product->images->sortBy('sort_order') as $image)
+                            <div class="image-item relative group rounded-xl overflow-hidden border-2 transition-all duration-200 cursor-move
+                                        {{ $image->is_primary ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200 hover:border-gray-300' }}"
+                                 data-id="{{ $image->id }}">
+                                
+                                <!-- Image -->
+                                <div class="aspect-square bg-gray-100">
+                                    <img src="{{ $image->url }}" alt="" class="w-full h-full object-cover">
                                 </div>
+                                
+                                <!-- Primary Badge -->
                                 @if($image->is_primary)
-                                    <span class="absolute top-1 left-1 bg-green-500 text-white text-xs px-1 rounded">Primary</span>
+                                    <div class="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center gap-1">
+                                        <i class="fas fa-star text-yellow-300"></i> Primary
+                                    </div>
                                 @endif
+                                
+                                <!-- Drag Handle -->
+                                <div class="absolute top-2 right-2 bg-white/90 text-gray-600 p-1.5 rounded-lg shadow opacity-0 group-hover:opacity-100 transition cursor-move">
+                                    <i class="fas fa-grip-vertical"></i>
+                                </div>
+                                
+                                <!-- Hover Overlay -->
+                                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                                    @if(!$image->is_primary)
+                                        <!-- Set Primary Button -->
+                                        <button type="button" 
+                                                onclick="setPrimaryImage({{ $image->id }})"
+                                                class="w-10 h-10 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full flex items-center justify-center transition transform hover:scale-110 shadow-lg"
+                                                title="Set as Primary">
+                                            <i class="fas fa-star"></i>
+                                        </button>
+                                    @endif
+                                    
+                                    <!-- View Button -->
+                                    <a href="{{ $image->url }}" target="_blank"
+                                       class="w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition transform hover:scale-110 shadow-lg"
+                                       title="View Full Size">
+                                        <i class="fas fa-expand"></i>
+                                    </a>
+                                    
+                                    <!-- Delete Button -->
+                                    <button type="button" 
+                                            onclick="deleteImage({{ $image->id }})"
+                                            class="w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition transform hover:scale-110 shadow-lg"
+                                            title="Delete Image">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Sort Order Indicator -->
+                                <div class="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+                                    #<span class="sort-number">{{ $loop->iteration }}</span>
+                                </div>
                             </div>
                         @endforeach
                     </div>
+                    
+                    <!-- Reorder Info -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                        <div class="flex items-start gap-2">
+                            <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
+                            <div class="text-sm text-blue-700">
+                                <strong>Tip:</strong> Drag images to rearrange their display order. The primary image will be shown first on the product page.
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <!-- No Images Placeholder -->
+                    <div class="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 mb-4">
+                        <i class="fas fa-image text-4xl text-gray-300 mb-2"></i>
+                        <p class="text-gray-500">No images uploaded yet</p>
+                    </div>
                 @endif
                 
-                <input type="file" name="images[]" multiple accept="image/*"
-                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
-                <p class="text-sm text-gray-500 mt-1">Upload additional images</p>
+                <!-- Upload New Images -->
+                <div class="border-t pt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-cloud-upload-alt mr-1"></i> Add More Images
+                    </label>
+                    <div class="relative">
+                        <input type="file" name="images[]" multiple accept="image/*" id="image-upload"
+                               class="hidden" @change="handleFileSelect($event)">
+                        <label for="image-upload" 
+                               class="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 transition">
+                            <div class="text-center">
+                                <i class="fas fa-plus text-2xl text-gray-400 mb-2"></i>
+                                <p class="text-sm text-gray-500">Click to upload or drag & drop</p>
+                                <p class="text-xs text-gray-400 mt-1">PNG, JPG, WEBP up to 2MB each</p>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <!-- Preview New Uploads -->
+                    <div x-show="newImages.length > 0" class="mt-4">
+                        <p class="text-sm font-medium text-gray-700 mb-2">New images to upload:</p>
+                        <div class="grid grid-cols-4 gap-3">
+                            <template x-for="(img, index) in newImages" :key="index">
+                                <div class="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
+                                    <img :src="img.preview" class="w-full h-full object-cover">
+                                    <button type="button" @click="removeNewImage(index)"
+                                            class="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -327,6 +411,24 @@
     </div>
 </form>
 
+<!-- Hidden forms for AJAX actions -->
+<form id="set-primary-form" method="POST" style="display:none;">
+    @csrf
+</form>
+
+<form id="delete-image-form" method="POST" style="display:none;">
+    @csrf
+    @method('DELETE')
+</form>
+
+<form id="reorder-form" method="POST" action="{{ route('admin.products.reorder-images', $product) }}" style="display:none;">
+    @csrf
+    <input type="hidden" name="order" id="image-order-input">
+</form>
+
+<!-- Sortable.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
 <script>
 function productForm() {
     return {
@@ -354,5 +456,177 @@ function productForm() {
         }
     }
 }
+
+function imageManager() {
+    return {
+        newImages: [],
+        
+        handleFileSelect(event) {
+            const files = event.target.files;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.newImages.push({
+                            file: file,
+                            preview: e.target.result
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        },
+        
+        removeNewImage(index) {
+            this.newImages.splice(index, 1);
+            // Clear the file input
+            document.getElementById('image-upload').value = '';
+        }
+    }
+}
+
+// Initialize Sortable for drag & drop
+document.addEventListener('DOMContentLoaded', function() {
+    const sortableEl = document.getElementById('image-sortable');
+    if (sortableEl) {
+        new Sortable(sortableEl, {
+            animation: 200,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            handle: '.image-item',
+            onEnd: function(evt) {
+                updateSortNumbers();
+                saveImageOrder();
+            }
+        });
+    }
+});
+
+function updateSortNumbers() {
+    const items = document.querySelectorAll('#image-sortable .image-item');
+    items.forEach((item, index) => {
+        const sortNumber = item.querySelector('.sort-number');
+        if (sortNumber) {
+            sortNumber.textContent = index + 1;
+        }
+    });
+}
+
+function saveImageOrder() {
+    const items = document.querySelectorAll('#image-sortable .image-item');
+    const order = Array.from(items).map(item => item.dataset.id);
+    
+    document.getElementById('image-order-input').value = JSON.stringify(order);
+    
+    // Send AJAX request to save order
+    fetch('{{ route("admin.products.reorder-images", $product) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ order: order })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Image order updated!', 'success');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Failed to update order', 'error');
+    });
+}
+
+function setPrimaryImage(imageId) {
+    fetch(`{{ url('admin/products/images') }}/${imageId}/set-primary`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showToast('Primary image updated!', 'success');
+            location.reload();
+        } else {
+            showToast(data.message || 'Failed to update primary image', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Failed to update primary image', 'error');
+    });
+}
+
+function deleteImage(imageId) {
+    if (!confirm('Are you sure you want to delete this image?')) return;
+    
+    fetch(`{{ url('admin/products/images') }}/${imageId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showToast('Image deleted!', 'success');
+            location.reload();
+        } else {
+            showToast(data.message || 'Failed to delete image', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Failed to delete image', 'error');
+    });
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg text-white font-medium shadow-lg z-50 transition-all transform ${
+        type === 'success' ? 'bg-green-600' : 'bg-red-600'
+    }`;
+    toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>${message}`;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
 </script>
+
+<style>
+.sortable-ghost {
+    opacity: 0.4 !important;
+}
+.sortable-chosen {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 3px #22c55e !important;
+    border-radius: 0.75rem;
+}
+.sortable-drag {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+</style>
 @endsection

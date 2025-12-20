@@ -214,12 +214,90 @@
                 </div>
             </div>
 
-            <!-- Images -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold mb-4">Product Images</h3>
-                <input type="file" name="images[]" multiple accept="image/*"
-                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
-                <p class="text-sm text-gray-500 mt-1">You can upload multiple images. First image will be primary.</p>
+            <!-- Product Images - Enhanced -->
+            <div class="bg-white rounded-lg shadow-md p-6" x-data="imageUploader()">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">
+                        <i class="fas fa-images text-green-600 mr-2"></i>Product Images
+                    </h3>
+                    <span class="text-xs text-gray-500">First image will be primary</span>
+                </div>
+                
+                <!-- Upload Area -->
+                <div class="relative">
+                    <input type="file" name="images[]" multiple accept="image/*" id="image-upload"
+                           class="hidden" @change="handleFiles($event)">
+                    <label for="image-upload" 
+                           class="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-green-500 hover:bg-green-50 transition-all duration-200"
+                           :class="{ 'border-green-500 bg-green-50': isDragging }"
+                           @dragover.prevent="isDragging = true"
+                           @dragleave.prevent="isDragging = false"
+                           @drop.prevent="handleDrop($event)">
+                        <div class="text-center">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                            <p class="text-sm font-medium text-gray-600">Click to upload or drag & drop</p>
+                            <p class="text-xs text-gray-400 mt-1">PNG, JPG, WEBP up to 2MB each</p>
+                        </div>
+                    </label>
+                </div>
+                
+                <!-- Image Previews -->
+                <div x-show="images.length > 0" class="mt-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="text-sm font-medium text-gray-700">Selected Images (<span x-text="images.length"></span>)</p>
+                        <button type="button" @click="clearAll()" class="text-xs text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash mr-1"></i> Clear All
+                        </button>
+                    </div>
+                    
+                    <div id="preview-sortable" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        <template x-for="(img, index) in images" :key="img.id">
+                            <div class="relative group aspect-square rounded-xl overflow-hidden border-2 cursor-move transition-all duration-200"
+                                 :class="index === 0 ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200'"
+                                 :data-index="index">
+                                
+                                <!-- Image Preview -->
+                                <img :src="img.preview" class="w-full h-full object-cover">
+                                
+                                <!-- Primary Badge -->
+                                <div x-show="index === 0" class="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center gap-1">
+                                    <i class="fas fa-star text-yellow-300"></i> Primary
+                                </div>
+                                
+                                <!-- Order Number -->
+                                <div class="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+                                    #<span x-text="index + 1"></span>
+                                </div>
+                                
+                                <!-- Drag Handle -->
+                                <div class="absolute top-2 right-2 bg-white/90 text-gray-600 p-1.5 rounded-lg shadow opacity-0 group-hover:opacity-100 transition">
+                                    <i class="fas fa-grip-vertical"></i>
+                                </div>
+                                
+                                <!-- Remove Button -->
+                                <button type="button" @click="removeImage(index)"
+                                        class="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center hover:bg-red-600">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                
+                                <!-- File Size -->
+                                <div class="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+                                    <span x-text="formatSize(img.size)"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    
+                    <!-- Tip -->
+                    <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div class="flex items-start gap-2">
+                            <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
+                            <div class="text-sm text-blue-700">
+                                <strong>Tip:</strong> Drag images to rearrange. The first image will be set as the primary/main product image.
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -281,6 +359,9 @@
     </div>
 </form>
 
+<!-- Sortable.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
 <script>
 function productForm() {
     return {
@@ -301,5 +382,107 @@ function productForm() {
         }
     }
 }
+
+function imageUploader() {
+    return {
+        images: [],
+        isDragging: false,
+        idCounter: 0,
+        
+        init() {
+            this.$nextTick(() => {
+                this.initSortable();
+            });
+        },
+        
+        initSortable() {
+            const el = document.getElementById('preview-sortable');
+            if (el) {
+                new Sortable(el, {
+                    animation: 200,
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    dragClass: 'sortable-drag',
+                    onEnd: (evt) => {
+                        // Reorder images array
+                        const item = this.images.splice(evt.oldIndex, 1)[0];
+                        this.images.splice(evt.newIndex, 0, item);
+                        this.updateFileInput();
+                    }
+                });
+            }
+        },
+        
+        handleFiles(event) {
+            const files = event.target.files;
+            this.addFiles(files);
+        },
+        
+        handleDrop(event) {
+            this.isDragging = false;
+            const files = event.dataTransfer.files;
+            this.addFiles(files);
+        },
+        
+        addFiles(files) {
+            for (let file of files) {
+                if (file.type.startsWith('image/') && file.size <= 2 * 1024 * 1024) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.images.push({
+                            id: ++this.idCounter,
+                            file: file,
+                            preview: e.target.result,
+                            size: file.size
+                        });
+                        this.$nextTick(() => this.initSortable());
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+            this.updateFileInput();
+        },
+        
+        removeImage(index) {
+            this.images.splice(index, 1);
+            this.updateFileInput();
+        },
+        
+        clearAll() {
+            this.images = [];
+            this.updateFileInput();
+        },
+        
+        updateFileInput() {
+            // Create a new DataTransfer to update the file input
+            const dt = new DataTransfer();
+            this.images.forEach(img => {
+                dt.items.add(img.file);
+            });
+            document.getElementById('image-upload').files = dt.files;
+        },
+        
+        formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+    }
+}
 </script>
+
+<style>
+[x-cloak] { display: none !important; }
+.sortable-ghost {
+    opacity: 0.4 !important;
+}
+.sortable-chosen {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 3px #22c55e !important;
+    border-radius: 0.75rem;
+}
+.sortable-drag {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+</style>
 @endsection

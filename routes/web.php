@@ -152,12 +152,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('categories', AdminCategoryController::class);
     Route::post('categories/{category}/toggle-status', [AdminCategoryController::class, 'toggleStatus'])->name('categories.toggle-status');
 
+    // Product Images (must be before products resource to avoid conflicts)
+    Route::delete('products/images/{image}', [AdminProductController::class, 'deleteImage'])->name('products.delete-image');
+    Route::post('products/images/{image}/set-primary', [AdminProductController::class, 'setPrimaryImage'])->name('products.set-primary-image');
+
     // Products
     Route::resource('products', AdminProductController::class);
     Route::post('products/{product}/toggle-status', [AdminProductController::class, 'toggleStatus'])->name('products.toggle-status');
     Route::post('products/{product}/update-stock', [AdminProductController::class, 'updateStock'])->name('products.update-stock');
-    Route::delete('products/images/{image}', [AdminProductController::class, 'deleteImage'])->name('products.delete-image');
-    Route::post('products/images/{image}/set-primary', [AdminProductController::class, 'setPrimaryImage'])->name('products.set-primary-image');
+    Route::post('products/{product}/reorder-images', [AdminProductController::class, 'reorderImages'])->name('products.reorder-images');
     
     // Product Variants
     Route::get('products/{product}/variants', [AdminProductVariantController::class, 'index'])->name('products.variants.index');
