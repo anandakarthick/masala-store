@@ -21,6 +21,12 @@
         $whatsappEnabled = \App\Models\Setting::get('whatsapp_enabled', '1');
         $whatsappMessage = \App\Models\Setting::get('whatsapp_default_message', 'Hello! I would like to place an order.');
         
+        // Marquee/Announcement Bar Settings
+        $marqueeEnabled = \App\Models\Setting::get('marquee_enabled', '1');
+        $marqueeText = \App\Models\Setting::get('marquee_text', '🎉 Free Shipping on Orders Above ₹500 | 100% Pure & Natural Products | Order Now! 🌿');
+        $marqueeSpeed = \App\Models\Setting::get('marquee_speed', '30'); // seconds for one complete scroll
+        $marqueeBgColor = \App\Models\Setting::get('marquee_bg_color', '#15803d'); // green-700
+        
         // Social Media Links
         $socialLinks = \App\Models\SocialMediaLink::active()->get();
         
@@ -94,6 +100,33 @@
             0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); }
             50% { transform: scale(1.05); box-shadow: 0 6px 20px rgba(37, 211, 102, 0.6); }
         }
+        
+        /* Marquee Animation */
+        .marquee-container {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .marquee-content {
+            display: inline-block;
+            animation: marquee-scroll {{ $marqueeSpeed }}s linear infinite;
+        }
+        .marquee-content:hover {
+            animation-play-state: paused;
+        }
+        @keyframes marquee-scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        /* Top bar height for offset */
+        .top-bar-offset {
+            padding-top: 72px; /* Adjust based on top bar + header height */
+        }
+        @media (min-width: 640px) {
+            .top-bar-offset {
+                padding-top: 76px;
+            }
+        }
     </style>
     
     @stack('styles')
@@ -101,59 +134,75 @@
 <body class="bg-gray-50 min-h-screen flex flex-col" x-data="cartManager()" x-init="init()">
     <div x-show="toast.show" x-cloak
          :class="toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'"
-         class="fixed top-4 right-4 z-50 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
+         class="fixed top-36 right-4 z-50 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
         <span x-text="toast.message"></span>
     </div>
 
-    <!-- Top Bar -->
-    <div class="bg-green-700 text-white text-xs sm:text-sm py-1.5">
-        <div class="container mx-auto px-2 sm:px-4">
-            <div class="flex justify-between items-center">
-                <!-- Left: Phone & Social -->
-                <div class="flex items-center gap-2 sm:gap-4">
-                    <a href="tel:{{ $businessPhone }}" class="flex items-center hover:text-green-200">
-                        <i class="fas fa-phone text-xs mr-1"></i>
-                        <span class="hidden sm:inline">{{ $businessPhone }}</span>
-                    </a>
+    <!-- Fixed Top Bar Container -->
+    <div class="fixed top-0 left-0 right-0 z-50 bg-green-700">
+        <!-- Top Bar with Contact, Marquee & Social -->
+        <div class="text-white text-xs sm:text-sm py-1.5">
+            <div class="container mx-auto px-2 sm:px-4">
+                <div class="flex justify-between items-center">
+                    <!-- Left: WhatsApp Order Button -->
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        @if($whatsappEnabled == '1' && $whatsappNumber)
+                            <a href="https://wa.me/91{{ $whatsappNumber }}?text={{ urlencode($whatsappMessage) }}" 
+                               target="_blank" rel="noopener"
+                               class="flex items-center gap-1 bg-green-600 hover:bg-green-500 px-2 py-0.5 rounded-full text-xs">
+                                <i class="fab fa-whatsapp"></i>
+                                <span class="hidden sm:inline">Order on WhatsApp</span>
+                            </a>
+                        @endif
+                        
+                        <!-- Social Media Links -->
+                        @if($socialLinks->count() > 0)
+                            <div class="hidden lg:flex items-center gap-2 border-l border-green-600 pl-2">
+                                @foreach($socialLinks->take(4) as $social)
+                                    <a href="{{ $social->url }}" target="_blank" rel="noopener" 
+                                       class="hover:text-green-200 transition" title="{{ $social->name }}">
+                                        <i class="{{ $social->icon }}"></i>
+                                    </a>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
                     
-                    <!-- Social Media Links in Top Bar -->
-                    @if($socialLinks->count() > 0)
-                        <div class="hidden md:flex items-center gap-2 border-l border-green-600 pl-3">
-                            @foreach($socialLinks->take(5) as $social)
-                                <a href="{{ $social->url }}" target="_blank" rel="noopener" 
-                                   class="hover:text-green-200 transition" title="{{ $social->name }}">
-                                    <i class="{{ $social->icon }}"></i>
-                                </a>
-                            @endforeach
+                    <!-- Center: Marquee Running Text -->
+                    @if($marqueeEnabled == '1' && $marqueeText)
+                        <div class="flex-1 mx-3 overflow-hidden">
+                            <div class="marquee-container">
+                                <div class="marquee-content text-xs">
+                                    <span class="mx-4">{{ $marqueeText }}</span>
+                                    <span class="mx-4">{{ $marqueeText }}</span>
+                                </div>
+                            </div>
                         </div>
                     @endif
-                </div>
-                
-                <!-- Right: WhatsApp, Track, Account -->
-                <div class="flex items-center gap-2 sm:gap-3">
-                    @if($whatsappEnabled == '1' && $whatsappNumber)
-                        <a href="https://wa.me/91{{ $whatsappNumber }}?text={{ urlencode($whatsappMessage) }}" 
-                           target="_blank" rel="noopener"
-                           class="hidden sm:flex items-center gap-1 bg-green-600 hover:bg-green-500 px-2 py-0.5 rounded-full text-xs">
-                            <i class="fab fa-whatsapp"></i>
-                            <span>Order on WhatsApp</span>
+                    
+                    <!-- Right: Phone, Track, Account -->
+                    <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                        <a href="tel:{{ $businessPhone }}" class="flex items-center hover:text-green-200">
+                            <i class="fas fa-phone text-xs mr-1"></i>
+                            <span class="hidden sm:inline">{{ $businessPhone }}</span>
                         </a>
-                    @endif
-                    <a href="{{ route('tracking.index') }}" class="hover:text-green-200 flex items-center">
-                        <i class="fas fa-truck text-xs"></i>
-                        <span class="hidden md:inline ml-1">Track</span>
-                    </a>
-                    @auth
-                        <a href="{{ route('account.dashboard') }}" class="hover:text-green-200">Account</a>
-                    @else
-                        <a href="{{ route('login') }}" class="hover:text-green-200">Login</a>
-                    @endauth
+                        <a href="{{ route('tracking.index') }}" class="hover:text-green-200 flex items-center border-l border-green-600 pl-2">
+                            <i class="fas fa-truck text-xs"></i>
+                            <span class="hidden md:inline ml-1">Track</span>
+                        </a>
+                        @auth
+                            <a href="{{ route('account.dashboard') }}" class="hover:text-green-200 border-l border-green-600 pl-2">Account</a>
+                        @else
+                            <a href="{{ route('login') }}" class="hover:text-green-200 border-l border-green-600 pl-2">Login</a>
+                        @endauth
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <header class="bg-white shadow-md sticky top-0 z-40" x-data="{ mobileMenuOpen: false }">
+    <!-- Header (Sticky, positioned right below fixed top bar) -->
+    <header class="bg-white shadow-md fixed top-[28px] sm:top-[32px] left-0 right-0 z-40" x-data="{ mobileMenuOpen: false }">
         <div class="container mx-auto px-2 sm:px-4">
             <div class="flex items-center justify-between py-2 sm:py-3">
                 <a href="{{ route('home') }}" class="flex items-center">
@@ -263,6 +312,9 @@
             </div>
         </div>
     </header>
+
+    <!-- Spacer for fixed top bar + header -->
+    <div class="h-[120px] sm:h-[130px] lg:h-[110px]"></div>
 
     @if(session('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 container mx-auto mt-4 rounded">

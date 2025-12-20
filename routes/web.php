@@ -233,6 +233,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::put('/social-media/links/{link}', [App\Http\Controllers\Admin\SocialMediaController::class, 'updateLink'])->name('social-media.update');
         Route::delete('/social-media/links/{link}', [App\Http\Controllers\Admin\SocialMediaController::class, 'destroyLink'])->name('social-media.destroy');
         Route::put('/social-media/whatsapp', [App\Http\Controllers\Admin\SocialMediaController::class, 'updateWhatsApp'])->name('social-media.whatsapp');
+        Route::put('/social-media/marquee', [App\Http\Controllers\Admin\SocialMediaController::class, 'updateMarquee'])->name('social-media.marquee');
     });
 
     // Pages (Privacy Policy, Terms, etc.)

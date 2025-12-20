@@ -10,8 +10,80 @@
 @section('meta_description', $companyName . ' - Buy premium quality homemade masala powders, Indian spices, turmeric, coriander, garam masala, herbal oils & natural products online. 100% pure, chemical-free. Free delivery on orders above ₹500.')
 @section('meta_keywords', 'buy masala online, homemade spices, turmeric powder, coriander powder, cumin powder, garam masala, kashmiri chilli powder, cardamom powder, herbal products, ayurvedic oils, hair growth oil, natural products India, organic spices Chennai')
 
+@push('styles')
+<style>
+    /* Auto-fit grid for categories */
+    .category-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 0.75rem;
+    }
+    @media (min-width: 640px) {
+        .category-grid {
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        }
+    }
+    @media (min-width: 1024px) {
+        .category-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+    }
+    
+    /* Flexible grid for products - shows all items in one row */
+    .product-grid {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 0.75rem;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 0.5rem;
+    }
+    .product-grid > * {
+        flex: 0 0 calc(50% - 0.375rem);
+        min-width: 140px;
+        max-width: 200px;
+        scroll-snap-align: start;
+    }
+    @media (min-width: 640px) {
+        .product-grid > * {
+            flex: 0 0 calc(33.333% - 0.5rem);
+        }
+    }
+    @media (min-width: 768px) {
+        .product-grid > * {
+            flex: 0 0 calc(25% - 0.5625rem);
+        }
+    }
+    @media (min-width: 1024px) {
+        .product-grid {
+            flex-wrap: wrap;
+            overflow-x: visible;
+        }
+        .product-grid > * {
+            flex: 1 1 0;
+            min-width: 150px;
+            max-width: none;
+        }
+    }
+    
+    /* Hide scrollbar but keep functionality */
+    .product-grid::-webkit-scrollbar {
+        height: 4px;
+    }
+    .product-grid::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 2px;
+    }
+    .product-grid::-webkit-scrollbar-thumb {
+        background: #16a34a;
+        border-radius: 2px;
+    }
+</style>
+@endpush
+
 @section('content')
-<!-- Hero Slider -->
+<!-- Hero Slider - 1920x600 Banner Size -->
 @if($banners->count() > 0)
     <section x-data="{ current: 0, banners: {{ $banners->count() }} }" class="relative" aria-label="Featured promotions">
         <div class="overflow-hidden">
@@ -20,18 +92,18 @@
                      x-transition:enter="transition ease-out duration-500"
                      x-transition:enter-start="opacity-0 transform translate-x-full"
                      x-transition:enter-end="opacity-100 transform translate-x-0"
-                     class="relative h-40 md:h-56 lg:h-64 bg-cover bg-center" 
-                     style="background-image: url('{{ $banner->image_url }}')"
+                     class="relative bg-cover bg-center" 
+                     style="background-image: url('{{ $banner->image_url }}'); aspect-ratio: 1920/600;"
                      role="img"
                      aria-label="{{ $banner->title }}">
                     <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
                         <div class="text-center text-white px-4">
-                            <h2 class="text-xl md:text-3xl font-bold mb-2">{{ $banner->title }}</h2>
+                            <h2 class="text-2xl md:text-4xl lg:text-5xl font-bold mb-3">{{ $banner->title }}</h2>
                             @if($banner->subtitle)
-                                <p class="text-sm md:text-base mb-3">{{ $banner->subtitle }}</p>
+                                <p class="text-sm md:text-lg lg:text-xl mb-4">{{ $banner->subtitle }}</p>
                             @endif
                             @if($banner->link)
-                                <a href="{{ $banner->link }}" class="bg-green-600 hover:bg-green-700 text-white px-5 py-1.5 rounded-lg font-semibold text-sm inline-block">
+                                <a href="{{ $banner->link }}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 md:px-8 md:py-3 rounded-lg font-semibold text-sm md:text-base inline-block">
                                     {{ $banner->button_text ?? 'Shop Now' }}
                                 </a>
                             @endif
@@ -43,21 +115,21 @@
         
         @if($banners->count() > 1)
             <button @click="current = current === 0 ? banners - 1 : current - 1" 
-                    class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 hover:bg-opacity-75 rounded-full p-1.5"
+                    class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 md:p-3"
                     aria-label="Previous slide">
-                <i class="fas fa-chevron-left text-gray-800 text-sm" aria-hidden="true"></i>
+                <i class="fas fa-chevron-left text-gray-800 text-lg" aria-hidden="true"></i>
             </button>
             <button @click="current = current === banners - 1 ? 0 : current + 1" 
-                    class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 hover:bg-opacity-75 rounded-full p-1.5"
+                    class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 md:p-3"
                     aria-label="Next slide">
-                <i class="fas fa-chevron-right text-gray-800 text-sm" aria-hidden="true"></i>
+                <i class="fas fa-chevron-right text-gray-800 text-lg" aria-hidden="true"></i>
             </button>
             
-            <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1.5" role="tablist">
+            <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2" role="tablist">
                 @foreach($banners as $index => $banner)
                     <button @click="current = {{ $index }}" 
-                            :class="current === {{ $index }} ? 'bg-green-600' : 'bg-white bg-opacity-50'"
-                            class="w-2 h-2 rounded-full"
+                            :class="current === {{ $index }} ? 'bg-green-600 w-8' : 'bg-white bg-opacity-50 w-3'"
+                            class="h-3 rounded-full transition-all duration-300"
                             role="tab"
                             aria-label="Slide {{ $index + 1 }}"
                             :aria-selected="current === {{ $index }}"></button>
@@ -66,18 +138,20 @@
         @endif
     </section>
 @else
-    <section class="bg-gradient-to-r from-green-600 to-green-800 text-white py-8 md:py-10" aria-label="Welcome banner">
-        <div class="container mx-auto px-4 text-center">
-            <h1 class="text-2xl md:text-3xl font-bold mb-2">Welcome to {{ $companyName }}</h1>
-            <p class="text-sm md:text-base mb-4">{{ $tagline }}</p>
-            <a href="{{ route('products.index') }}" class="bg-white text-green-600 hover:bg-gray-100 px-5 py-1.5 rounded-lg font-semibold text-sm inline-block">
-                Shop Now
-            </a>
+    <section class="bg-gradient-to-r from-green-600 to-green-800 text-white" style="aspect-ratio: 1920/600;" aria-label="Welcome banner">
+        <div class="container mx-auto px-4 h-full flex items-center justify-center">
+            <div class="text-center">
+                <h1 class="text-3xl md:text-5xl font-bold mb-4">Welcome to {{ $companyName }}</h1>
+                <p class="text-lg md:text-xl mb-6">{{ $tagline }}</p>
+                <a href="{{ route('products.index') }}" class="bg-white text-green-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold text-base inline-block">
+                    Shop Now
+                </a>
+            </div>
         </div>
     </section>
 @endif
 
-<!-- Categories Section - Compact -->
+<!-- Categories Section - Auto-fit Grid -->
 <section class="py-6 bg-white" aria-labelledby="categories-heading">
     <div class="container mx-auto px-4">
         <div class="text-center mb-5">
@@ -85,13 +159,14 @@
             <p class="text-gray-500 text-xs">Explore our wide range of natural & homemade products</p>
         </div>
         
-        <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <!-- Auto-fit grid that adjusts based on number of items -->
+        <div class="category-grid">
             @foreach($categories as $category)
                 <a href="{{ route('category.show', $category->slug) }}" 
                    class="group relative overflow-hidden rounded-xl shadow hover:shadow-lg transition-all duration-300"
                    title="Shop {{ $category->name }}">
                     
-                    <!-- Category Image - Smaller -->
+                    <!-- Category Image -->
                     <div class="aspect-square relative">
                         @if($category->image_url)
                             <img src="{{ $category->image_url }}" 
@@ -111,6 +186,9 @@
                                         'wellness' => 'fa-spa',
                                         'oil' => 'fa-tint',
                                         'herbal' => 'fa-pagelines',
+                                        'candle' => 'fa-fire',
+                                        'gift' => 'fa-gift',
+                                        'combo' => 'fa-box',
                                     ];
                                     $icon = 'fa-leaf';
                                     $categoryNameLower = strtolower($category->name);
@@ -129,7 +207,7 @@
                         <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                     </div>
                     
-                    <!-- Category Info - Compact -->
+                    <!-- Category Info -->
                     <div class="absolute bottom-0 left-0 right-0 p-2 text-white text-center">
                         <h3 class="font-semibold text-xs md:text-sm leading-tight group-hover:text-green-300 transition-colors line-clamp-1">
                             {{ $category->name }}
@@ -144,7 +222,7 @@
     </div>
 </section>
 
-<!-- Featured Products -->
+<!-- Featured Products - Auto-fit Grid -->
 @if($featuredProducts->count() > 0)
     <section class="py-6 bg-gray-50" aria-labelledby="featured-heading">
         <div class="container mx-auto px-4">
@@ -154,7 +232,8 @@
                     View All <i class="fas fa-arrow-right ml-1" aria-hidden="true"></i>
                 </a>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <!-- Auto-fit grid that adjusts based on number of products -->
+            <div class="product-grid">
                 @foreach($featuredProducts as $product)
                     @include('frontend.partials.product-card-compact', ['product' => $product])
                 @endforeach
@@ -178,7 +257,7 @@
     </div>
 </section>
 
-<!-- New Arrivals -->
+<!-- New Arrivals - Auto-fit Grid -->
 @if($newArrivals->count() > 0)
     <section class="py-6 bg-white" aria-labelledby="new-arrivals-heading">
         <div class="container mx-auto px-4">
@@ -188,7 +267,8 @@
                     View All <i class="fas fa-arrow-right ml-1" aria-hidden="true"></i>
                 </a>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <!-- Auto-fit grid that adjusts based on number of products -->
+            <div class="product-grid">
                 @foreach($newArrivals as $product)
                     @include('frontend.partials.product-card-compact', ['product' => $product])
                 @endforeach

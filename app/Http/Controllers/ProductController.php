@@ -60,7 +60,7 @@ class ProductController extends Controller
                 $query->latest();
         }
 
-        $products = $query->paginate(12);
+        $products = $query->paginate(25);
         $categories = Category::active()->whereNull('parent_id')->withCount('activeProducts')->get();
 
         $currentCategory = $request->filled('category') 
@@ -102,7 +102,7 @@ class ProductController extends Controller
         $products = Product::active()
             ->whereIn('category_id', $categoryIds)
             ->with('primaryImage', 'category', 'activeVariants')
-            ->paginate(12);
+            ->paginate(25);
 
         $categories = Category::active()->whereNull('parent_id')->withCount('activeProducts')->get();
 
@@ -128,7 +128,7 @@ class ProductController extends Controller
                     ->orWhere('sku', 'like', "%{$search}%");
             })
             ->with('primaryImage', 'activeVariants')
-            ->paginate(12);
+            ->paginate(25);
 
         return view('frontend.products.search', compact('products', 'search'));
     }
@@ -162,7 +162,7 @@ class ProductController extends Controller
                 $query->orderByRaw('((price - discount_price) / price * 100) DESC');
         }
 
-        $products = $query->paginate(12);
+        $products = $query->paginate(25);
         $categories = Category::active()->whereNull('parent_id')->withCount('activeProducts')->get();
 
         return view('frontend.products.offers', compact('products', 'categories'));

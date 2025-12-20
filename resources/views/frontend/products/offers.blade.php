@@ -126,7 +126,7 @@
             </div>
 
             @if($products->count() > 0)
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                     @foreach($products as $product)
                         <div class="bg-white rounded-xl shadow-md overflow-hidden group hover:shadow-xl transition-all duration-300 relative">
                             <!-- Discount Badge -->

@@ -3,6 +3,78 @@
 @section('page_title', 'Social Media & WhatsApp Settings')
 
 @section('content')
+<!-- Announcement Bar / Marquee Settings -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h3 class="text-lg font-semibold mb-4 flex items-center">
+        <i class="fas fa-bullhorn text-orange-500 text-xl mr-2"></i>
+        Announcement Bar (Running Text)
+    </h3>
+    <form action="{{ route('admin.settings.social-media.marquee') }}" method="POST">
+        @csrf
+        @method('PUT')
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="flex items-center mb-3 cursor-pointer">
+                        <input type="checkbox" name="marquee_enabled" value="1" 
+                               {{ $marqueeEnabled == '1' ? 'checked' : '' }}
+                               class="w-5 h-5 text-orange-600 focus:ring-orange-500 rounded">
+                        <span class="ml-2 text-sm font-medium">Enable Announcement Bar</span>
+                    </label>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Announcement Text *</label>
+                    <textarea name="marquee_text" rows="3" required
+                              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500"
+                              placeholder="🎉 Free Shipping on Orders Above ₹500 | 100% Pure & Natural Products | Order Now! 🌿">{{ $marqueeText }}</textarea>
+                    <p class="text-xs text-gray-500 mt-1">Use emojis to make it attractive! This text scrolls between WhatsApp button and Phone number.</p>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Scroll Speed (seconds)</label>
+                    <input type="number" name="marquee_speed" value="{{ $marqueeSpeed }}" min="10" max="120"
+                           class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
+                    <p class="text-xs text-gray-500 mt-1">Time for one complete scroll. Lower = faster. Recommended: 25-40 seconds</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
+                    <div class="flex items-center gap-3">
+                        <input type="color" name="marquee_bg_color" value="{{ $marqueeBgColor }}"
+                               class="w-16 h-10 border border-gray-300 rounded-lg cursor-pointer">
+                        <input type="text" value="{{ $marqueeBgColor }}" readonly
+                               class="flex-1 border border-gray-300 rounded-lg px-4 py-2 bg-gray-50 text-sm"
+                               id="marquee-color-text">
+                        <div class="flex gap-1">
+                            <button type="button" onclick="setMarqueeColor('#15803d')" class="w-8 h-8 rounded bg-green-700 border-2 border-transparent hover:border-gray-400" title="Green"></button>
+                            <button type="button" onclick="setMarqueeColor('#dc2626')" class="w-8 h-8 rounded bg-red-600 border-2 border-transparent hover:border-gray-400" title="Red"></button>
+                            <button type="button" onclick="setMarqueeColor('#2563eb')" class="w-8 h-8 rounded bg-blue-600 border-2 border-transparent hover:border-gray-400" title="Blue"></button>
+                            <button type="button" onclick="setMarqueeColor('#7c3aed')" class="w-8 h-8 rounded bg-purple-600 border-2 border-transparent hover:border-gray-400" title="Purple"></button>
+                            <button type="button" onclick="setMarqueeColor('#ea580c')" class="w-8 h-8 rounded bg-orange-600 border-2 border-transparent hover:border-gray-400" title="Orange"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Preview -->
+        <div class="mt-4 p-4 bg-gray-100 rounded-lg">
+            <p class="text-xs text-gray-600 font-medium mb-2">Preview:</p>
+            <div class="text-white text-xs py-1.5 rounded overflow-hidden" id="marquee-preview" style="background-color: {{ $marqueeBgColor }}">
+                <div class="whitespace-nowrap animate-pulse">
+                    {{ $marqueeText }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button type="submit" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg flex items-center gap-2">
+                <i class="fas fa-save"></i> Save Announcement Settings
+            </button>
+        </div>
+    </form>
+</div>
+
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- WhatsApp Settings -->
     <div class="lg:col-span-1">
@@ -280,5 +352,17 @@ function updatePlatformDefaults() {
         colorInput.value = option.dataset.color || '#6B7280';
     }
 }
+
+function setMarqueeColor(color) {
+    document.querySelector('input[name="marquee_bg_color"]').value = color;
+    document.getElementById('marquee-color-text').value = color;
+    document.getElementById('marquee-preview').style.backgroundColor = color;
+}
+
+// Update color text when color picker changes
+document.querySelector('input[name="marquee_bg_color"]').addEventListener('input', function(e) {
+    document.getElementById('marquee-color-text').value = e.target.value;
+    document.getElementById('marquee-preview').style.backgroundColor = e.target.value;
+});
 </script>
 @endsection

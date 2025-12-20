@@ -18,7 +18,23 @@ class SocialMediaController extends Controller
         $whatsappEnabled = Setting::get('whatsapp_enabled', '1');
         $whatsappMessage = Setting::get('whatsapp_default_message', 'Hello! I would like to place an order.');
         
-        return view('admin.settings.social-media', compact('socialLinks', 'platforms', 'whatsappNumber', 'whatsappEnabled', 'whatsappMessage'));
+        // Marquee/Announcement Bar Settings
+        $marqueeEnabled = Setting::get('marquee_enabled', '1');
+        $marqueeText = Setting::get('marquee_text', '🎉 Free Shipping on Orders Above ₹500 | 100% Pure & Natural Products | Order Now! 🌿');
+        $marqueeSpeed = Setting::get('marquee_speed', '30');
+        $marqueeBgColor = Setting::get('marquee_bg_color', '#15803d');
+        
+        return view('admin.settings.social-media', compact(
+            'socialLinks', 
+            'platforms', 
+            'whatsappNumber', 
+            'whatsappEnabled', 
+            'whatsappMessage',
+            'marqueeEnabled',
+            'marqueeText',
+            'marqueeSpeed',
+            'marqueeBgColor'
+        ));
     }
 
     public function storeLink(Request $request)
@@ -84,5 +100,21 @@ class SocialMediaController extends Controller
         Setting::set('whatsapp_default_message', $request->whatsapp_default_message ?? 'Hello! I would like to place an order.', 'text', 'contact');
 
         return back()->with('success', 'WhatsApp settings updated successfully.');
+    }
+
+    public function updateMarquee(Request $request)
+    {
+        $request->validate([
+            'marquee_text' => 'required|string|max:1000',
+            'marquee_speed' => 'nullable|integer|min:10|max:120',
+            'marquee_bg_color' => 'nullable|string|max:20',
+        ]);
+
+        Setting::set('marquee_enabled', $request->boolean('marquee_enabled') ? '1' : '0', 'boolean', 'appearance');
+        Setting::set('marquee_text', $request->marquee_text, 'text', 'appearance');
+        Setting::set('marquee_speed', $request->marquee_speed ?? '30', 'text', 'appearance');
+        Setting::set('marquee_bg_color', $request->marquee_bg_color ?? '#15803d', 'text', 'appearance');
+
+        return back()->with('success', 'Announcement bar settings updated successfully.');
     }
 }
