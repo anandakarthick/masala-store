@@ -320,7 +320,7 @@
                 <div>
                     <h4 class="text-white font-semibold mb-4">Categories</h4>
                     <ul class="space-y-2 text-sm">
-                        @foreach(\App\Models\Category::whereNull('parent_id')->where('is_active', true)->take(5)->get() as $cat)
+                        @foreach(\App\Models\Category::whereNull('parent_id')->where('is_active', true)->orderBy('sort_order')->get() as $cat)
                             <li><a href="{{ route('category.show', $cat->slug) }}" class="hover:text-green-400">{{ $cat->name }}</a></li>
                         @endforeach
                     </ul>
