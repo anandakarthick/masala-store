@@ -54,7 +54,9 @@ class EstimateController extends Controller
     public function create()
     {
         $products = Product::active()->get();
-        $customers = User::where('is_admin', false)->get();
+        $customers = User::whereHas('role', function($q) {
+            $q->where('slug', 'customer');
+        })->get();
 
         $productsJson = [];
         foreach ($products as $p) {
@@ -171,7 +173,9 @@ class EstimateController extends Controller
 
         $estimate->load('items');
         $products = Product::active()->get();
-        $customers = User::where('is_admin', false)->get();
+        $customers = User::whereHas('role', function($q) {
+            $q->where('slug', 'customer');
+        })->get();
 
         $productsJson = [];
         foreach ($products as $p) {
