@@ -90,7 +90,7 @@ class CustomComboController extends Controller
     public function addProduct(Request $request)
     {
         $request->validate([
-            'combo_cart_id' => 'required|exists:custom_combo_cart,id',
+            'combo_cart_id' => 'required|exists:custom_combo_carts,id',
             'product_id' => 'required|exists:products,id',
             'variant_id' => 'nullable|exists:product_variants,id',
             'quantity' => 'integer|min:1|max:10',
@@ -137,7 +137,7 @@ class CustomComboController extends Controller
     public function removeProduct(Request $request)
     {
         $request->validate([
-            'combo_cart_id' => 'required|exists:custom_combo_cart,id',
+            'combo_cart_id' => 'required|exists:custom_combo_carts,id',
             'item_id' => 'required|exists:custom_combo_cart_items,id',
         ]);
 
@@ -164,7 +164,7 @@ class CustomComboController extends Controller
     public function updateQuantity(Request $request)
     {
         $request->validate([
-            'combo_cart_id' => 'required|exists:custom_combo_cart,id',
+            'combo_cart_id' => 'required|exists:custom_combo_carts,id',
             'item_id' => 'required|exists:custom_combo_cart_items,id',
             'quantity' => 'required|integer|min:0|max:10',
         ]);
@@ -205,7 +205,7 @@ class CustomComboController extends Controller
     public function addToCart(Request $request)
     {
         $request->validate([
-            'combo_cart_id' => 'required|exists:custom_combo_cart,id',
+            'combo_cart_id' => 'required|exists:custom_combo_carts,id',
         ]);
 
         $cart = Cart::getCart();
@@ -238,7 +238,7 @@ class CustomComboController extends Controller
     public function getStatus(Request $request)
     {
         $request->validate([
-            'combo_cart_id' => 'required|exists:custom_combo_cart,id',
+            'combo_cart_id' => 'required|exists:custom_combo_carts,id',
         ]);
 
         $cart = Cart::getCart();
@@ -260,7 +260,7 @@ class CustomComboController extends Controller
     public function deleteCombo(Request $request)
     {
         $request->validate([
-            'combo_cart_id' => 'required|exists:custom_combo_cart,id',
+            'combo_cart_id' => 'required|exists:custom_combo_carts,id',
         ]);
 
         $cart = Cart::getCart();
