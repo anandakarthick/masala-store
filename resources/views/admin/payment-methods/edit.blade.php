@@ -4,7 +4,7 @@
 @section('page_title', 'Edit Payment Method')
 
 @section('content')
-<div class="max-w-4xl mx-auto pb-6">
+<div class="max-w-4xl mx-auto">
     <div class="mb-6">
         <a href="{{ route('admin.payment-methods.index') }}" class="text-green-600 hover:text-green-700">
             <i class="fas fa-arrow-left mr-2"></i>Back to Payment Methods
@@ -24,6 +24,16 @@
                 <div>
                     <h2 class="text-xl font-semibold">{{ $paymentMethod->name }}</h2>
                     <p class="text-gray-500 text-sm">Code: {{ $paymentMethod->code }}</p>
+                </div>
+                <!-- Active Toggle - Moved to header -->
+                <div class="ml-auto">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" name="is_active" value="1" 
+                               {{ $paymentMethod->is_active ? 'checked' : '' }}
+                               class="sr-only peer">
+                        <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                        <span class="ml-3 text-sm font-medium text-gray-700">Active</span>
+                    </label>
                 </div>
             </div>
             
@@ -61,44 +71,41 @@
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Payment Instructions</label>
-                    <textarea name="instructions" rows="3" 
+                    <textarea name="instructions" rows="2" 
                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">{{ old('instructions', $paymentMethod->instructions) }}</textarea>
                     <p class="text-xs text-gray-500 mt-1">Instructions shown to customer during checkout</p>
                 </div>
                 
-                <!-- Order Amount Limits -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Order Amount Limits & Extra Charges in one row -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Minimum Order Amount (Rs.)</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Min Order (₹)</label>
                         <input type="number" name="min_order_amount" step="0.01" min="0"
                                value="{{ old('min_order_amount', $paymentMethod->min_order_amount) }}" 
-                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Maximum Order Amount (Rs.)</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Max Order (₹)</label>
                         <input type="number" name="max_order_amount" step="0.01" min="0"
                                value="{{ old('max_order_amount', $paymentMethod->max_order_amount) }}" 
-                               placeholder="Leave empty for no limit"
-                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                               placeholder="No limit"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                     </div>
-                </div>
-                
-                <!-- Extra Charges -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Extra Charge</label>
                         <input type="number" name="extra_charge" step="0.01" min="0"
                                value="{{ old('extra_charge', $paymentMethod->extra_charge) }}" 
-                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                     </div>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Charge Type</label>
                         <select name="extra_charge_type" 
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
-                            <option value="fixed" {{ $paymentMethod->extra_charge_type === 'fixed' ? 'selected' : '' }}>Fixed Amount (Rs.)</option>
-                            <option value="percentage" {{ $paymentMethod->extra_charge_type === 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
+                            <option value="fixed" {{ $paymentMethod->extra_charge_type === 'fixed' ? 'selected' : '' }}>Fixed (₹)</option>
+                            <option value="percentage" {{ $paymentMethod->extra_charge_type === 'percentage' ? 'selected' : '' }}>Percent (%)</option>
                         </select>
                     </div>
                 </div>
@@ -107,7 +114,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Sort Order</label>
                     <input type="number" name="sort_order" min="0"
                            value="{{ old('sort_order', $paymentMethod->sort_order) }}" 
-                           class="w-32 border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                           class="w-24 border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                 </div>
                 
                 <!-- Razorpay Settings -->
@@ -116,20 +123,20 @@
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">
                         <i class="fas fa-cog mr-2 text-blue-600"></i>Razorpay Configuration
                     </h3>
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                         <p class="text-sm text-blue-700">
                             <i class="fas fa-info-circle mr-1"></i>
                             Get your API keys from <a href="https://dashboard.razorpay.com/app/keys" target="_blank" class="underline font-medium">Razorpay Dashboard</a>
                         </p>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Key ID *</label>
                             <input type="text" name="razorpay_key_id" 
                                    value="{{ old('razorpay_key_id', $paymentMethod->getSetting('key_id')) }}" 
                                    placeholder="rzp_live_xxxxxxxxxxxxx"
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                         </div>
                         
                         <div>
@@ -137,7 +144,7 @@
                             <input type="password" name="razorpay_key_secret" 
                                    value="{{ old('razorpay_key_secret', $paymentMethod->getSetting('key_secret')) }}" 
                                    placeholder="••••••••••••••••"
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                         </div>
                     </div>
                     
@@ -145,8 +152,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Webhook Secret (Optional)</label>
                         <input type="text" name="razorpay_webhook_secret" 
                                value="{{ old('razorpay_webhook_secret', $paymentMethod->getSetting('webhook_secret')) }}" 
-                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
-                        <p class="text-xs text-gray-500 mt-1">Required for automatic payment verification via webhooks</p>
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                     </div>
                 </div>
                 @endif
@@ -158,20 +164,20 @@
                         <i class="fas fa-mobile-alt mr-2 text-purple-600"></i>UPI Configuration
                     </h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">UPI ID</label>
                             <input type="text" name="upi_id" 
                                    value="{{ old('upi_id', $paymentMethod->getSetting('upi_id')) }}" 
                                    placeholder="yourname@upi"
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Payee Name</label>
                             <input type="text" name="upi_name" 
                                    value="{{ old('upi_name', $paymentMethod->getSetting('upi_name')) }}" 
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                         </div>
                     </div>
                     
@@ -180,7 +186,7 @@
                         <input type="text" name="qr_code" 
                                value="{{ old('qr_code', $paymentMethod->getSetting('qr_code')) }}" 
                                placeholder="https://example.com/upi-qr.png"
-                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                     </div>
                 </div>
                 @endif
@@ -192,59 +198,48 @@
                         <i class="fas fa-university mr-2 text-indigo-600"></i>Bank Account Details
                     </h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Account Holder Name</label>
                             <input type="text" name="account_name" 
                                    value="{{ old('account_name', $paymentMethod->getSetting('account_name')) }}" 
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
                             <input type="text" name="account_number" 
                                    value="{{ old('account_number', $paymentMethod->getSetting('account_number')) }}" 
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
                             <input type="text" name="bank_name" 
                                    value="{{ old('bank_name', $paymentMethod->getSetting('bank_name')) }}" 
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">IFSC Code</label>
                             <input type="text" name="ifsc_code" 
                                    value="{{ old('ifsc_code', $paymentMethod->getSetting('ifsc_code')) }}" 
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Branch</label>
                             <input type="text" name="branch" 
                                    value="{{ old('branch', $paymentMethod->getSetting('branch')) }}" 
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                         </div>
                     </div>
                 </div>
                 @endif
-                
-                <!-- Active Toggle -->
-                <div class="border-t pt-6">
-                    <label class="flex items-center cursor-pointer">
-                        <input type="checkbox" name="is_active" value="1" 
-                               {{ $paymentMethod->is_active ? 'checked' : '' }}
-                               class="sr-only peer">
-                        <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                        <span class="ml-3 text-sm font-medium text-gray-700">Enable this payment method</span>
-                    </label>
-                </div>
             </div>
             
             <!-- Footer -->
-            <div class="px-6 py-4 bg-gray-50 border-t flex justify-end space-x-3">
+            <div class="px-6 py-4 bg-gray-50 border-t rounded-b-lg flex justify-end space-x-3">
                 <a href="{{ route('admin.payment-methods.index') }}" 
                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">
                     Cancel
