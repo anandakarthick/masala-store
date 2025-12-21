@@ -53,39 +53,12 @@ class EstimateController extends Controller
 
     public function create()
     {
-        $products = Product::active()->with('activeVariants')->get();
+        $products = Product::active()->with(['activeVariants'])->get();
         $customers = User::whereHas('role', function($q) {
             $q->where('slug', 'customer');
         })->get();
 
-        $productsJson = [];
-        foreach ($products as $p) {
-            if ($p->has_variants && $p->activeVariants->count() > 0) {
-                foreach ($p->activeVariants as $v) {
-                    $productsJson[] = [
-                        'id' => (int) $p->id,
-                        'variant_id' => (int) $v->id,
-                        'name' => $p->name . ' - ' . $v->name,
-                        'sku' => $v->sku ?? '',
-                        'price' => (float) ($v->discount_price ?? $v->price ?? $p->price),
-                        'gst_percent' => (float) ($p->gst_percentage ?? 0),
-                        'stock' => (int) ($v->stock_quantity ?? 0),
-                    ];
-                }
-            } else {
-                $productsJson[] = [
-                    'id' => (int) $p->id,
-                    'variant_id' => 0,
-                    'name' => $p->name,
-                    'sku' => $p->sku ?? '',
-                    'price' => (float) ($p->discount_price ?? $p->price),
-                    'gst_percent' => (float) ($p->gst_percentage ?? 0),
-                    'stock' => (int) ($p->stock_quantity ?? 0),
-                ];
-            }
-        }
-
-        return view('admin.estimates.create', compact('products', 'productsJson', 'customers'));
+        return view('admin.estimates.create', compact('products', 'customers'));
     }
 
     public function store(Request $request)
@@ -173,39 +146,12 @@ class EstimateController extends Controller
         }
 
         $estimate->load('items');
-        $products = Product::active()->with('activeVariants')->get();
+        $products = Product::active()->with(['activeVariants'])->get();
         $customers = User::whereHas('role', function($q) {
             $q->where('slug', 'customer');
         })->get();
 
-        $productsJson = [];
-        foreach ($products as $p) {
-            if ($p->has_variants && $p->activeVariants->count() > 0) {
-                foreach ($p->activeVariants as $v) {
-                    $productsJson[] = [
-                        'id' => (int) $p->id,
-                        'variant_id' => (int) $v->id,
-                        'name' => $p->name . ' - ' . $v->name,
-                        'sku' => $v->sku ?? '',
-                        'price' => (float) ($v->discount_price ?? $v->price ?? $p->price),
-                        'gst_percent' => (float) ($p->gst_percentage ?? 0),
-                        'stock' => (int) ($v->stock_quantity ?? 0),
-                    ];
-                }
-            } else {
-                $productsJson[] = [
-                    'id' => (int) $p->id,
-                    'variant_id' => 0,
-                    'name' => $p->name,
-                    'sku' => $p->sku ?? '',
-                    'price' => (float) ($p->discount_price ?? $p->price),
-                    'gst_percent' => (float) ($p->gst_percentage ?? 0),
-                    'stock' => (int) ($p->stock_quantity ?? 0),
-                ];
-            }
-        }
-
-        return view('admin.estimates.edit', compact('estimate', 'products', 'productsJson', 'customers'));
+        return view('admin.estimates.edit', compact('estimate', 'products', 'customers'));
     }
 
     public function update(Request $request, Estimate $estimate)
@@ -310,13 +256,13 @@ class EstimateController extends Controller
 
         $customMessage = $request->input('message');
 
-        $sent = $this->estimateService->sendEmail($estimate, $customMessage);
+        $queued = $this->estimateService->sendEmail($estimate, $customMessage);
 
-        if ($sent) {
-            return back()->with('success', 'Estimate sent successfully via email.');
+        if ($queued) {
+            return back()->with('success', 'Estimate has been queued for sending to ' . $estimate->customer_email . '. It will be delivered shortly.');
         }
 
-        return back()->with('error', 'Failed to send estimate. Please try again.');
+        return back()->with('error', 'Failed to queue estimate email. Please try again.');
     }
 
     public function getWhatsAppUrl(Estimate $estimate)

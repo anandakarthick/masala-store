@@ -71,11 +71,62 @@
     .product-item:last-child {
         border-bottom: none;
     }
+    .variant-option {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.5rem;
+        transition: all 0.15s;
+        background: white;
+    }
+    .variant-option:hover {
+        border-color: #22c55e;
+        background-color: #f0fdf4;
+        transform: translateY(-1px);
+    }
 </style>
 @endpush
 
 @section('content')
-<div class="space-y-6">
+@php
+    $productsJson = $products->map(function($p) {
+        return [
+            'id' => (int) $p->id,
+            'name' => $p->name,
+            'sku' => $p->sku ?? '',
+            'price' => (float) ($p->discount_price ?? $p->price),
+            'gst_percent' => (float) ($p->gst_percentage ?? 0),
+            'stock' => (int) ($p->stock_quantity ?? 0),
+            'has_variants' => (bool) ($p->has_variants && $p->activeVariants->count() > 0),
+            'variants' => $p->activeVariants->map(function($v) use ($p) {
+                return [
+                    'id' => (int) $v->id,
+                    'name' => $v->name,
+                    'sku' => $v->sku ?? '',
+                    'price' => (float) ($v->discount_price ?? $v->price ?? $p->price),
+                    'gst_percent' => (float) ($p->gst_percentage ?? 0),
+                    'stock' => (int) ($v->stock_quantity ?? 0),
+                ];
+            })->toArray()
+        ];
+    })->toArray();
+
+    $existingItems = $estimate->items->map(function($item) {
+        return [
+            'product_id' => (int) $item->product_id,
+            'variant_id' => $item->variant_id ? (int) $item->variant_id : null,
+            'name' => $item->product_name,
+            'variant_name' => $item->variant_name,
+            'sku' => $item->product_sku ?? '',
+            'quantity' => (int) $item->quantity,
+            'unit_price' => (float) $item->unit_price,
+            'gst_percent' => (float) $item->gst_percent,
+            'total' => (float) $item->total_price
+        ];
+    })->toArray();
+@endphp
+
+<div class="space-y-6" x-data="estimateManager({{ json_encode($productsJson) }}, {{ json_encode($existingItems) }}, '{{ $estimate->discount_type }}', {{ $estimate->discount_value ?? 0 }}, {{ $estimate->shipping_charge ?? 0 }})">
     <!-- Header -->
     <div class="flex items-center justify-between">
         <div>
@@ -87,7 +138,7 @@
         </a>
     </div>
 
-    <form action="{{ route('admin.estimates.update', $estimate) }}" method="POST" id="estimateForm">
+    <form action="{{ route('admin.estimates.update', $estimate) }}" method="POST" id="estimateForm" @submit.prevent="submitForm">
         @csrf
         @method('PUT')
 
@@ -139,7 +190,7 @@
                 </div>
 
                 <!-- Items -->
-                <div class="bg-white rounded-lg shadow p-6" x-data="itemsManager()">
+                <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-lg font-semibold text-gray-800">
                             <i class="fas fa-box text-green-600 mr-2"></i>Items
@@ -155,27 +206,68 @@
                             <input type="text" 
                                    x-model="productSearch" 
                                    @input="filterProducts()" 
-                                   @focus="showDropdown = true"
-                                   @keydown.escape="showDropdown = false"
+                                   @focus="showDropdown = true; filterProducts()"
+                                   @keydown.escape="showDropdown = false; selectedProduct = null"
                                    placeholder="Type to search products..."
                                    class="form-input pl-10">
                             <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         </div>
                         
                         <!-- Product Dropdown -->
-                        <div x-show="showDropdown && filteredProducts.length > 0" 
+                        <div x-show="showDropdown && filteredProducts.length > 0 && !selectedProduct" 
                              x-transition
                              @click.away="showDropdown = false"
                              class="product-dropdown">
-                            <template x-for="product in filteredProducts" :key="getProductKey(product)">
-                                <div @click="addProduct(product)" class="product-item">
+                            <template x-for="product in filteredProducts" :key="product.id">
+                                <div @click="selectProduct(product)" class="product-item">
                                     <div>
                                         <div class="font-medium text-gray-800" x-text="product.name"></div>
-                                        <div class="text-xs text-gray-500">SKU: <span x-text="product.sku || 'N/A'"></span></div>
+                                        <div class="text-xs text-gray-500">
+                                            <span x-show="product.has_variants" class="text-purple-600">
+                                                <i class="fas fa-layer-group mr-1"></i>Has <span x-text="product.variants.length"></span> Variants
+                                            </span>
+                                            <span x-show="!product.has_variants">
+                                                SKU: <span x-text="product.sku || 'N/A'"></span>
+                                            </span>
+                                        </div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="text-green-600 font-semibold">₹<span x-text="product.price.toFixed(2)"></span></div>
-                                        <div class="text-xs text-gray-400">Stock: <span x-text="product.stock"></span></div>
+                                        <div x-show="!product.has_variants" class="text-green-600 font-semibold">
+                                            ₹<span x-text="product.price.toFixed(2)"></span>
+                                        </div>
+                                        <div x-show="product.has_variants" class="text-purple-600 text-sm font-medium">
+                                            Select variant →
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Variant Selection Panel -->
+                    <div x-show="selectedProduct" 
+                         x-transition
+                         class="mb-4 bg-purple-50 border-2 border-purple-300 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-semibold text-purple-800">
+                                <i class="fas fa-layer-group mr-2"></i>Select Variant for: <span x-text="selectedProduct?.name"></span>
+                            </h3>
+                            <button type="button" @click="selectedProduct = null" class="text-purple-600 hover:text-purple-800 text-lg">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <template x-for="variant in (selectedProduct?.variants || [])" :key="variant.id">
+                                <div @click="addVariant(variant)" class="variant-option">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <div class="font-medium text-gray-800" x-text="variant.name"></div>
+                                            <div class="text-xs text-gray-500">SKU: <span x-text="variant.sku || 'N/A'"></span></div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-green-600 font-bold">₹<span x-text="variant.price.toFixed(2)"></span></div>
+                                            <div class="text-xs text-gray-400">Stock: <span x-text="variant.stock"></span></div>
+                                        </div>
                                     </div>
                                 </div>
                             </template>
@@ -200,14 +292,17 @@
                                     <tr class="hover:bg-gray-50">
                                         <td class="px-3 py-3">
                                             <div class="font-medium text-gray-800" x-text="item.name"></div>
-                                            <div class="text-xs text-gray-500">SKU: <span x-text="item.sku || 'N/A'"></span></div>
+                                            <div class="text-xs text-gray-500">
+                                                <span x-show="item.variant_name" class="text-purple-600 font-medium" x-text="item.variant_name"></span>
+                                                <span x-show="item.sku"> | SKU: <span x-text="item.sku"></span></span>
+                                            </div>
                                             <input type="hidden" :name="'items['+index+'][product_id]'" :value="item.product_id">
-                                            <input type="hidden" :name="'items['+index+'][variant_id]'" :value="item.variant_id">
+                                            <input type="hidden" :name="'items['+index+'][variant_id]'" :value="item.variant_id || ''">
                                         </td>
                                         <td class="px-3 py-3 text-center">
                                             <input type="number" 
                                                    x-model.number="item.quantity" 
-                                                   @input="calculateItemTotal(index); calculateTotals()"
+                                                   @input="calculateItemTotal(index)"
                                                    min="1" 
                                                    :name="'items['+index+'][quantity]'"
                                                    class="form-input text-center" 
@@ -216,7 +311,7 @@
                                         <td class="px-3 py-3">
                                             <input type="number" 
                                                    x-model.number="item.unit_price" 
-                                                   @input="calculateItemTotal(index); calculateTotals()"
+                                                   @input="calculateItemTotal(index)"
                                                    step="0.01" 
                                                    min="0" 
                                                    :name="'items['+index+'][unit_price]'"
@@ -226,7 +321,7 @@
                                         <td class="px-3 py-3 text-center">
                                             <input type="number" 
                                                    x-model.number="item.gst_percent" 
-                                                   @input="calculateItemTotal(index); calculateTotals()"
+                                                   @input="calculateItemTotal(index)"
                                                    step="0.01" 
                                                    min="0" 
                                                    :name="'items['+index+'][gst_percent]'"
@@ -278,7 +373,7 @@
             </div>
 
             <!-- Right Column -->
-            <div class="space-y-6" x-data="summaryManager()">
+            <div class="space-y-6">
                 <!-- Estimate Info -->
                 <div class="bg-white rounded-lg shadow p-6">
                     <h2 class="text-lg font-semibold text-gray-800 mb-4">
@@ -306,7 +401,7 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
-                            <select name="discount_type" x-model="discountType" @change="window.dispatchEvent(new CustomEvent('recalculate'))"
+                            <select name="discount_type" x-model="discountType" @change="calculateTotals()"
                                     class="form-select">
                                 <option value="fixed">Fixed Amount (₹)</option>
                                 <option value="percentage">Percentage (%)</option>
@@ -315,13 +410,13 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Discount Value</label>
                             <input type="number" name="discount_value" x-model.number="discountValue" 
-                                   @input="window.dispatchEvent(new CustomEvent('recalculate'))"
+                                   @input="calculateTotals()"
                                    step="0.01" min="0" class="form-input" placeholder="0">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Shipping Charge (₹)</label>
                             <input type="number" name="shipping_charge" x-model.number="shippingCharge" 
-                                   @input="window.dispatchEvent(new CustomEvent('recalculate'))"
+                                   @input="calculateTotals()"
                                    step="0.01" min="0" class="form-input" placeholder="0">
                         </div>
                     </div>
@@ -371,48 +466,35 @@
 </div>
 
 <script>
-// Products data
-const allProducts = @json($productsJson);
-
-// Existing items from estimate
-const existingItems = @json($estimate->items->map(function($item) {
-    return [
-        'product_id' => (int) $item->product_id,
-        'variant_id' => (int) ($item->variant_id ?? 0),
-        'name' => $item->product_name . ($item->variant_name ? ' - ' . $item->variant_name : ''),
-        'sku' => $item->product_sku ?? '',
-        'quantity' => (int) $item->quantity,
-        'unit_price' => (float) $item->unit_price,
-        'gst_percent' => (float) $item->gst_percent,
-        'total' => (float) $item->total_price
-    ];
-}));
-
-// Shared items array - pre-populated with existing items
-window.estimateItems = existingItems;
-
-function itemsManager() {
+function estimateManager(productsData, existingItems, existingDiscountType, existingDiscountValue, existingShippingCharge) {
     return {
-        products: allProducts,
+        // Products
+        products: productsData,
         filteredProducts: [],
         productSearch: '',
         showDropdown: false,
-        items: window.estimateItems,
+        selectedProduct: null,
+        
+        // Items
+        items: existingItems || [],
+        
+        // Totals
+        discountType: existingDiscountType || 'fixed',
+        discountValue: existingDiscountValue || 0,
+        shippingCharge: existingShippingCharge || 0,
+        subtotal: 0,
+        discountAmount: 0,
+        gstAmount: 0,
+        grandTotal: 0,
 
         init() {
             this.filteredProducts = this.products.slice(0, 15);
-            // Recalculate totals on init
             this.calculateTotals();
-        },
-
-        getProductKey(product) {
-            return product.id + '-' + product.variant_id;
         },
 
         filterProducts() {
             if (this.productSearch.length < 1) {
                 this.filteredProducts = this.products.slice(0, 15);
-                this.showDropdown = true;
                 return;
             }
             const search = this.productSearch.toLowerCase();
@@ -420,13 +502,47 @@ function itemsManager() {
                 p.name.toLowerCase().includes(search) || 
                 (p.sku && p.sku.toLowerCase().includes(search))
             ).slice(0, 15);
-            this.showDropdown = true;
         },
 
-        addProduct(product) {
-            // Check if already exists
+        selectProduct(product) {
+            if (product.has_variants && product.variants && product.variants.length > 0) {
+                this.selectedProduct = JSON.parse(JSON.stringify(product));
+                this.showDropdown = false;
+                this.productSearch = '';
+            } else {
+                this.addItem({
+                    product_id: product.id,
+                    variant_id: null,
+                    name: product.name,
+                    variant_name: null,
+                    sku: product.sku || '',
+                    unit_price: product.price,
+                    gst_percent: product.gst_percent || 0,
+                });
+                this.showDropdown = false;
+                this.productSearch = '';
+            }
+        },
+
+        addVariant(variant) {
+            const product = this.selectedProduct;
+            
+            this.addItem({
+                product_id: product.id,
+                variant_id: variant.id,
+                name: product.name,
+                variant_name: variant.name,
+                sku: variant.sku || '',
+                unit_price: variant.price,
+                gst_percent: variant.gst_percent || product.gst_percent || 0,
+            });
+            
+            this.selectedProduct = null;
+        },
+
+        addItem(itemData) {
             const existingIndex = this.items.findIndex(i => 
-                i.product_id === product.id && i.variant_id === product.variant_id
+                i.product_id === itemData.product_id && i.variant_id === itemData.variant_id
             );
             
             if (existingIndex > -1) {
@@ -434,21 +550,14 @@ function itemsManager() {
                 this.calculateItemTotal(existingIndex);
             } else {
                 const newItem = {
-                    product_id: product.id,
-                    variant_id: product.variant_id,
-                    name: product.name,
-                    sku: product.sku || '',
+                    ...itemData,
                     quantity: 1,
-                    unit_price: product.price,
-                    gst_percent: product.gst_percent || 0,
-                    total: product.price
+                    total: itemData.unit_price
                 };
                 this.items.push(newItem);
                 this.calculateItemTotal(this.items.length - 1);
             }
             
-            this.productSearch = '';
-            this.showDropdown = false;
             this.calculateTotals();
         },
 
@@ -461,39 +570,17 @@ function itemsManager() {
             const item = this.items[index];
             if (item) {
                 const baseTotal = item.quantity * item.unit_price;
-                const gst = (baseTotal * item.gst_percent) / 100;
+                const gst = (baseTotal * (item.gst_percent || 0)) / 100;
                 item.total = baseTotal + gst;
             }
+            this.calculateTotals();
         },
 
         calculateTotals() {
-            window.dispatchEvent(new CustomEvent('recalculate'));
-        }
-    }
-}
-
-function summaryManager() {
-    return {
-        discountType: '{{ $estimate->discount_type }}',
-        discountValue: {{ $estimate->discount_value ?? 0 }},
-        shippingCharge: {{ $estimate->shipping_charge ?? 0 }},
-        subtotal: 0,
-        discountAmount: 0,
-        gstAmount: 0,
-        grandTotal: 0,
-
-        init() {
-            this.calculate();
-            window.addEventListener('recalculate', () => this.calculate());
-        },
-
-        calculate() {
-            const items = window.estimateItems;
-            
             this.subtotal = 0;
             this.gstAmount = 0;
 
-            items.forEach(item => {
+            this.items.forEach(item => {
                 const baseTotal = item.quantity * item.unit_price;
                 const gst = (baseTotal * (item.gst_percent || 0)) / 100;
                 this.subtotal += baseTotal;
@@ -507,18 +594,16 @@ function summaryManager() {
             }
 
             this.grandTotal = this.subtotal - this.discountAmount + this.gstAmount + (this.shippingCharge || 0);
+        },
+
+        submitForm() {
+            if (this.items.length === 0) {
+                alert('Please add at least one item to the estimate.');
+                return;
+            }
+            document.getElementById('estimateForm').submit();
         }
     }
 }
-
-// Form validation
-document.getElementById('estimateForm').addEventListener('submit', function(e) {
-    if (window.estimateItems.length === 0) {
-        e.preventDefault();
-        alert('Please add at least one item to the estimate.');
-        return false;
-    }
-    return true;
-});
 </script>
 @endsection

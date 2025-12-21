@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use App\Jobs\SendEstimateEmailJob;
 use App\Models\Estimate;
 use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 class EstimateService
@@ -13,7 +13,7 @@ class EstimateService
     /**
      * Get company data with logo for PDF
      */
-    private function getCompanyData(): array
+    public function getCompanyData(): array
     {
         $logoUrl = Setting::logo();
         $logoBase64 = null;
@@ -99,7 +99,7 @@ class EstimateService
     }
 
     /**
-     * Send estimate via email
+     * Send estimate via email using queue
      */
     public function sendEmail(Estimate $estimate, ?string $customMessage = null): bool
     {
@@ -108,33 +108,18 @@ class EstimateService
         }
 
         try {
-            $estimate->load('items.product');
-            $pdf = $this->generatePdf($estimate);
-            $pdfContent = $pdf->output();
+            // Dispatch job to queue
+            SendEstimateEmailJob::dispatch($estimate, $customMessage);
 
-            $company = $this->getCompanyData();
-
-            Mail::send('emails.estimate', [
-                'estimate' => $estimate,
-                'company' => $company,
-                'customMessage' => $customMessage,
-            ], function ($message) use ($estimate, $pdfContent, $company) {
-                $message->to($estimate->customer_email, $estimate->customer_name)
-                    ->subject('Estimate #' . $estimate->estimate_number . ' from ' . $company['name'])
-                    ->attachData($pdfContent, 'Estimate-' . $estimate->estimate_number . '.pdf', [
-                        'mime' => 'application/pdf',
-                    ]);
-            });
-
-            // Update estimate status
-            $estimate->update([
-                'status' => $estimate->status === 'draft' ? 'sent' : $estimate->status,
-                'sent_at' => now(),
+            \Log::info('Estimate email job dispatched', [
+                'estimate_id' => $estimate->id,
+                'estimate_number' => $estimate->estimate_number,
+                'customer_email' => $estimate->customer_email,
             ]);
 
             return true;
         } catch (\Exception $e) {
-            \Log::error('Failed to send estimate email: ' . $e->getMessage());
+            \Log::error('Failed to dispatch estimate email job: ' . $e->getMessage());
             return false;
         }
     }
