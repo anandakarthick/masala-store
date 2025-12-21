@@ -31,6 +31,12 @@
     <style>
         [x-cloak] { display: none !important; }
         
+        /* Prevent body scroll - only main content should scroll */
+        html, body {
+            overflow: hidden;
+            height: 100%;
+        }
+        
         /* Notification animation */
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }

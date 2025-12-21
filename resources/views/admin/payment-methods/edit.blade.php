@@ -4,7 +4,7 @@
 @section('page_title', 'Edit Payment Method')
 
 @section('content')
-<div class="max-w-4xl">
+<div class="max-w-4xl mx-auto pb-6">
     <div class="mb-6">
         <a href="{{ route('admin.payment-methods.index') }}" class="text-green-600 hover:text-green-700">
             <i class="fas fa-arrow-left mr-2"></i>Back to Payment Methods
