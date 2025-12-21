@@ -430,6 +430,15 @@
         </div>
     </footer>
 
+    <!-- Floating Cart Button - Always visible -->
+    <a href="{{ route('cart.index') }}" 
+       class="fixed bottom-24 right-6 z-50 w-14 h-14 bg-green-600 hover:bg-green-700 text-white rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110"
+       title="View Cart">
+        <i class="fas fa-shopping-cart text-xl"></i>
+        <span x-show="cartCount > 0" x-text="cartCount"
+              class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[20px] h-[20px] flex items-center justify-center font-bold"></span>
+    </a>
+
     <!-- Floating WhatsApp Button -->
     @if($whatsappEnabled == '1' && $whatsappNumber)
         <a href="https://wa.me/91{{ $whatsappNumber }}?text={{ urlencode($whatsappMessage) }}" 

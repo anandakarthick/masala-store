@@ -8,7 +8,7 @@
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <div class="flex items-center justify-between mb-4">
                 <h1 class="text-xl font-bold">Complete Your Payment</h1>
-                <span class="text-green-600 font-semibold text-xl">Rs. {{ number_format($order->total_amount, 2) }}</span>
+                <span class="text-green-600 font-semibold text-xl">₹{{ number_format($order->total_amount, 2) }}</span>
             </div>
             
             <div class="bg-gray-50 rounded-lg p-4">
@@ -45,7 +45,7 @@
 
             <button @click="initiatePayment()" :disabled="processing"
                     class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-4 rounded-lg font-semibold">
-                <span x-show="!processing"><i class="fas fa-lock mr-2"></i>Pay Rs. {{ number_format($order->total_amount, 2) }}</span>
+                <span x-show="!processing"><i class="fas fa-lock mr-2"></i>Pay ₹{{ number_format($order->total_amount, 2) }}</span>
                 <span x-show="processing"><i class="fas fa-spinner fa-spin mr-2"></i>Processing...</span>
             </button>
 
@@ -61,21 +61,83 @@
                     <i class="fas fa-mobile-alt text-purple-600 text-2xl"></i>
                 </div>
                 <h2 class="text-lg font-semibold">Pay via UPI</h2>
+                <p class="text-gray-500 text-sm mt-1">Scan QR code or pay using UPI ID</p>
             </div>
 
-            @if($paymentMethod->getSetting('upi_id'))
-            <div class="bg-gray-50 rounded-lg p-4 text-center mb-4">
-                <p class="text-sm text-gray-500 mb-1">Pay to UPI ID</p>
-                <p class="font-mono text-lg font-bold text-purple-600">{{ $paymentMethod->getSetting('upi_id') }}</p>
+            {{-- QR Code Image --}}
+            @php
+                $qrCode = $paymentMethod->getSetting('qr_code');
+            @endphp
+            
+            @if($qrCode)
+            <div class="text-center mb-6">
+                <div class="inline-block p-4 bg-white border-2 border-purple-200 rounded-xl shadow-sm">
+                    <img src="{{ asset('storage/' . $qrCode) }}" alt="UPI QR Code" class="w-48 h-48 object-contain mx-auto">
+                </div>
+                <p class="text-sm text-gray-500 mt-3">
+                    <i class="fas fa-camera mr-1"></i> Scan with any UPI app
+                </p>
             </div>
             @endif
 
-            <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p class="text-sm text-yellow-800">
+            {{-- Amount to Pay --}}
+            <div class="bg-purple-50 rounded-lg p-4 text-center mb-4">
+                <p class="text-sm text-purple-600 mb-1">Amount to Pay</p>
+                <p class="text-3xl font-bold text-purple-700">₹{{ number_format($order->total_amount, 2) }}</p>
+            </div>
+
+            {{-- UPI ID --}}
+            @if($paymentMethod->getSetting('upi_id'))
+            <div class="bg-gray-50 rounded-lg p-4 text-center mb-4">
+                <p class="text-sm text-gray-500 mb-1">Or pay using UPI ID</p>
+                <div class="flex items-center justify-center gap-2">
+                    <p class="font-mono text-lg font-bold text-purple-600" id="upi-id">{{ $paymentMethod->getSetting('upi_id') }}</p>
+                    <button onclick="copyUpiId()" class="text-gray-500 hover:text-purple-600" title="Copy UPI ID">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                @if($paymentMethod->getSetting('upi_name'))
+                    <p class="text-xs text-gray-500 mt-1">Payee: {{ $paymentMethod->getSetting('upi_name') }}</p>
+                @endif
+            </div>
+            @endif
+
+            {{-- Payment Instructions --}}
+            @if($paymentMethod->instructions)
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p class="text-sm text-blue-800">
                     <i class="fas fa-info-circle mr-1"></i>
-                    After payment, share transaction ID on WhatsApp to confirm your order.
+                    {{ $paymentMethod->instructions }}
                 </p>
             </div>
+            @endif
+
+            {{-- After Payment Info --}}
+            <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p class="text-sm text-yellow-800 font-medium mb-2">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    After making payment:
+                </p>
+                <ol class="text-sm text-yellow-700 list-decimal list-inside space-y-1">
+                    <li>Take a screenshot of the payment confirmation</li>
+                    <li>Share the transaction ID/UTR number on WhatsApp</li>
+                    <li>Your order will be confirmed within 30 minutes</li>
+                </ol>
+            </div>
+
+            {{-- WhatsApp Button --}}
+            @php
+                $whatsappNumber = \App\Models\Setting::get('whatsapp_number', '');
+                $whatsappMessage = "Hi! I've made a UPI payment for Order #{$order->order_number}. Amount: ₹" . number_format($order->total_amount, 2) . ". Transaction ID: ";
+            @endphp
+            @if($whatsappNumber)
+            <a href="https://wa.me/91{{ $whatsappNumber }}?text={{ urlencode($whatsappMessage) }}" 
+               target="_blank" rel="noopener"
+               class="mt-4 w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold">
+                <i class="fab fa-whatsapp text-xl"></i>
+                Share Payment Details on WhatsApp
+            </a>
+            @endif
         </div>
 
         @elseif($paymentMethod->code === 'bank_transfer')
@@ -85,6 +147,12 @@
                     <i class="fas fa-university text-indigo-600 text-2xl"></i>
                 </div>
                 <h2 class="text-lg font-semibold">Bank Transfer Details</h2>
+            </div>
+
+            {{-- Amount to Pay --}}
+            <div class="bg-indigo-50 rounded-lg p-4 text-center mb-4">
+                <p class="text-sm text-indigo-600 mb-1">Amount to Pay</p>
+                <p class="text-3xl font-bold text-indigo-700">₹{{ number_format($order->total_amount, 2) }}</p>
             </div>
 
             <div class="bg-gray-50 rounded-lg p-4 space-y-3">
@@ -112,14 +180,47 @@
                     <span class="font-medium font-mono">{{ $paymentMethod->getSetting('ifsc_code') }}</span>
                 </div>
                 @endif
+                @if($paymentMethod->getSetting('branch'))
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Branch</span>
+                    <span class="font-medium">{{ $paymentMethod->getSetting('branch') }}</span>
+                </div>
+                @endif
             </div>
 
-            <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p class="text-sm text-yellow-800">
+            @if($paymentMethod->instructions)
+            <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p class="text-sm text-blue-800">
                     <i class="fas fa-info-circle mr-1"></i>
-                    Please share transaction reference number to confirm your order.
+                    {{ $paymentMethod->instructions }}
                 </p>
             </div>
+            @endif
+
+            <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p class="text-sm text-yellow-800 font-medium mb-2">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    After making payment:
+                </p>
+                <ol class="text-sm text-yellow-700 list-decimal list-inside space-y-1">
+                    <li>Note down the transaction reference number</li>
+                    <li>Share the details on WhatsApp to confirm your order</li>
+                </ol>
+            </div>
+
+            {{-- WhatsApp Button --}}
+            @php
+                $whatsappNumber = \App\Models\Setting::get('whatsapp_number', '');
+                $whatsappMessage = "Hi! I've made a bank transfer for Order #{$order->order_number}. Amount: ₹" . number_format($order->total_amount, 2) . ". Transaction Ref: ";
+            @endphp
+            @if($whatsappNumber)
+            <a href="https://wa.me/91{{ $whatsappNumber }}?text={{ urlencode($whatsappMessage) }}" 
+               target="_blank" rel="noopener"
+               class="mt-4 w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold">
+                <i class="fab fa-whatsapp text-xl"></i>
+                Share Payment Details on WhatsApp
+            </a>
+            @endif
         </div>
         @endif
 
@@ -130,6 +231,15 @@
         </div>
     </div>
 </div>
+
+<script>
+function copyUpiId() {
+    const upiId = document.getElementById('upi-id').textContent;
+    navigator.clipboard.writeText(upiId).then(() => {
+        alert('UPI ID copied!');
+    });
+}
+</script>
 @endsection
 
 @if($paymentMethod->code === 'razorpay')

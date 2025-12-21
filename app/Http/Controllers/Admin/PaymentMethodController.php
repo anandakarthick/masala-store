@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PaymentMethodController extends Controller
 {
@@ -32,6 +33,7 @@ class PaymentMethodController extends Controller
             'extra_charge' => 'nullable|numeric|min:0',
             'extra_charge_type' => 'in:fixed,percentage',
             'sort_order' => 'integer|min:0',
+            'qr_code_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         // Handle Razorpay specific settings
@@ -46,11 +48,30 @@ class PaymentMethodController extends Controller
 
         // Handle UPI settings
         if ($paymentMethod->code === 'upi') {
-            $settings = [
-                'upi_id' => $request->input('upi_id'),
-                'upi_name' => $request->input('upi_name'),
-                'qr_code' => $request->input('qr_code'),
-            ];
+            $settings = $paymentMethod->settings ?? [];
+            $settings['upi_id'] = $request->input('upi_id');
+            $settings['upi_name'] = $request->input('upi_name');
+            
+            // Handle QR code image upload
+            if ($request->hasFile('qr_code_image')) {
+                // Delete old QR code if exists
+                if (!empty($settings['qr_code']) && Storage::disk('public')->exists($settings['qr_code'])) {
+                    Storage::disk('public')->delete($settings['qr_code']);
+                }
+                
+                // Store new QR code
+                $path = $request->file('qr_code_image')->store('payment/qr-codes', 'public');
+                $settings['qr_code'] = $path;
+            }
+            
+            // Handle QR code removal
+            if ($request->boolean('remove_qr_code') && !empty($settings['qr_code'])) {
+                if (Storage::disk('public')->exists($settings['qr_code'])) {
+                    Storage::disk('public')->delete($settings['qr_code']);
+                }
+                $settings['qr_code'] = null;
+            }
+            
             $validated['settings'] = $settings;
         }
 

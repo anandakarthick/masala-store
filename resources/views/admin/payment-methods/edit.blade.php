@@ -11,7 +11,7 @@
         </a>
     </div>
 
-    <form action="{{ route('admin.payment-methods.update', $paymentMethod) }}" method="POST">
+    <form action="{{ route('admin.payment-methods.update', $paymentMethod) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
         
@@ -181,12 +181,48 @@
                         </div>
                     </div>
                     
+                    <!-- QR Code Upload -->
                     <div class="mt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">QR Code Image URL</label>
-                        <input type="text" name="qr_code" 
-                               value="{{ old('qr_code', $paymentMethod->getSetting('qr_code')) }}" 
-                               placeholder="https://example.com/upi-qr.png"
-                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">QR Code Image</label>
+                        
+                        @php
+                            $qrCode = $paymentMethod->getSetting('qr_code');
+                        @endphp
+                        
+                        @if($qrCode)
+                            <div class="mb-4 p-4 bg-gray-50 rounded-lg inline-block">
+                                <img src="{{ asset('storage/' . $qrCode) }}" alt="UPI QR Code" class="max-w-[200px] h-auto rounded border">
+                                <div class="mt-2 flex items-center gap-2">
+                                    <label class="flex items-center text-sm text-red-600 cursor-pointer">
+                                        <input type="checkbox" name="remove_qr_code" value="1" class="mr-1">
+                                        Remove QR Code
+                                    </label>
+                                </div>
+                            </div>
+                        @endif
+                        
+                        <div class="flex items-center justify-center w-full">
+                            <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <i class="fas fa-qrcode text-3xl text-gray-400 mb-2"></i>
+                                    <p class="mb-1 text-sm text-gray-500">
+                                        <span class="font-semibold">Click to upload QR Code</span>
+                                    </p>
+                                    <p class="text-xs text-gray-500">PNG, JPG or GIF (Max 2MB)</p>
+                                </div>
+                                <input type="file" name="qr_code_image" accept="image/*" class="hidden" onchange="previewQR(this)">
+                            </label>
+                        </div>
+                        
+                        <!-- Preview -->
+                        <div id="qr-preview" class="mt-4 hidden">
+                            <p class="text-sm text-gray-600 mb-2">New QR Code Preview:</p>
+                            <img id="qr-preview-img" src="" alt="QR Preview" class="max-w-[200px] h-auto rounded border">
+                        </div>
+                        
+                        @error('qr_code_image')
+                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
                 @endif
@@ -252,4 +288,22 @@
         </div>
     </form>
 </div>
+
+<script>
+function previewQR(input) {
+    const preview = document.getElementById('qr-preview');
+    const previewImg = document.getElementById('qr-preview-img');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.classList.remove('hidden');
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
 @endsection
