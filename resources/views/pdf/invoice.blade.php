@@ -21,53 +21,55 @@
         
         /* Header */
         .header {
+            width: 100%;
             border-bottom: 3px solid #166534;
             padding-bottom: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
-        .header-table {
-            width: 100%;
+        .header-left {
+            float: left;
+            width: 55%;
         }
-        .logo-cell {
-            width: 50%;
-            vertical-align: middle;
+        .header-right {
+            float: right;
+            width: 42%;
+            text-align: right;
+        }
+        .clearfix::after {
+            content: "";
+            display: table;
+            clear: both;
         }
         .logo-img {
-            max-height: 60px;
-            max-width: 180px;
+            max-height: 55px;
+            max-width: 160px;
+            display: block;
+            margin-bottom: 8px;
         }
         .company-details {
             font-size: 10px;
             color: #555;
-            line-height: 1.4;
-            margin-top: 5px;
-        }
-        .invoice-cell {
-            width: 50%;
-            text-align: right;
-            vertical-align: middle;
+            line-height: 1.6;
         }
         .invoice-title {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: bold;
             color: #166534;
             text-transform: uppercase;
+            margin-bottom: 8px;
         }
-        .invoice-number {
-            font-size: 14px;
+        .invoice-meta {
+            font-size: 12px;
             color: #333;
-            font-weight: bold;
-            margin-top: 5px;
+            line-height: 1.8;
         }
-        .invoice-date {
-            font-size: 11px;
-            color: #666;
-            margin-top: 3px;
+        .invoice-meta strong {
+            color: #000;
         }
         
         /* Info Boxes */
         .info-section {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         .info-table {
             width: 100%;
@@ -76,7 +78,7 @@
         .info-box {
             width: 33.33%;
             vertical-align: top;
-            padding: 8px 10px;
+            padding: 10px;
             background: #f8f9fa;
             border: 1px solid #e0e0e0;
         }
@@ -86,13 +88,13 @@
             color: #166534;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 5px;
-            padding-bottom: 3px;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
             border-bottom: 2px solid #166534;
         }
         .info-content {
             font-size: 11px;
-            line-height: 1.5;
+            line-height: 1.6;
         }
         .info-content strong {
             font-size: 12px;
@@ -174,17 +176,13 @@
         .bottom-section {
             margin-top: 10px;
         }
-        .bottom-table {
-            width: 100%;
+        .bottom-left {
+            float: left;
+            width: 48%;
         }
-        .left-col {
-            width: 50%;
-            vertical-align: top;
-            padding-right: 15px;
-        }
-        .right-col {
-            width: 50%;
-            vertical-align: top;
+        .bottom-right {
+            float: right;
+            width: 48%;
         }
         
         /* Totals */
@@ -222,8 +220,8 @@
         .amount-words {
             font-size: 10px;
             color: #555;
-            margin-top: 8px;
-            padding: 6px 8px;
+            margin-top: 10px;
+            padding: 8px;
             background: #f5f5f5;
             border: 1px solid #e0e0e0;
             border-radius: 3px;
@@ -238,7 +236,7 @@
             padding: 8px 10px;
             font-size: 9px;
             color: #666;
-            line-height: 1.5;
+            line-height: 1.6;
             background: #fafafa;
         }
         .terms-title {
@@ -251,7 +249,7 @@
         /* Signature */
         .signature-box {
             text-align: right;
-            margin-top: 20px;
+            margin-top: 25px;
         }
         .signature-line {
             border-top: 1px solid #333;
@@ -265,9 +263,10 @@
         
         /* Thank You */
         .thank-you {
+            clear: both;
             text-align: center;
-            margin-top: 15px;
-            padding: 8px;
+            margin-top: 20px;
+            padding: 10px;
             background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
             border-radius: 5px;
             font-size: 12px;
@@ -278,29 +277,27 @@
 </head>
 <body>
     <!-- Header -->
-    <div class="header">
-        <table class="header-table" cellpadding="0" cellspacing="0">
-            <tr>
-                <td class="logo-cell">
-                    @if(!empty($company['logo']))
-                        <img src="{{ $company['logo'] }}" alt="Logo" class="logo-img">
-                    @else
-                        <div style="font-size: 20px; font-weight: bold; color: #166534;">{{ $company['name'] }}</div>
-                    @endif
-                    <div class="company-details">
-                        @if($company['address']){{ $company['address'] }}<br>@endif
-                        @if($company['phone'])Phone: {{ $company['phone'] }}@endif
-                        @if($company['email']) | Email: {{ $company['email'] }}@endif
-                        @if($company['gst'])<br>GSTIN: {{ $company['gst'] }}@endif
-                    </div>
-                </td>
-                <td class="invoice-cell">
-                    <div class="invoice-title">TAX INVOICE</div>
-                    <div class="invoice-number">#{{ $order->invoice_number ?? $order->order_number }}</div>
-                    <div class="invoice-date">Date: {{ $order->invoice_generated_at ? $order->invoice_generated_at->format('d/m/Y') : now()->format('d/m/Y') }}</div>
-                </td>
-            </tr>
-        </table>
+    <div class="header clearfix">
+        <div class="header-left">
+            @if(!empty($company['logo']))
+                <img src="{{ $company['logo'] }}" alt="Logo" class="logo-img">
+            @else
+                <div style="font-size: 20px; font-weight: bold; color: #166534; margin-bottom: 8px;">{{ $company['name'] }}</div>
+            @endif
+            <div class="company-details">
+                @if($company['address']){{ $company['address'] }}<br>@endif
+                @if($company['phone'])Phone: {{ $company['phone'] }}@endif
+                @if($company['email']) | Email: {{ $company['email'] }}@endif
+                @if($company['gst'])<br>GSTIN: {{ $company['gst'] }}@endif
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="invoice-title">TAX INVOICE</div>
+            <div class="invoice-meta">
+                <strong>Invoice No:</strong> {{ $order->invoice_number ?? $order->order_number }}<br>
+                <strong>Date:</strong> {{ $order->invoice_generated_at ? $order->invoice_generated_at->format('d/m/Y') : now()->format('d/m/Y') }}
+            </div>
+        </div>
     </div>
 
     <!-- Info Section -->
@@ -330,7 +327,7 @@
                 <td class="info-box">
                     <div class="info-box-title">Order Details</div>
                     <div class="info-content">
-                        <strong>Order #:</strong> {{ $order->order_number }}<br>
+                        <strong>Order No:</strong> {{ $order->order_number }}<br>
                         <strong>Order Date:</strong> {{ $order->created_at->format('d/m/Y') }}<br>
                         <strong>Order Type:</strong> {{ ucfirst($order->order_type ?? 'Retail') }}<br>
                         <strong>Payment:</strong> 
@@ -378,66 +375,62 @@
     </table>
 
     <!-- Bottom Section -->
-    <div class="bottom-section">
-        <table class="bottom-table" cellpadding="0" cellspacing="0">
-            <tr>
-                <td class="left-col">
-                    <!-- Terms -->
-                    <div class="terms-box">
-                        <div class="terms-title">Terms & Conditions:</div>
-                        1. Goods once sold will not be taken back or exchanged.<br>
-                        2. All disputes are subject to local jurisdiction only.<br>
-                        3. E. & O.E. - This is a computer generated invoice.
-                    </div>
-                    
-                    <!-- Amount in Words -->
-                    <div class="amount-words">
-                        <strong>Amount in Words:</strong><br>
-                        Indian Rupees {{ ucwords(\NumberFormatter::create('en_IN', \NumberFormatter::SPELLOUT)->format(floor($order->total_amount))) }} Only
-                    </div>
-                </td>
-                <td class="right-col">
-                    <!-- Totals -->
-                    <table class="totals-table" cellpadding="0" cellspacing="0">
-                        <tr>
-                            <td class="label">Subtotal:</td>
-                            <td class="value">₹{{ number_format($order->subtotal, 2) }}</td>
-                        </tr>
-                        @if($order->gst_amount > 0)
-                        <tr>
-                            <td class="label">CGST:</td>
-                            <td class="value">₹{{ number_format($order->gst_amount / 2, 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">SGST:</td>
-                            <td class="value">₹{{ number_format($order->gst_amount / 2, 2) }}</td>
-                        </tr>
-                        @endif
-                        <tr>
-                            <td class="label">Shipping Charges:</td>
-                            <td class="value">{{ $order->shipping_charge > 0 ? '₹' . number_format($order->shipping_charge, 2) : 'FREE' }}</td>
-                        </tr>
-                        @if($order->discount_amount > 0)
-                        <tr>
-                            <td class="label">Discount:</td>
-                            <td class="value" style="color: #166534;">-₹{{ number_format($order->discount_amount, 2) }}</td>
-                        </tr>
-                        @endif
-                        <tr class="grand-total">
-                            <td class="label">Grand Total:</td>
-                            <td class="value">₹{{ number_format($order->total_amount, 2) }}</td>
-                        </tr>
-                    </table>
-                    
-                    <!-- Signature -->
-                    <div class="signature-box">
-                        <div class="signature-line">
-                            Authorized Signatory
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        </table>
+    <div class="bottom-section clearfix">
+        <div class="bottom-left">
+            <!-- Terms -->
+            <div class="terms-box">
+                <div class="terms-title">Terms & Conditions:</div>
+                1. Goods once sold will not be taken back or exchanged.<br>
+                2. All disputes are subject to local jurisdiction only.<br>
+                3. E. & O.E. - This is a computer generated invoice.
+            </div>
+            
+            <!-- Amount in Words -->
+            <div class="amount-words">
+                <strong>Amount in Words:</strong><br>
+                Indian Rupees {{ ucwords(\NumberFormatter::create('en_IN', \NumberFormatter::SPELLOUT)->format(floor($order->total_amount))) }} Only
+            </div>
+        </div>
+        <div class="bottom-right">
+            <!-- Totals -->
+            <table class="totals-table" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="label">Subtotal:</td>
+                    <td class="value">{{ number_format($order->subtotal, 2) }}</td>
+                </tr>
+                @if($order->gst_amount > 0)
+                <tr>
+                    <td class="label">CGST:</td>
+                    <td class="value">₹{{ number_format($order->gst_amount / 2, 2) }}</td>
+                </tr>
+                <tr>
+                    <td class="label">SGST:</td>
+                    <td class="value">₹{{ number_format($order->gst_amount / 2, 2) }}</td>
+                </tr>
+                @endif
+                <tr>
+                    <td class="label">Shipping Charges:</td>
+                    <td class="value">{{ $order->shipping_charge > 0 ? '₹' . number_format($order->shipping_charge, 2) : 'FREE' }}</td>
+                </tr>
+                @if($order->discount_amount > 0)
+                <tr>
+                    <td class="label">Discount:</td>
+                    <td class="value" style="color: #166534;">-₹{{ number_format($order->discount_amount, 2) }}</td>
+                </tr>
+                @endif
+                <tr class="grand-total">
+                    <td class="label">Grand Total:</td>
+                    <td class="value">₹{{ number_format($order->total_amount, 2) }}</td>
+                </tr>
+            </table>
+            
+            <!-- Signature -->
+            <div class="signature-box">
+                <div class="signature-line">
+                    Authorized Signatory
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Thank You -->
