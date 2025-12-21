@@ -80,6 +80,14 @@ class Order extends Model
     }
 
     /**
+     * Custom combos in this order
+     */
+    public function customCombos(): HasMany
+    {
+        return $this->hasMany(OrderCustomCombo::class);
+    }
+
+    /**
      * Mark order as seen by admin
      */
     public function markAsSeen(): void

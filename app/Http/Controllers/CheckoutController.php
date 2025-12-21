@@ -6,6 +6,7 @@ use App\Jobs\SendOrderEmails;
 use App\Models\Cart;
 use App\Models\Coupon;
 use App\Models\Order;
+use App\Models\OrderCustomCombo;
 use App\Models\PaymentMethod;
 use App\Models\Setting;
 use App\Models\StockMovement;
@@ -17,9 +18,10 @@ class CheckoutController extends Controller
     public function index()
     {
         $cart = Cart::getCart();
-        $cart->load('items.product', 'items.variant');
+        $cart->load('items.product', 'items.variant', 'customCombos.items.product', 'customCombos.items.variant', 'customCombos.comboSetting');
 
-        if ($cart->items->isEmpty()) {
+        // Check if cart has items OR custom combos
+        if ($cart->items->isEmpty() && $cart->customCombos->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
 
@@ -94,17 +96,29 @@ class CheckoutController extends Controller
         }
 
         $cart = Cart::getCart();
-        $cart->load('items.product', 'items.variant');
+        $cart->load('items.product', 'items.variant', 'customCombos.items.product', 'customCombos.items.variant', 'customCombos.comboSetting');
 
-        if ($cart->items->isEmpty()) {
+        // Check if cart has items OR custom combos
+        if ($cart->items->isEmpty() && $cart->customCombos->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
 
-        // Check stock availability
+        // Check stock availability for regular items
         foreach ($cart->items as $item) {
             $stockQty = $item->variant ? $item->variant->stock_quantity : $item->product->stock_quantity;
             if ($item->quantity > $stockQty) {
                 return back()->with('error', "Not enough stock for {$item->item_name}.");
+            }
+        }
+
+        // Check stock availability for combo items
+        foreach ($cart->customCombos as $combo) {
+            foreach ($combo->items as $item) {
+                $stockQty = $item->variant ? $item->variant->stock_quantity : $item->product->stock_quantity;
+                $totalNeeded = $item->quantity * $combo->quantity;
+                if ($totalNeeded > $stockQty) {
+                    return back()->with('error', "Not enough stock for {$item->item_name} in combo.");
+                }
             }
         }
 
@@ -157,7 +171,7 @@ class CheckoutController extends Controller
                 'customer_notes' => $validated['customer_notes'],
             ]);
 
-            // Create order items and update stock
+            // Create order items from regular cart items and update stock
             foreach ($cart->items as $item) {
                 $product = $item->product;
                 $variant = $item->variant;
@@ -190,13 +204,74 @@ class CheckoutController extends Controller
                 }
             }
 
+            // Create order items from custom combos
+            foreach ($cart->customCombos as $combo) {
+                // Create combo snapshot
+                $itemsSnapshot = $combo->items->map(function ($item) {
+                    return [
+                        'product_id' => $item->product_id,
+                        'variant_id' => $item->variant_id,
+                        'product_name' => $item->product->name,
+                        'variant_name' => $item->variant ? $item->variant->name : null,
+                        'quantity' => $item->quantity,
+                        'unit_price' => $item->unit_price,
+                        'total' => $item->total,
+                    ];
+                })->toArray();
+
+                // Save combo to order
+                OrderCustomCombo::create([
+                    'order_id' => $order->id,
+                    'combo_setting_id' => $combo->combo_setting_id,
+                    'combo_name' => $combo->comboSetting->name ?? $combo->combo_name,
+                    'quantity' => $combo->quantity,
+                    'original_price' => $combo->calculated_price,
+                    'discount_amount' => $combo->discount_amount,
+                    'final_price' => $combo->final_price,
+                    'items_snapshot' => $itemsSnapshot,
+                ]);
+
+                // Create individual order items for each product in combo (for stock tracking)
+                foreach ($combo->items as $item) {
+                    $product = $item->product;
+                    $variant = $item->variant;
+                    $totalQty = $item->quantity * $combo->quantity;
+                    $itemGst = $product->calculateGst($item->unit_price * $totalQty);
+
+                    $order->items()->create([
+                        'product_id' => $product->id,
+                        'variant_id' => $variant ? $variant->id : null,
+                        'product_name' => $product->name . ' (Combo: ' . $combo->comboSetting->name . ')',
+                        'product_sku' => $variant ? $variant->sku : $product->sku,
+                        'variant_name' => $variant ? $variant->name : null,
+                        'unit_price' => $item->unit_price,
+                        'quantity' => $totalQty,
+                        'gst_amount' => $itemGst,
+                        'total_price' => ($item->unit_price * $totalQty) + $itemGst,
+                    ]);
+
+                    // Reduce stock
+                    if ($variant) {
+                        $variant->decrement('stock_quantity', $totalQty);
+                    } else {
+                        StockMovement::recordMovement(
+                            $product,
+                            'out',
+                            $totalQty,
+                            "Order #{$order->order_number} (Combo)",
+                            'Stock reduced for combo order'
+                        );
+                    }
+                }
+            }
+
             // Increment coupon usage
             if ($coupon) {
                 $coupon->incrementUsage();
                 session()->forget('coupon');
             }
 
-            // Clear cart
+            // Clear cart (including combos)
             $cart->clear();
 
             DB::commit();

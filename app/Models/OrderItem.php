@@ -10,8 +10,10 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'product_id',
+        'variant_id',
         'product_name',
         'product_sku',
+        'variant_name',
         'unit_price',
         'quantity',
         'discount',
@@ -34,6 +36,11 @@ class OrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class);
     }
 
     public function getSubtotalAttribute(): float
