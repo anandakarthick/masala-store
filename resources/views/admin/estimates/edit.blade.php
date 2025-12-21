@@ -2,6 +2,51 @@
 
 @section('title', 'Edit Estimate ' . $estimate->estimate_number)
 
+@push('styles')
+<style>
+    .form-input {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #22c55e;
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+    }
+    .form-select {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        background-color: white;
+    }
+    .form-select:focus {
+        outline: none;
+        border-color: #22c55e;
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+    }
+    .form-textarea {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        resize: vertical;
+    }
+    .form-textarea:focus {
+        outline: none;
+        border-color: #22c55e;
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+    }
+</style>
+@endpush
+
 @section('content')
 <div x-data="estimateForm()" class="space-y-6">
     <!-- Header -->
@@ -31,37 +76,37 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
                             <input type="text" name="customer_name" value="{{ old('customer_name', $estimate->customer_name) }}" required
-                                   class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                                   class="form-input" placeholder="Enter customer name">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
                             <input type="tel" name="customer_phone" value="{{ old('customer_phone', $estimate->customer_phone) }}" required
-                                   class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                                   class="form-input" placeholder="Enter phone number">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                             <input type="email" name="customer_email" value="{{ old('customer_email', $estimate->customer_email) }}"
-                                   class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                                   class="form-input" placeholder="Enter email address">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
                             <input type="text" name="customer_city" value="{{ old('customer_city', $estimate->customer_city) }}"
-                                   class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                                   class="form-input" placeholder="Enter city">
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
                             <input type="text" name="customer_address" value="{{ old('customer_address', $estimate->customer_address) }}"
-                                   class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                                   class="form-input" placeholder="Enter full address">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
                             <input type="text" name="customer_state" value="{{ old('customer_state', $estimate->customer_state) }}"
-                                   class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                                   class="form-input" placeholder="Enter state">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
                             <input type="text" name="customer_pincode" value="{{ old('customer_pincode', $estimate->customer_pincode) }}"
-                                   class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                                   class="form-input" placeholder="Enter pincode">
                         </div>
                     </div>
                 </div>
@@ -75,16 +120,16 @@
                     </div>
 
                     <!-- Add Product Search -->
-                    <div class="mb-4">
+                    <div class="mb-4 relative">
                         <div class="relative">
                             <input type="text" x-model="productSearch" @input="filterProducts" @focus="showDropdown = true"
                                    placeholder="Search products to add..."
-                                   class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 pl-10">
+                                   class="form-input pl-10">
                             <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         </div>
                         
                         <div x-show="showDropdown && filteredProducts.length > 0" @click.away="showDropdown = false"
-                             class="absolute z-10 mt-1 w-full max-w-2xl bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                             class="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                             <template x-for="product in filteredProducts" :key="product.id + '-' + (product.variant_id || 0)">
                                 <div @click="addProduct(product)" 
                                      class="px-4 py-2 hover:bg-gray-100 cursor-pointer flex justify-between items-center">
@@ -104,9 +149,9 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                                    <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-20">Qty</th>
-                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase w-28">Price</th>
-                                    <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-20">GST%</th>
+                                    <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-24">Qty</th>
+                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase w-32">Price</th>
+                                    <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-24">GST%</th>
                                     <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase w-28">Total</th>
                                     <th class="px-3 py-2 w-10"></th>
                                 </tr>
@@ -123,17 +168,17 @@
                                         <td class="px-3 py-2">
                                             <input type="number" x-model.number="item.quantity" min="1" @change="calculateTotals"
                                                    :name="'items['+index+'][quantity]'"
-                                                   class="w-20 text-center border-gray-300 rounded focus:ring-green-500 focus:border-green-500">
+                                                   class="form-input text-center" style="width: 70px;">
                                         </td>
                                         <td class="px-3 py-2">
                                             <input type="number" x-model.number="item.unit_price" step="0.01" min="0" @change="calculateTotals"
                                                    :name="'items['+index+'][unit_price]'"
-                                                   class="w-28 text-right border-gray-300 rounded focus:ring-green-500 focus:border-green-500">
+                                                   class="form-input text-right" style="width: 100px;">
                                         </td>
                                         <td class="px-3 py-2">
                                             <input type="number" x-model.number="item.gst_percent" step="0.01" min="0" @change="calculateTotals"
                                                    :name="'items['+index+'][gst_percent]'"
-                                                   class="w-20 text-center border-gray-300 rounded focus:ring-green-500 focus:border-green-500">
+                                                   class="form-input text-center" style="width: 70px;">
                                         </td>
                                         <td class="px-3 py-2 text-right font-semibold text-gray-800">
                                             ₹<span x-text="item.total.toFixed(2)"></span>
@@ -147,6 +192,11 @@
                                 </template>
                             </tbody>
                         </table>
+
+                        <div x-show="items.length === 0" class="text-center py-8 text-gray-500">
+                            <i class="fas fa-box-open text-4xl mb-2"></i>
+                            <p>No items added. Search and add products above.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -159,15 +209,15 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
                             <input type="text" name="subject" value="{{ old('subject', $estimate->subject) }}"
-                                   class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                                   class="form-input" placeholder="Estimate for...">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                            <textarea name="notes" rows="2" class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">{{ old('notes', $estimate->notes) }}</textarea>
+                            <textarea name="notes" rows="2" class="form-textarea">{{ old('notes', $estimate->notes) }}</textarea>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Terms & Conditions</label>
-                            <textarea name="terms" rows="2" class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">{{ old('terms', $estimate->terms) }}</textarea>
+                            <textarea name="terms" rows="3" class="form-textarea">{{ old('terms', $estimate->terms) }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -184,12 +234,12 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Estimate Date *</label>
                             <input type="date" name="estimate_date" value="{{ old('estimate_date', $estimate->estimate_date->format('Y-m-d')) }}" required
-                                   class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                                   class="form-input">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Valid Until</label>
                             <input type="date" name="valid_until" value="{{ old('valid_until', $estimate->valid_until?->format('Y-m-d')) }}"
-                                   class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                                   class="form-input">
                         </div>
                     </div>
                 </div>
@@ -203,7 +253,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
                             <select name="discount_type" x-model="discountType" @change="calculateTotals"
-                                    class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                                    class="form-select">
                                 <option value="fixed">Fixed Amount (₹)</option>
                                 <option value="percentage">Percentage (%)</option>
                             </select>
@@ -211,12 +261,12 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Discount Value</label>
                             <input type="number" name="discount_value" x-model.number="discountValue" @change="calculateTotals" step="0.01" min="0"
-                                   class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                                   class="form-input" placeholder="0">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Shipping Charge (₹)</label>
                             <input type="number" name="shipping_charge" x-model.number="shippingCharge" @change="calculateTotals" step="0.01" min="0"
-                                   class="w-full border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                                   class="form-input" placeholder="0">
                         </div>
                     </div>
                 </div>
