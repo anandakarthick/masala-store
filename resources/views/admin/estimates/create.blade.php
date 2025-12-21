@@ -11,7 +11,7 @@
         border-radius: 0.5rem;
         font-size: 0.875rem;
         line-height: 1.25rem;
-        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        background-color: #fff;
     }
     .form-input:focus {
         outline: none;
@@ -38,17 +38,44 @@
         border-radius: 0.5rem;
         font-size: 0.875rem;
         resize: vertical;
+        background-color: #fff;
     }
     .form-textarea:focus {
         outline: none;
         border-color: #22c55e;
         box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
     }
+    .product-dropdown {
+        position: absolute;
+        z-index: 50;
+        margin-top: 0.25rem;
+        width: 100%;
+        background-color: white;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .product-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    .product-item:hover {
+        background-color: #f0fdf4;
+    }
+    .product-item:last-child {
+        border-bottom: none;
+    }
 </style>
 @endpush
 
 @section('content')
-<div x-data="estimateForm()" class="space-y-6">
+<div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
         <div>
@@ -60,7 +87,7 @@
         </a>
     </div>
 
-    <form action="{{ route('admin.estimates.store') }}" method="POST" @submit="prepareSubmit">
+    <form action="{{ route('admin.estimates.store') }}" method="POST" id="estimateForm">
         @csrf
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -114,33 +141,44 @@
                 </div>
 
                 <!-- Items -->
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white rounded-lg shadow p-6" x-data="itemsManager()">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-lg font-semibold text-gray-800">
                             <i class="fas fa-box text-green-600 mr-2"></i>Items
                         </h2>
+                        <span class="text-sm text-gray-500">
+                            <span x-text="items.length"></span> item(s) added
+                        </span>
                     </div>
 
                     <!-- Add Product Search -->
                     <div class="mb-4 relative">
                         <div class="relative">
-                            <input type="text" x-model="productSearch" @input="filterProducts" @focus="showDropdown = true"
-                                   placeholder="Search products to add..."
+                            <input type="text" 
+                                   x-model="productSearch" 
+                                   @input="filterProducts()" 
+                                   @focus="showDropdown = true"
+                                   @keydown.escape="showDropdown = false"
+                                   placeholder="Type to search products..."
                                    class="form-input pl-10">
                             <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         </div>
                         
                         <!-- Product Dropdown -->
-                        <div x-show="showDropdown && filteredProducts.length > 0" @click.away="showDropdown = false"
-                             class="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                            <template x-for="product in filteredProducts" :key="product.id + '-' + (product.variant_id || 0)">
-                                <div @click="addProduct(product)" 
-                                     class="px-4 py-2 hover:bg-gray-100 cursor-pointer flex justify-between items-center">
+                        <div x-show="showDropdown && filteredProducts.length > 0" 
+                             x-transition
+                             @click.away="showDropdown = false"
+                             class="product-dropdown">
+                            <template x-for="product in filteredProducts" :key="getProductKey(product)">
+                                <div @click="addProduct(product)" class="product-item">
                                     <div>
-                                        <span x-text="product.name" class="font-medium"></span>
-                                        <span x-text="'SKU: ' + product.sku" class="text-sm text-gray-500 ml-2"></span>
+                                        <div class="font-medium text-gray-800" x-text="product.name"></div>
+                                        <div class="text-xs text-gray-500">SKU: <span x-text="product.sku || 'N/A'"></span></div>
                                     </div>
-                                    <span class="text-green-600 font-semibold">₹<span x-text="product.price.toFixed(2)"></span></span>
+                                    <div class="text-right">
+                                        <div class="text-green-600 font-semibold">₹<span x-text="product.price.toFixed(2)"></span></div>
+                                        <div class="text-xs text-gray-400">Stock: <span x-text="product.stock"></span></div>
+                                    </div>
                                 </div>
                             </template>
                         </div>
@@ -148,45 +186,59 @@
 
                     <!-- Items Table -->
                     <div class="overflow-x-auto">
-                        <table class="w-full">
+                        <table class="w-full" x-show="items.length > 0">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                                    <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-24">Qty</th>
-                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase w-32">Price</th>
-                                    <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-24">GST%</th>
-                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase w-28">Total</th>
-                                    <th class="px-3 py-2 w-10"></th>
+                                    <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase" style="width: 80px;">Qty</th>
+                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase" style="width: 110px;">Price</th>
+                                    <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase" style="width: 80px;">GST%</th>
+                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase" style="width: 110px;">Total</th>
+                                    <th class="px-3 py-2" style="width: 40px;"></th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y">
+                            <tbody class="divide-y divide-gray-100">
                                 <template x-for="(item, index) in items" :key="index">
-                                    <tr>
-                                        <td class="px-3 py-2">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-3">
                                             <div class="font-medium text-gray-800" x-text="item.name"></div>
-                                            <div class="text-xs text-gray-500" x-text="'SKU: ' + item.sku"></div>
+                                            <div class="text-xs text-gray-500">SKU: <span x-text="item.sku || 'N/A'"></span></div>
                                             <input type="hidden" :name="'items['+index+'][product_id]'" :value="item.product_id">
                                             <input type="hidden" :name="'items['+index+'][variant_id]'" :value="item.variant_id">
                                         </td>
-                                        <td class="px-3 py-2">
-                                            <input type="number" x-model.number="item.quantity" min="1" @change="calculateTotals"
+                                        <td class="px-3 py-3 text-center">
+                                            <input type="number" 
+                                                   x-model.number="item.quantity" 
+                                                   @input="calculateItemTotal(index); calculateTotals()"
+                                                   min="1" 
                                                    :name="'items['+index+'][quantity]'"
-                                                   class="form-input text-center" style="width: 70px;">
+                                                   class="form-input text-center" 
+                                                   style="width: 70px;">
                                         </td>
-                                        <td class="px-3 py-2">
-                                            <input type="number" x-model.number="item.unit_price" step="0.01" min="0" @change="calculateTotals"
+                                        <td class="px-3 py-3">
+                                            <input type="number" 
+                                                   x-model.number="item.unit_price" 
+                                                   @input="calculateItemTotal(index); calculateTotals()"
+                                                   step="0.01" 
+                                                   min="0" 
                                                    :name="'items['+index+'][unit_price]'"
-                                                   class="form-input text-right" style="width: 100px;">
+                                                   class="form-input text-right" 
+                                                   style="width: 100px;">
                                         </td>
-                                        <td class="px-3 py-2">
-                                            <input type="number" x-model.number="item.gst_percent" step="0.01" min="0" @change="calculateTotals"
+                                        <td class="px-3 py-3 text-center">
+                                            <input type="number" 
+                                                   x-model.number="item.gst_percent" 
+                                                   @input="calculateItemTotal(index); calculateTotals()"
+                                                   step="0.01" 
+                                                   min="0" 
                                                    :name="'items['+index+'][gst_percent]'"
-                                                   class="form-input text-center" style="width: 70px;">
+                                                   class="form-input text-center" 
+                                                   style="width: 70px;">
                                         </td>
-                                        <td class="px-3 py-2 text-right font-semibold text-gray-800">
+                                        <td class="px-3 py-3 text-right font-semibold text-gray-800">
                                             ₹<span x-text="item.total.toFixed(2)"></span>
                                         </td>
-                                        <td class="px-3 py-2">
+                                        <td class="px-3 py-3 text-center">
                                             <button type="button" @click="removeItem(index)" class="text-red-500 hover:text-red-700">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -196,9 +248,10 @@
                             </tbody>
                         </table>
 
-                        <div x-show="items.length === 0" class="text-center py-8 text-gray-500">
-                            <i class="fas fa-box-open text-4xl mb-2"></i>
-                            <p>No items added. Search and add products above.</p>
+                        <div x-show="items.length === 0" class="text-center py-12 text-gray-500">
+                            <i class="fas fa-box-open text-5xl mb-3 text-gray-300"></i>
+                            <p class="text-lg">No items added yet</p>
+                            <p class="text-sm">Search and add products using the search box above</p>
                         </div>
                     </div>
                 </div>
@@ -227,7 +280,7 @@
             </div>
 
             <!-- Right Column - Summary -->
-            <div class="space-y-6">
+            <div class="space-y-6" x-data="summaryManager()">
                 <!-- Estimate Info -->
                 <div class="bg-white rounded-lg shadow p-6">
                     <h2 class="text-lg font-semibold text-gray-800 mb-4">
@@ -255,7 +308,7 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
-                            <select name="discount_type" x-model="discountType" @change="calculateTotals"
+                            <select name="discount_type" x-model="discountType" @change="window.dispatchEvent(new CustomEvent('recalculate'))"
                                     class="form-select">
                                 <option value="fixed">Fixed Amount (₹)</option>
                                 <option value="percentage">Percentage (%)</option>
@@ -263,13 +316,15 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Discount Value</label>
-                            <input type="number" name="discount_value" x-model.number="discountValue" @change="calculateTotals" step="0.01" min="0"
-                                   class="form-input" placeholder="0">
+                            <input type="number" name="discount_value" x-model.number="discountValue" 
+                                   @input="window.dispatchEvent(new CustomEvent('recalculate'))"
+                                   step="0.01" min="0" class="form-input" placeholder="0">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Shipping Charge (₹)</label>
-                            <input type="number" name="shipping_charge" x-model.number="shippingCharge" @change="calculateTotals" step="0.01" min="0"
-                                   class="form-input" placeholder="0">
+                            <input type="number" name="shipping_charge" x-model.number="shippingCharge" 
+                                   @input="window.dispatchEvent(new CustomEvent('recalculate'))"
+                                   step="0.01" min="0" class="form-input" placeholder="0">
                         </div>
                     </div>
                 </div>
@@ -318,52 +373,64 @@
 </div>
 
 <script>
-function estimateForm() {
+// Products data
+const allProducts = @json($productsJson);
+
+// Shared items array
+window.estimateItems = [];
+
+function itemsManager() {
     return {
-        products: @json($productsJson),
+        products: allProducts,
         filteredProducts: [],
         productSearch: '',
         showDropdown: false,
-        items: [],
-        discountType: 'fixed',
-        discountValue: 0,
-        shippingCharge: 0,
-        subtotal: 0,
-        discountAmount: 0,
-        gstAmount: 0,
-        grandTotal: 0,
+        items: window.estimateItems,
+
+        init() {
+            this.filteredProducts = this.products.slice(0, 15);
+        },
+
+        getProductKey(product) {
+            return product.id + '-' + product.variant_id;
+        },
 
         filterProducts() {
             if (this.productSearch.length < 1) {
-                this.filteredProducts = this.products.slice(0, 10);
+                this.filteredProducts = this.products.slice(0, 15);
+                this.showDropdown = true;
                 return;
             }
             const search = this.productSearch.toLowerCase();
             this.filteredProducts = this.products.filter(p => 
                 p.name.toLowerCase().includes(search) || 
-                p.sku.toLowerCase().includes(search)
-            ).slice(0, 10);
+                (p.sku && p.sku.toLowerCase().includes(search))
+            ).slice(0, 15);
+            this.showDropdown = true;
         },
 
         addProduct(product) {
             // Check if already exists
-            const exists = this.items.find(i => 
+            const existingIndex = this.items.findIndex(i => 
                 i.product_id === product.id && i.variant_id === product.variant_id
             );
             
-            if (exists) {
-                exists.quantity++;
+            if (existingIndex > -1) {
+                this.items[existingIndex].quantity++;
+                this.calculateItemTotal(existingIndex);
             } else {
-                this.items.push({
+                const newItem = {
                     product_id: product.id,
                     variant_id: product.variant_id,
                     name: product.name,
-                    sku: product.sku,
+                    sku: product.sku || '',
                     quantity: 1,
                     unit_price: product.price,
                     gst_percent: product.gst_percent || 0,
                     total: product.price
-                });
+                };
+                this.items.push(newItem);
+                this.calculateItemTotal(this.items.length - 1);
             }
             
             this.productSearch = '';
@@ -376,40 +443,68 @@ function estimateForm() {
             this.calculateTotals();
         },
 
-        calculateTotals() {
-            this.subtotal = 0;
-            this.gstAmount = 0;
-
-            this.items.forEach(item => {
+        calculateItemTotal(index) {
+            const item = this.items[index];
+            if (item) {
                 const baseTotal = item.quantity * item.unit_price;
                 const gst = (baseTotal * item.gst_percent) / 100;
                 item.total = baseTotal + gst;
+            }
+        },
+
+        calculateTotals() {
+            window.dispatchEvent(new CustomEvent('recalculate'));
+        }
+    }
+}
+
+function summaryManager() {
+    return {
+        discountType: 'fixed',
+        discountValue: 0,
+        shippingCharge: 0,
+        subtotal: 0,
+        discountAmount: 0,
+        gstAmount: 0,
+        grandTotal: 0,
+
+        init() {
+            this.calculate();
+            window.addEventListener('recalculate', () => this.calculate());
+        },
+
+        calculate() {
+            const items = window.estimateItems;
+            
+            this.subtotal = 0;
+            this.gstAmount = 0;
+
+            items.forEach(item => {
+                const baseTotal = item.quantity * item.unit_price;
+                const gst = (baseTotal * (item.gst_percent || 0)) / 100;
                 this.subtotal += baseTotal;
                 this.gstAmount += gst;
             });
 
             if (this.discountType === 'percentage') {
-                this.discountAmount = (this.subtotal * this.discountValue) / 100;
+                this.discountAmount = (this.subtotal * (this.discountValue || 0)) / 100;
             } else {
                 this.discountAmount = this.discountValue || 0;
             }
 
             this.grandTotal = this.subtotal - this.discountAmount + this.gstAmount + (this.shippingCharge || 0);
-        },
-
-        prepareSubmit(e) {
-            if (this.items.length === 0) {
-                e.preventDefault();
-                alert('Please add at least one item to the estimate.');
-                return false;
-            }
-            return true;
-        },
-
-        init() {
-            this.filteredProducts = this.products.slice(0, 10);
         }
     }
 }
+
+// Form validation
+document.getElementById('estimateForm').addEventListener('submit', function(e) {
+    if (window.estimateItems.length === 0) {
+        e.preventDefault();
+        alert('Please add at least one item to the estimate.');
+        return false;
+    }
+    return true;
+});
 </script>
 @endsection

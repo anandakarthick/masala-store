@@ -53,34 +53,34 @@ class EstimateController extends Controller
 
     public function create()
     {
-        $products = Product::active()->get();
+        $products = Product::active()->with('activeVariants')->get();
         $customers = User::whereHas('role', function($q) {
             $q->where('slug', 'customer');
         })->get();
 
         $productsJson = [];
         foreach ($products as $p) {
-            if ($p->has_variants) {
+            if ($p->has_variants && $p->activeVariants->count() > 0) {
                 foreach ($p->activeVariants as $v) {
                     $productsJson[] = [
-                        'id' => $p->id,
-                        'variant_id' => $v->id,
+                        'id' => (int) $p->id,
+                        'variant_id' => (int) $v->id,
                         'name' => $p->name . ' - ' . $v->name,
-                        'sku' => $v->sku,
-                        'price' => (float) $v->effective_price,
-                        'gst_percent' => (float) ($p->gst_percent ?? 0),
-                        'stock' => (int) $v->stock_quantity,
+                        'sku' => $v->sku ?? '',
+                        'price' => (float) ($v->discount_price ?? $v->price ?? $p->price),
+                        'gst_percent' => (float) ($p->gst_percentage ?? 0),
+                        'stock' => (int) ($v->stock_quantity ?? 0),
                     ];
                 }
             } else {
                 $productsJson[] = [
-                    'id' => $p->id,
-                    'variant_id' => null,
+                    'id' => (int) $p->id,
+                    'variant_id' => 0,
                     'name' => $p->name,
                     'sku' => $p->sku ?? '',
-                    'price' => (float) $p->effective_price,
-                    'gst_percent' => (float) ($p->gst_percent ?? 0),
-                    'stock' => (int) $p->stock_quantity,
+                    'price' => (float) ($p->discount_price ?? $p->price),
+                    'gst_percent' => (float) ($p->gst_percentage ?? 0),
+                    'stock' => (int) ($p->stock_quantity ?? 0),
                 ];
             }
         }
@@ -108,7 +108,7 @@ class EstimateController extends Controller
             'shipping_charge' => 'nullable|numeric|min:0',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.variant_id' => 'nullable|exists:product_variants,id',
+            'items.*.variant_id' => 'nullable',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.gst_percent' => 'nullable|numeric|min:0',
@@ -117,17 +117,17 @@ class EstimateController extends Controller
 
         $estimate = Estimate::create([
             'customer_name' => $validated['customer_name'],
-            'customer_email' => $validated['customer_email'],
+            'customer_email' => $validated['customer_email'] ?? null,
             'customer_phone' => $validated['customer_phone'],
-            'customer_address' => $validated['customer_address'],
-            'customer_city' => $validated['customer_city'],
-            'customer_state' => $validated['customer_state'],
-            'customer_pincode' => $validated['customer_pincode'],
+            'customer_address' => $validated['customer_address'] ?? null,
+            'customer_city' => $validated['customer_city'] ?? null,
+            'customer_state' => $validated['customer_state'] ?? null,
+            'customer_pincode' => $validated['customer_pincode'] ?? null,
             'estimate_date' => $validated['estimate_date'],
-            'valid_until' => $validated['valid_until'],
-            'subject' => $validated['subject'],
-            'notes' => $validated['notes'],
-            'terms' => $validated['terms'],
+            'valid_until' => $validated['valid_until'] ?? null,
+            'subject' => $validated['subject'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+            'terms' => $validated['terms'] ?? null,
             'discount_type' => $validated['discount_type'],
             'discount_value' => $validated['discount_value'] ?? 0,
             'shipping_charge' => $validated['shipping_charge'] ?? 0,
@@ -137,7 +137,8 @@ class EstimateController extends Controller
 
         foreach ($validated['items'] as $item) {
             $product = Product::find($item['product_id']);
-            $variant = isset($item['variant_id']) ? ProductVariant::find($item['variant_id']) : null;
+            $variantId = !empty($item['variant_id']) && $item['variant_id'] != '0' ? $item['variant_id'] : null;
+            $variant = $variantId ? ProductVariant::find($variantId) : null;
 
             $estimate->items()->create([
                 'product_id' => $product->id,
@@ -172,34 +173,34 @@ class EstimateController extends Controller
         }
 
         $estimate->load('items');
-        $products = Product::active()->get();
+        $products = Product::active()->with('activeVariants')->get();
         $customers = User::whereHas('role', function($q) {
             $q->where('slug', 'customer');
         })->get();
 
         $productsJson = [];
         foreach ($products as $p) {
-            if ($p->has_variants) {
+            if ($p->has_variants && $p->activeVariants->count() > 0) {
                 foreach ($p->activeVariants as $v) {
                     $productsJson[] = [
-                        'id' => $p->id,
-                        'variant_id' => $v->id,
+                        'id' => (int) $p->id,
+                        'variant_id' => (int) $v->id,
                         'name' => $p->name . ' - ' . $v->name,
-                        'sku' => $v->sku,
-                        'price' => (float) $v->effective_price,
-                        'gst_percent' => (float) ($p->gst_percent ?? 0),
-                        'stock' => (int) $v->stock_quantity,
+                        'sku' => $v->sku ?? '',
+                        'price' => (float) ($v->discount_price ?? $v->price ?? $p->price),
+                        'gst_percent' => (float) ($p->gst_percentage ?? 0),
+                        'stock' => (int) ($v->stock_quantity ?? 0),
                     ];
                 }
             } else {
                 $productsJson[] = [
-                    'id' => $p->id,
-                    'variant_id' => null,
+                    'id' => (int) $p->id,
+                    'variant_id' => 0,
                     'name' => $p->name,
                     'sku' => $p->sku ?? '',
-                    'price' => (float) $p->effective_price,
-                    'gst_percent' => (float) ($p->gst_percent ?? 0),
-                    'stock' => (int) $p->stock_quantity,
+                    'price' => (float) ($p->discount_price ?? $p->price),
+                    'gst_percent' => (float) ($p->gst_percentage ?? 0),
+                    'stock' => (int) ($p->stock_quantity ?? 0),
                 ];
             }
         }
@@ -231,7 +232,7 @@ class EstimateController extends Controller
             'shipping_charge' => 'nullable|numeric|min:0',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.variant_id' => 'nullable|exists:product_variants,id',
+            'items.*.variant_id' => 'nullable',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.gst_percent' => 'nullable|numeric|min:0',
@@ -240,17 +241,17 @@ class EstimateController extends Controller
 
         $estimate->update([
             'customer_name' => $validated['customer_name'],
-            'customer_email' => $validated['customer_email'],
+            'customer_email' => $validated['customer_email'] ?? null,
             'customer_phone' => $validated['customer_phone'],
-            'customer_address' => $validated['customer_address'],
-            'customer_city' => $validated['customer_city'],
-            'customer_state' => $validated['customer_state'],
-            'customer_pincode' => $validated['customer_pincode'],
+            'customer_address' => $validated['customer_address'] ?? null,
+            'customer_city' => $validated['customer_city'] ?? null,
+            'customer_state' => $validated['customer_state'] ?? null,
+            'customer_pincode' => $validated['customer_pincode'] ?? null,
             'estimate_date' => $validated['estimate_date'],
-            'valid_until' => $validated['valid_until'],
-            'subject' => $validated['subject'],
-            'notes' => $validated['notes'],
-            'terms' => $validated['terms'],
+            'valid_until' => $validated['valid_until'] ?? null,
+            'subject' => $validated['subject'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+            'terms' => $validated['terms'] ?? null,
             'discount_type' => $validated['discount_type'],
             'discount_value' => $validated['discount_value'] ?? 0,
             'shipping_charge' => $validated['shipping_charge'] ?? 0,
@@ -262,7 +263,8 @@ class EstimateController extends Controller
         // Add new items
         foreach ($validated['items'] as $item) {
             $product = Product::find($item['product_id']);
-            $variant = isset($item['variant_id']) ? ProductVariant::find($item['variant_id']) : null;
+            $variantId = !empty($item['variant_id']) && $item['variant_id'] != '0' ? $item['variant_id'] : null;
+            $variant = $variantId ? ProductVariant::find($variantId) : null;
 
             $estimate->items()->create([
                 'product_id' => $product->id,
