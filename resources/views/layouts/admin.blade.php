@@ -159,6 +159,13 @@
                         <span x-show="sidebarOpen" class="px-3 text-xs text-gray-400 uppercase">Sales</span>
                     </li>
                     <li>
+                        <a href="{{ route('admin.estimates.index') }}" 
+                           class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-700 {{ request()->routeIs('admin.estimates.*') ? 'bg-green-600' : '' }}">
+                            <i class="fas fa-file-invoice w-6"></i>
+                            <span x-show="sidebarOpen" class="ml-3">Estimates</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('admin.orders.index') }}" 
                            class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-700 {{ request()->routeIs('admin.orders.*') ? 'bg-green-600' : '' }}">
                             <i class="fas fa-shopping-bag w-6"></i>

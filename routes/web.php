@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\PaymentMethodController as AdminPaymentMethodController;
 use App\Http\Controllers\Admin\SellingPlatformController as AdminSellingPlatformController;
 use App\Http\Controllers\Admin\VariantAttributeController as AdminVariantAttributeController;
+use App\Http\Controllers\Admin\EstimateController as AdminEstimateController;
 use App\Http\Controllers\RazorpayController;
 use Illuminate\Support\Facades\Route;
 
@@ -267,6 +268,22 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/category-details', [App\Http\Controllers\Admin\BannerController::class, 'getCategoryDetails'])->name('category-details');
         Route::post('/save-to-store', [App\Http\Controllers\Admin\BannerController::class, 'saveToStore'])->name('save-to-store');
         Route::get('/store-banners', [App\Http\Controllers\Admin\BannerController::class, 'getStoreBanners'])->name('store-banners');
+    });
+
+    // Estimates
+    Route::prefix('estimates')->name('estimates.')->group(function () {
+        Route::get('/', [AdminEstimateController::class, 'index'])->name('index');
+        Route::get('/create', [AdminEstimateController::class, 'create'])->name('create');
+        Route::post('/', [AdminEstimateController::class, 'store'])->name('store');
+        Route::get('/{estimate}', [AdminEstimateController::class, 'show'])->name('show');
+        Route::get('/{estimate}/edit', [AdminEstimateController::class, 'edit'])->name('edit');
+        Route::put('/{estimate}', [AdminEstimateController::class, 'update'])->name('update');
+        Route::delete('/{estimate}', [AdminEstimateController::class, 'destroy'])->name('destroy');
+        Route::get('/{estimate}/download', [AdminEstimateController::class, 'downloadPdf'])->name('download');
+        Route::post('/{estimate}/send-email', [AdminEstimateController::class, 'sendEmail'])->name('send-email');
+        Route::get('/{estimate}/whatsapp', [AdminEstimateController::class, 'getWhatsAppUrl'])->name('whatsapp');
+        Route::post('/{estimate}/update-status', [AdminEstimateController::class, 'updateStatus'])->name('update-status');
+        Route::get('/{estimate}/duplicate', [AdminEstimateController::class, 'duplicate'])->name('duplicate');
     });
 
     // Payment Methods
