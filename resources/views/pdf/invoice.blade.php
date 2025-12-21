@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <title>Invoice #{{ $order->invoice_number ?? $order->order_number }}</title>
     <style>
+        @page {
+            margin: 8mm 10mm;
+        }
         * {
             margin: 0;
             padding: 0;
@@ -11,277 +14,110 @@
         }
         body {
             font-family: 'DejaVu Sans', sans-serif;
-            font-size: 12px;
+            font-size: 9px;
             color: #333;
-            line-height: 1.4;
+            line-height: 1.1;
         }
         .invoice-container {
-            padding: 20px;
+            padding: 0;
         }
         
-        /* Rupee Symbol */
-        .rupee {
-            font-family: 'DejaVu Sans', sans-serif;
-        }
-        
-        /* Header */
+        /* Header - Very Compact */
         .header {
-            border-bottom: 3px solid #166534;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
+            border-bottom: 2px solid #166534;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
         }
         .header-table {
             width: 100%;
         }
         .logo-section {
-            width: 60%;
+            width: 70%;
+            vertical-align: middle;
+        }
+        .logo-img {
+            max-height: 40px;
+            max-width: 100px;
+            vertical-align: middle;
         }
         .company-name {
-            font-size: 24px;
+            font-size: 14px;
             font-weight: bold;
             color: #166534;
-            margin-bottom: 5px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 5px;
         }
         .company-details {
-            font-size: 11px;
-            color: #666;
-            line-height: 1.6;
+            font-size: 8px;
+            color: #555;
+            line-height: 1.2;
+            margin-top: 2px;
         }
         .invoice-title-section {
-            width: 40%;
+            width: 30%;
             text-align: right;
+            vertical-align: middle;
         }
         .invoice-title {
-            font-size: 32px;
+            font-size: 18px;
             font-weight: bold;
-            color: #1a1a1a;
+            color: #166534;
             text-transform: uppercase;
-            letter-spacing: 2px;
         }
         .invoice-number {
-            font-size: 14px;
-            color: #166534;
-            margin-top: 5px;
+            font-size: 10px;
+            color: #333;
+            font-weight: bold;
+        }
+        .invoice-date {
+            font-size: 8px;
+            color: #666;
         }
         
-        /* Info Section */
+        /* Info Section - Compact */
         .info-section {
-            margin-bottom: 25px;
+            margin-bottom: 5px;
         }
         .info-table {
             width: 100%;
+            border: 1px solid #ddd;
+            border-collapse: collapse;
         }
         .info-box {
-            width: 48%;
+            width: 33.33%;
             vertical-align: top;
+            padding: 4px 6px;
+            border-right: 1px solid #ddd;
+        }
+        .info-box:last-child {
+            border-right: none;
         }
         .info-box-title {
-            font-size: 11px;
+            font-size: 7px;
             font-weight: bold;
             color: #166534;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #86efac;
+            margin-bottom: 2px;
+            border-bottom: 1px solid #d1fae5;
+            padding-bottom: 1px;
         }
         .info-box-content {
-            font-size: 12px;
-            line-height: 1.8;
+            font-size: 8px;
+            line-height: 1.3;
         }
         .info-box-content strong {
-            color: #1a1a1a;
-        }
-        
-        /* Order Details */
-        .order-meta {
-            background-color: #f0fdf4;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-        .order-meta-table {
-            width: 100%;
-        }
-        .order-meta td {
-            padding: 5px 15px 5px 0;
-            font-size: 11px;
-        }
-        .order-meta .label {
-            color: #78716c;
-        }
-        .order-meta .value {
-            font-weight: bold;
-            color: #1a1a1a;
-        }
-        
-        /* Items Table */
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        .items-table th {
-            background-color: #166534;
-            color: #ffffff;
-            padding: 12px 10px;
-            text-align: left;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .items-table th:first-child {
-            border-radius: 5px 0 0 0;
-        }
-        .items-table th:last-child {
-            border-radius: 0 5px 0 0;
-            text-align: right;
-        }
-        .items-table td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #eee;
-            font-size: 11px;
-        }
-        .items-table .item-name {
-            font-weight: 600;
-            color: #1a1a1a;
-        }
-        .items-table .item-variant {
-            font-size: 10px;
-            color: #166534;
-        }
-        .items-table .item-sku {
-            font-size: 10px;
-            color: #999;
-        }
-        .items-table .text-center {
-            text-align: center;
-        }
-        .items-table .text-right {
-            text-align: right;
-        }
-        .items-table tbody tr:nth-child(even) {
-            background-color: #fafafa;
-        }
-        
-        /* Totals */
-        .totals-section {
-            margin-top: 20px;
-        }
-        .totals-table {
-            width: 350px;
-            margin-left: auto;
-            border-collapse: collapse;
-        }
-        .totals-table td {
-            padding: 8px 10px;
-            font-size: 12px;
-        }
-        .totals-table .label {
-            text-align: right;
-            color: #666;
-        }
-        .totals-table .value {
-            text-align: right;
-            font-weight: 500;
-            width: 120px;
-        }
-        .totals-table .grand-total td {
-            border-top: 2px solid #166534;
-            padding-top: 12px;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        .totals-table .grand-total .value {
-            color: #166534;
-        }
-        
-        /* Amount in Words */
-        .amount-words {
-            background-color: #f8fafc;
-            padding: 12px 15px;
-            margin-top: 20px;
-            border-radius: 5px;
-            font-size: 11px;
-        }
-        .amount-words-label {
-            color: #666;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .amount-words-value {
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-top: 3px;
-        }
-        
-        /* Footer */
-        .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-        .footer-content {
-            width: 100%;
-        }
-        .terms-section {
-            width: 60%;
-            vertical-align: top;
-        }
-        .terms-title {
-            font-size: 11px;
-            font-weight: bold;
-            color: #666;
-            margin-bottom: 8px;
-        }
-        .terms-list {
-            font-size: 10px;
-            color: #888;
-            line-height: 1.8;
-        }
-        .signature-section {
-            width: 40%;
-            text-align: right;
-            vertical-align: bottom;
-        }
-        .signature-line {
-            border-top: 1px solid #333;
-            width: 180px;
-            margin-left: auto;
-            padding-top: 8px;
-            font-size: 11px;
-            color: #666;
-        }
-        
-        /* Thank You */
-        .thank-you {
-            text-align: center;
-            margin-top: 30px;
-            padding: 15px;
-            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-            border-radius: 5px;
-        }
-        .thank-you-text {
-            font-size: 14px;
-            color: #166534;
-            font-weight: bold;
-        }
-        .thank-you-subtext {
-            font-size: 11px;
-            color: #15803d;
-            margin-top: 5px;
+            color: #000;
         }
         
         /* Payment Badge */
         .payment-badge {
             display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 10px;
+            padding: 1px 5px;
+            border-radius: 8px;
+            font-size: 7px;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
         .badge-paid {
             background-color: #dcfce7;
@@ -295,167 +131,313 @@
             background-color: #dbeafe;
             color: #1e40af;
         }
+        
+        /* Items Table - Super Compact for 15 items */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5px;
+        }
+        .items-table th {
+            background-color: #166534;
+            color: #fff;
+            padding: 3px 3px;
+            text-align: left;
+            font-size: 7px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .items-table th:first-child {
+            width: 3%;
+            text-align: center;
+        }
+        .items-table th:last-child {
+            text-align: right;
+        }
+        .items-table td {
+            padding: 3px 3px;
+            border-bottom: 1px solid #eee;
+            font-size: 8px;
+            vertical-align: middle;
+        }
+        .items-table .item-name {
+            font-weight: 600;
+            color: #000;
+            font-size: 8px;
+        }
+        .items-table .item-variant {
+            font-size: 7px;
+            color: #166534;
+        }
+        .items-table .item-sku {
+            font-size: 6px;
+            color: #888;
+        }
+        .items-table .text-center {
+            text-align: center;
+        }
+        .items-table .text-right {
+            text-align: right;
+        }
+        .items-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        /* Bottom Section */
+        .bottom-section {
+            margin-top: 5px;
+        }
+        .bottom-table {
+            width: 100%;
+        }
+        .terms-cell {
+            width: 55%;
+            vertical-align: top;
+            padding-right: 10px;
+        }
+        .totals-cell {
+            width: 45%;
+            vertical-align: top;
+        }
+        
+        /* Totals - Compact */
+        .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+        }
+        .totals-table td {
+            padding: 2px 5px;
+            font-size: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .totals-table .label {
+            text-align: right;
+            color: #555;
+            width: 55%;
+        }
+        .totals-table .value {
+            text-align: right;
+            font-weight: 500;
+            width: 45%;
+        }
+        .totals-table .grand-total td {
+            background-color: #166534;
+            color: #fff;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 4px 5px;
+            border: none;
+        }
+        
+        /* Amount Words */
+        .amount-words {
+            font-size: 7px;
+            color: #555;
+            margin-top: 3px;
+            padding: 3px 5px;
+            background: #f5f5f5;
+            border-radius: 2px;
+        }
+        
+        /* Terms */
+        .terms-box {
+            border: 1px solid #ddd;
+            padding: 4px 6px;
+            font-size: 7px;
+            color: #666;
+            line-height: 1.3;
+        }
+        .terms-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 2px;
+            font-size: 7px;
+        }
+        
+        /* Signature */
+        .signature-box {
+            text-align: right;
+            margin-top: 8px;
+            padding-top: 15px;
+        }
+        .signature-line {
+            border-top: 1px solid #333;
+            width: 120px;
+            margin-left: auto;
+            padding-top: 3px;
+            font-size: 7px;
+            color: #555;
+        }
+        
+        /* Thank You */
+        .thank-you {
+            text-align: center;
+            margin-top: 8px;
+            padding: 5px;
+            background: #f0fdf4;
+            border-radius: 3px;
+            font-size: 9px;
+            color: #166534;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div class="invoice-container">
-        <!-- Header -->
+        <!-- Header with Logo -->
         <div class="header">
-            <table class="header-table">
+            <table class="header-table" cellpadding="0" cellspacing="0">
                 <tr>
                     <td class="logo-section">
-                        <div class="company-name">{{ $company['name'] }}</div>
+                        @if(!empty($company['logo']))
+                            <img src="{{ $company['logo'] }}" alt="Logo" class="logo-img">
+                        @endif
+                        <span class="company-name">{{ $company['name'] }}</span>
                         <div class="company-details">
-                            @if($company['address']){{ $company['address'] }}<br>@endif
-                            @if($company['phone'])Phone: {{ $company['phone'] }} @endif
-                            @if($company['email'])| Email: {{ $company['email'] }}@endif
-                            @if($company['gst'])<br>GSTIN: {{ $company['gst'] }}@endif
+                            @if($company['address']){{ $company['address'] }} | @endif
+                            @if($company['phone'])Ph: {{ $company['phone'] }} | @endif
+                            @if($company['email']){{ $company['email'] }}@endif
+                            @if($company['gst']) | GSTIN: {{ $company['gst'] }}@endif
                         </div>
                     </td>
                     <td class="invoice-title-section">
-                        <div class="invoice-title">Invoice</div>
+                        <div class="invoice-title">TAX INVOICE</div>
                         <div class="invoice-number">#{{ $order->invoice_number ?? $order->order_number }}</div>
+                        <div class="invoice-date">Date: {{ $order->invoice_generated_at ? $order->invoice_generated_at->format('d/m/Y') : now()->format('d/m/Y') }}</div>
                     </td>
                 </tr>
             </table>
         </div>
 
-        <!-- Billing & Shipping Info -->
+        <!-- Billing, Shipping & Order Info -->
         <div class="info-section">
-            <table class="info-table">
+            <table class="info-table" cellpadding="0" cellspacing="0">
                 <tr>
                     <td class="info-box">
                         <div class="info-box-title">Bill To</div>
                         <div class="info-box-content">
                             <strong>{{ $order->customer_name }}</strong><br>
                             {{ $order->shipping_address }}<br>
-                            {{ $order->shipping_city }}, {{ $order->shipping_state }}<br>
-                            PIN: {{ $order->shipping_pincode }}<br>
-                            Phone: {{ $order->customer_phone }}
-                            @if($order->customer_email)<br>Email: {{ $order->customer_email }}@endif
+                            {{ $order->shipping_city }}, {{ $order->shipping_state }} - {{ $order->shipping_pincode }}<br>
+                            Ph: {{ $order->customer_phone }}
                         </div>
                     </td>
-                    <td style="width: 4%;"></td>
                     <td class="info-box">
                         <div class="info-box-title">Ship To</div>
                         <div class="info-box-content">
                             <strong>{{ $order->customer_name }}</strong><br>
                             {{ $order->shipping_address }}<br>
-                            {{ $order->shipping_city }}, {{ $order->shipping_state }}<br>
-                            PIN: {{ $order->shipping_pincode }}<br>
-                            Phone: {{ $order->customer_phone }}
+                            {{ $order->shipping_city }}, {{ $order->shipping_state }} - {{ $order->shipping_pincode }}<br>
+                            Ph: {{ $order->customer_phone }}
                         </div>
                     </td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- Order Meta -->
-        <div class="order-meta">
-            <table class="order-meta-table">
-                <tr>
-                    <td class="label">Invoice Date:</td>
-                    <td class="value">{{ $order->invoice_generated_at ? $order->invoice_generated_at->format('d M Y') : now()->format('d M Y') }}</td>
-                    <td class="label">Order Date:</td>
-                    <td class="value">{{ $order->created_at->format('d M Y') }}</td>
-                    <td class="label">Order No:</td>
-                    <td class="value">{{ $order->order_number }}</td>
-                    <td class="label">Payment:</td>
-                    <td class="value">
-                        <span class="payment-badge {{ $order->payment_status === 'paid' ? 'badge-paid' : ($order->payment_method === 'cod' ? 'badge-cod' : 'badge-pending') }}">
-                            {{ $order->payment_method === 'cod' ? 'COD' : ucfirst($order->payment_status) }}
-                        </span>
+                    <td class="info-box">
+                        <div class="info-box-title">Order Details</div>
+                        <div class="info-box-content">
+                            <strong>Order:</strong> {{ $order->order_number }}<br>
+                            <strong>Date:</strong> {{ $order->created_at->format('d/m/Y') }}<br>
+                            <strong>Type:</strong> {{ ucfirst($order->order_type ?? 'Retail') }}<br>
+                            <strong>Payment:</strong> 
+                            <span class="payment-badge {{ $order->payment_status === 'paid' ? 'badge-paid' : ($order->payment_method === 'cod' ? 'badge-cod' : 'badge-pending') }}">
+                                {{ $order->payment_method === 'cod' ? 'COD' : ucfirst($order->payment_status) }}
+                            </span>
+                        </div>
                     </td>
                 </tr>
             </table>
         </div>
 
         <!-- Items Table -->
-        <table class="items-table">
+        <table class="items-table" cellpadding="0" cellspacing="0">
             <thead>
                 <tr>
-                    <th style="width: 5%;">#</th>
-                    <th style="width: 40%;">Item Description</th>
-                    <th style="width: 12%;">HSN</th>
-                    <th class="text-center" style="width: 10%;">Qty</th>
-                    <th class="text-right" style="width: 15%;">Rate</th>
-                    <th class="text-right" style="width: 18%;">Amount</th>
+                    <th class="text-center">#</th>
+                    <th style="width: 40%;">Description</th>
+                    <th style="width: 10%;">HSN</th>
+                    <th class="text-center" style="width: 8%;">Qty</th>
+                    <th class="text-right" style="width: 12%;">Rate</th>
+                    <th class="text-right" style="width: 8%;">GST%</th>
+                    <th class="text-right" style="width: 14%;">Amount</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($order->items as $index => $item)
                 <tr>
-                    <td>{{ $index + 1 }}</td>
+                    <td class="text-center">{{ $index + 1 }}</td>
                     <td>
-                        <div class="item-name">{{ $item->product_name }}</div>
+                        <span class="item-name">{{ $item->product_name }}</span>
                         @if($item->variant_name)
-                            <div class="item-variant">{{ $item->variant_name }}</div>
+                            <span class="item-variant">({{ $item->variant_name }})</span>
                         @endif
-                        <div class="item-sku">SKU: {{ $item->product_sku }}</div>
+                        @if($item->product_sku)
+                            <span class="item-sku">SKU: {{ $item->product_sku }}</span>
+                        @endif
                     </td>
                     <td>{{ $item->product->hsn_code ?? '-' }}</td>
                     <td class="text-center">{{ $item->quantity }}</td>
-                    <td class="text-right">Rs. {{ number_format($item->unit_price, 2) }}</td>
-                    <td class="text-right">Rs. {{ number_format($item->unit_price * $item->quantity, 2) }}</td>
+                    <td class="text-right">{{ number_format($item->unit_price, 2) }}</td>
+                    <td class="text-right">{{ $item->product->gst_percent ?? 12 }}%</td>
+                    <td class="text-right">{{ number_format($item->unit_price * $item->quantity, 2) }}</td>
                 </tr>
                 @endforeach
             </tbody>
         </table>
 
-        <!-- Totals -->
-        <div class="totals-section">
-            <table class="totals-table">
+        <!-- Bottom Section: Terms & Totals -->
+        <div class="bottom-section">
+            <table class="bottom-table" cellpadding="0" cellspacing="0">
                 <tr>
-                    <td class="label">Subtotal:</td>
-                    <td class="value">Rs. {{ number_format($order->subtotal, 2) }}</td>
-                </tr>
-                @if($order->gst_amount > 0)
-                <tr>
-                    <td class="label">GST ({{ $order->gst_percent ?? 12 }}%):</td>
-                    <td class="value">Rs. {{ number_format($order->gst_amount, 2) }}</td>
-                </tr>
-                @endif
-                <tr>
-                    <td class="label">Shipping:</td>
-                    <td class="value">{{ $order->shipping_charge > 0 ? 'Rs. ' . number_format($order->shipping_charge, 2) : 'FREE' }}</td>
-                </tr>
-                @if($order->discount_amount > 0)
-                <tr>
-                    <td class="label">Discount:</td>
-                    <td class="value" style="color: #16a34a;">- Rs. {{ number_format($order->discount_amount, 2) }}</td>
-                </tr>
-                @endif
-                <tr class="grand-total">
-                    <td class="label">Grand Total:</td>
-                    <td class="value">Rs. {{ number_format($order->total_amount, 2) }}</td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- Amount in Words -->
-        <div class="amount-words">
-            <div class="amount-words-label">Amount in Words</div>
-            <div class="amount-words-value">Indian Rupees {{ ucwords(\NumberFormatter::create('en_IN', \NumberFormatter::SPELLOUT)->format(floor($order->total_amount))) }} Only</div>
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
-            <table class="footer-content">
-                <tr>
-                    <td class="terms-section">
-                        <div class="terms-title">Terms & Conditions</div>
-                        <div class="terms-list">
-                            1. Goods once sold will not be taken back.<br>
-                            2. All disputes are subject to local jurisdiction.<br>
-                            3. E. & O.E. (Errors and Omissions Excepted)<br>
-                            4. This is a computer-generated invoice.
+                    <td class="terms-cell">
+                        <div class="terms-box">
+                            <div class="terms-title">Terms & Conditions:</div>
+                            1. Goods once sold will not be taken back or exchanged.<br>
+                            2. All disputes are subject to local jurisdiction only.<br>
+                            3. E. & O.E. - This is a computer generated invoice.
+                        </div>
+                        
+                        <div class="amount-words">
+                            <strong>Amount in Words:</strong> Indian Rupees {{ ucwords(\NumberFormatter::create('en_IN', \NumberFormatter::SPELLOUT)->format(floor($order->total_amount))) }} Only
+                        </div>
+                        
+                        <div class="signature-box">
+                            <div class="signature-line">
+                                Authorized Signatory<br>
+                                <strong>{{ $company['name'] }}</strong>
+                            </div>
                         </div>
                     </td>
-                    <td class="signature-section">
-                        <div class="signature-line">
-                            Authorized Signatory<br>
-                            <strong>{{ $company['name'] }}</strong>
-                        </div>
+                    <td class="totals-cell">
+                        <table class="totals-table" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td class="label">Subtotal:</td>
+                                <td class="value">₹{{ number_format($order->subtotal, 2) }}</td>
+                            </tr>
+                            @if($order->gst_amount > 0)
+                            <tr>
+                                <td class="label">CGST:</td>
+                                <td class="value">₹{{ number_format($order->gst_amount / 2, 2) }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">SGST:</td>
+                                <td class="value">₹{{ number_format($order->gst_amount / 2, 2) }}</td>
+                            </tr>
+                            @endif
+                            <tr>
+                                <td class="label">Shipping:</td>
+                                <td class="value">{{ $order->shipping_charge > 0 ? '₹' . number_format($order->shipping_charge, 2) : 'FREE' }}</td>
+                            </tr>
+                            @if($order->discount_amount > 0)
+                            <tr>
+                                <td class="label">Discount:</td>
+                                <td class="value" style="color: #16a34a;">-₹{{ number_format($order->discount_amount, 2) }}</td>
+                            </tr>
+                            @endif
+                            <tr class="grand-total">
+                                <td class="label">Grand Total:</td>
+                                <td class="value">₹{{ number_format($order->total_amount, 2) }}</td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
             </table>
@@ -463,8 +445,7 @@
 
         <!-- Thank You -->
         <div class="thank-you">
-            <div class="thank-you-text">Thank You for Your Business!</div>
-            <div class="thank-you-subtext">We appreciate your trust in {{ $company['name'] }}</div>
+            Thank You for Your Business! | {{ $company['phone'] ?? '' }} | {{ $company['email'] ?? '' }}
         </div>
     </div>
 </body>
