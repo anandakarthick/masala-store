@@ -90,37 +90,35 @@
             @foreach($banners as $index => $banner)
                 <div x-show="current === {{ $index }}" 
                      x-transition:enter="transition ease-out duration-500"
-                     x-transition:enter-start="opacity-0 transform translate-x-full"
-                     x-transition:enter-end="opacity-100 transform translate-x-0"
-                     class="relative bg-cover bg-center" 
-                     style="background-image: url('{{ $banner->image_url }}'); aspect-ratio: 1920/600;"
-                     role="img"
-                     aria-label="{{ $banner->title }}">
-                    <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                        <div class="text-center text-white px-4">
-                            <h2 class="text-2xl md:text-4xl lg:text-5xl font-bold mb-3">{{ $banner->title }}</h2>
-                            @if($banner->subtitle)
-                                <p class="text-sm md:text-lg lg:text-xl mb-4">{{ $banner->subtitle }}</p>
-                            @endif
-                            @if($banner->link)
-                                <a href="{{ $banner->link }}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 md:px-8 md:py-3 rounded-lg font-semibold text-sm md:text-base inline-block">
-                                    {{ $banner->button_text ?? 'Shop Now' }}
-                                </a>
-                            @endif
-                        </div>
-                    </div>
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     class="relative"
+                     style="aspect-ratio: 1920/600;">
+                    @if($banner->link)
+                        <a href="{{ $banner->link }}" class="block w-full h-full">
+                            <img src="{{ $banner->image_url }}" 
+                                 alt="{{ $banner->title }}" 
+                                 class="w-full h-full object-cover"
+                                 loading="{{ $index === 0 ? 'eager' : 'lazy' }}">
+                        </a>
+                    @else
+                        <img src="{{ $banner->image_url }}" 
+                             alt="{{ $banner->title }}" 
+                             class="w-full h-full object-cover"
+                             loading="{{ $index === 0 ? 'eager' : 'lazy' }}">
+                    @endif
                 </div>
             @endforeach
         </div>
         
         @if($banners->count() > 1)
             <button @click="current = current === 0 ? banners - 1 : current - 1" 
-                    class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 md:p-3"
+                    class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/70 hover:bg-white rounded-full p-2 md:p-3 shadow-lg transition"
                     aria-label="Previous slide">
                 <i class="fas fa-chevron-left text-gray-800 text-lg" aria-hidden="true"></i>
             </button>
             <button @click="current = current === banners - 1 ? 0 : current + 1" 
-                    class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 md:p-3"
+                    class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/70 hover:bg-white rounded-full p-2 md:p-3 shadow-lg transition"
                     aria-label="Next slide">
                 <i class="fas fa-chevron-right text-gray-800 text-lg" aria-hidden="true"></i>
             </button>
@@ -128,8 +126,8 @@
             <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2" role="tablist">
                 @foreach($banners as $index => $banner)
                     <button @click="current = {{ $index }}" 
-                            :class="current === {{ $index }} ? 'bg-green-600 w-8' : 'bg-white bg-opacity-50 w-3'"
-                            class="h-3 rounded-full transition-all duration-300"
+                            :class="current === {{ $index }} ? 'bg-green-600 w-8' : 'bg-white/70 w-3'"
+                            class="h-3 rounded-full transition-all duration-300 shadow"
                             role="tab"
                             aria-label="Slide {{ $index + 1 }}"
                             :aria-selected="current === {{ $index }}"></button>
