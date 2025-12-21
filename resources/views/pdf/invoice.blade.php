@@ -409,7 +409,7 @@
                     <table class="totals-table" cellpadding="0" cellspacing="0">
                         <tr>
                             <td class="label">Subtotal:</td>
-                            <td class="value">₹{{ number_format($order->subtotal, 2) }}</td>
+                            <td class="value"> {{ number_format($order->subtotal, 2) }}</td>
                         </tr>
                         @if($order->gst_amount > 0)
                         <tr>
