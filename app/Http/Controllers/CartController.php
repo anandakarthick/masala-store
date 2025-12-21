@@ -196,7 +196,7 @@ class CartController extends Controller
     public function removeCombo(Request $request)
     {
         $validated = $request->validate([
-            'combo_id' => 'required|exists:custom_combo_cart,id',
+            'combo_id' => 'required|exists:custom_combo_carts,id',
         ]);
 
         $cart = Cart::getCart();
@@ -219,7 +219,7 @@ class CartController extends Controller
     public function updateCombo(Request $request)
     {
         $validated = $request->validate([
-            'combo_id' => 'required|exists:custom_combo_cart,id',
+            'combo_id' => 'required|exists:custom_combo_carts,id',
             'quantity' => 'required|integer|min:0|max:10',
         ]);
 
