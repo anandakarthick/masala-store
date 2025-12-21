@@ -14,22 +14,71 @@ class OrderTrackingController extends Controller
 
     public function track(Request $request)
     {
-        $validated = $request->validate([
-            'order_number' => 'required|string',
-            'phone' => 'required|string',
+        // Validate - at least one field is required
+        $request->validate([
+            'order_number' => 'nullable|string',
+            'phone' => 'nullable|string',
         ]);
 
-        $order = Order::where('order_number', $validated['order_number'])
-            ->where('customer_phone', $validated['phone'])
-            ->first();
+        $orderNumber = $request->input('order_number');
+        $phone = $request->input('phone');
 
-        if (!$order) {
-            return back()->with('error', 'Order not found. Please check your order number and phone number.');
+        // Check if at least one field is provided
+        if (empty($orderNumber) && empty($phone)) {
+            return back()->with('error', 'Please enter either Order Number or Mobile Number.');
         }
 
-        $order->load('items.product');
+        // If order number is provided - search by order number
+        if (!empty($orderNumber)) {
+            $order = Order::where('order_number', trim($orderNumber))->first();
 
-        return view('frontend.tracking.result', compact('order'));
+            if (!$order) {
+                return back()->with('error', 'Order not found. Please check your order number.');
+            }
+
+            $order->load('items.product');
+
+            return view('frontend.tracking.result', [
+                'orders' => collect([$order]),
+                'searchType' => 'order_number',
+                'searchValue' => $orderNumber,
+            ]);
+        }
+
+        // If phone number is provided - search by phone number
+        if (!empty($phone)) {
+            // Clean phone number - remove spaces, dashes, etc.
+            $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+            
+            // Search with multiple phone formats
+            $orders = Order::where(function($query) use ($cleanPhone, $phone) {
+                $query->where('customer_phone', $phone)
+                      ->orWhere('customer_phone', $cleanPhone)
+                      ->orWhere('customer_phone', 'LIKE', '%' . $cleanPhone);
+                      
+                // Also try with last 10 digits if longer
+                if (strlen($cleanPhone) > 10) {
+                    $last10 = substr($cleanPhone, -10);
+                    $query->orWhere('customer_phone', 'LIKE', '%' . $last10);
+                }
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+            if ($orders->isEmpty()) {
+                return back()->with('error', 'No orders found for this mobile number.');
+            }
+
+            $orders->load('items.product');
+
+            return view('frontend.tracking.result', [
+                'orders' => $orders,
+                'searchType' => 'phone',
+                'searchValue' => $phone,
+            ]);
+        }
+
+        return back()->with('error', 'Please enter either Order Number or Mobile Number.');
     }
 
     public function show(Order $order)
@@ -41,6 +90,10 @@ class OrderTrackingController extends Controller
 
         $order->load('items.product');
 
-        return view('frontend.tracking.result', compact('order'));
+        return view('frontend.tracking.result', [
+            'orders' => collect([$order]),
+            'searchType' => 'direct',
+            'searchValue' => $order->order_number,
+        ]);
     }
 }
