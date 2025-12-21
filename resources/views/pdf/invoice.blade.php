@@ -438,11 +438,7 @@
                     </table>
                     
                     <!-- Signature -->
-                    <div class="signature-box">
-                        <div class="signature-line">
-                            Authorized Signatory
-                        </div>
-                    </div>
+                    
                 </td>
             </tr>
         </table>
