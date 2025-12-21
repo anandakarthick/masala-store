@@ -5,11 +5,13 @@ use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CustomerAccountController;
+use App\Http\Controllers\CustomComboController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderTrackingController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
+use App\Http\Controllers\Admin\CustomComboController as AdminCustomComboController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
@@ -61,12 +63,27 @@ Route::get('/products/offers', [ProductController::class, 'offers'])->name('prod
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/category/{category:slug}', [ProductController::class, 'category'])->name('category.show');
 
+// Build Your Own Combo (Custom Combo)
+Route::prefix('combo')->name('combo.')->group(function () {
+    Route::get('/', [CustomComboController::class, 'index'])->name('index');
+    Route::get('/build/{combo:slug}', [CustomComboController::class, 'builder'])->name('builder');
+    Route::post('/start/{combo}', [CustomComboController::class, 'startCombo'])->name('start');
+    Route::post('/add-product', [CustomComboController::class, 'addProduct'])->name('add-product');
+    Route::post('/remove-product', [CustomComboController::class, 'removeProduct'])->name('remove-product');
+    Route::post('/update-quantity', [CustomComboController::class, 'updateQuantity'])->name('update-quantity');
+    Route::post('/add-to-cart', [CustomComboController::class, 'addToCart'])->name('add-to-cart');
+    Route::post('/status', [CustomComboController::class, 'getStatus'])->name('status');
+    Route::post('/delete', [CustomComboController::class, 'deleteCombo'])->name('delete');
+});
+
 // Cart
 Route::prefix('cart')->name('cart.')->group(function () {
     Route::get('/', [CartController::class, 'index'])->name('index');
     Route::post('/add', [CartController::class, 'add'])->name('add');
     Route::post('/update', [CartController::class, 'update'])->name('update');
     Route::post('/remove', [CartController::class, 'remove'])->name('remove');
+    Route::post('/remove-combo', [CartController::class, 'removeCombo'])->name('remove-combo');
+    Route::post('/update-combo', [CartController::class, 'updateCombo'])->name('update-combo');
     Route::post('/clear', [CartController::class, 'clear'])->name('clear');
     Route::get('/count', [CartController::class, 'count'])->name('count');
 });
@@ -182,6 +199,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::delete('/{attribute}/values/{value}', [AdminVariantAttributeController::class, 'destroyValue'])->name('values.destroy');
     });
     Route::get('variant-attributes/get-values', [AdminVariantAttributeController::class, 'getValues'])->name('variant-attributes.get-values');
+
+    // Custom Combos (Build Your Own Combo Settings)
+    Route::resource('combos', AdminCustomComboController::class);
+    Route::post('combos/{combo}/toggle-status', [AdminCustomComboController::class, 'toggleStatus'])->name('combos.toggle-status');
 
     // Orders
     Route::resource('orders', AdminOrderController::class)->only(['index', 'show', 'create', 'store']);

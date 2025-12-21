@@ -259,6 +259,11 @@
                             <i class="fas fa-fire animate-pulse"></i> Offers
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('combo.index') }}" class="inline-flex items-center gap-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full font-medium hover:from-purple-600 hover:to-pink-600 transition-all text-xs">
+                            <i class="fas fa-box-open"></i> Build Combo
+                        </a>
+                    </li>
                     <li><a href="{{ route('about') }}" class="text-gray-700 hover:text-green-600 font-medium">About</a></li>
                     <li><a href="{{ route('contact') }}" class="text-gray-700 hover:text-green-600 font-medium">Contact</a></li>
                 </ul>
@@ -279,6 +284,11 @@
                     <li>
                         <a href="{{ route('products.offers') }}" class="block py-2 px-3 rounded bg-gradient-to-r from-red-500 to-orange-500 text-white font-medium">
                             <i class="fas fa-fire w-5 mr-2 animate-pulse"></i>🔥 Special Offers
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('combo.index') }}" class="block py-2 px-3 rounded bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium">
+                            <i class="fas fa-box-open w-5 mr-2"></i>🎁 Build Your Combo
                         </a>
                     </li>
                     @foreach($navCategories as $category)

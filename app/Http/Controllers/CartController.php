@@ -12,7 +12,13 @@ class CartController extends Controller
     public function index()
     {
         $cart = Cart::getCart();
-        $cart->load('items.product.primaryImage', 'items.variant');
+        $cart->load([
+            'items.product.primaryImage', 
+            'items.variant',
+            'customCombos.items.product.primaryImage',
+            'customCombos.items.variant',
+            'customCombos.comboSetting'
+        ]);
 
         return view('frontend.cart.index', compact('cart'));
     }
@@ -182,6 +188,55 @@ class CartController extends Controller
         }
 
         return back()->with('success', 'Product removed from cart.');
+    }
+
+    /**
+     * Remove a custom combo from cart
+     */
+    public function removeCombo(Request $request)
+    {
+        $validated = $request->validate([
+            'combo_id' => 'required|exists:custom_combo_cart,id',
+        ]);
+
+        $cart = Cart::getCart();
+        $cart->removeCombo($validated['combo_id']);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Combo removed from cart.',
+                'cart_count' => $cart->fresh()->total_items,
+            ]);
+        }
+
+        return back()->with('success', 'Combo removed from cart.');
+    }
+
+    /**
+     * Update combo quantity in cart
+     */
+    public function updateCombo(Request $request)
+    {
+        $validated = $request->validate([
+            'combo_id' => 'required|exists:custom_combo_cart,id',
+            'quantity' => 'required|integer|min:0|max:10',
+        ]);
+
+        $cart = Cart::getCart();
+        $cart->updateComboQuantity($validated['combo_id'], $validated['quantity']);
+
+        if ($request->ajax()) {
+            $cart = $cart->fresh()->load('customCombos.comboSetting');
+            return response()->json([
+                'success' => true,
+                'message' => 'Combo updated.',
+                'cart_count' => $cart->total_items,
+                'subtotal' => number_format($cart->subtotal, 2),
+            ]);
+        }
+
+        return back()->with('success', 'Combo updated.');
     }
 
     public function clear()
