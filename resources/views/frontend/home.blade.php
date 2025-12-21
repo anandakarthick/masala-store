@@ -83,9 +83,43 @@
 @endpush
 
 @section('content')
-<!-- Hero Slider - 1920x600 Banner Size -->
+<!-- Hero Slider - 1920x600 Banner Size with Auto-slide -->
 @if($banners->count() > 0)
-    <section x-data="{ current: 0, banners: {{ $banners->count() }} }" class="relative" aria-label="Featured promotions">
+    <section x-data="{ 
+        current: 0, 
+        banners: {{ $banners->count() }},
+        autoSlideInterval: null,
+        startAutoSlide() {
+            this.autoSlideInterval = setInterval(() => {
+                this.current = this.current === this.banners - 1 ? 0 : this.current + 1;
+            }, 4000);
+        },
+        stopAutoSlide() {
+            if (this.autoSlideInterval) {
+                clearInterval(this.autoSlideInterval);
+            }
+        },
+        goTo(index) {
+            this.current = index;
+            this.stopAutoSlide();
+            this.startAutoSlide();
+        },
+        next() {
+            this.current = this.current === this.banners - 1 ? 0 : this.current + 1;
+            this.stopAutoSlide();
+            this.startAutoSlide();
+        },
+        prev() {
+            this.current = this.current === 0 ? this.banners - 1 : this.current - 1;
+            this.stopAutoSlide();
+            this.startAutoSlide();
+        }
+    }" 
+    x-init="startAutoSlide()"
+    @mouseenter="stopAutoSlide()"
+    @mouseleave="startAutoSlide()"
+    class="relative" 
+    aria-label="Featured promotions">
         <div class="overflow-hidden">
             @foreach($banners as $index => $banner)
                 <div x-show="current === {{ $index }}" 
@@ -112,12 +146,12 @@
         </div>
         
         @if($banners->count() > 1)
-            <button @click="current = current === 0 ? banners - 1 : current - 1" 
+            <button @click="prev()" 
                     class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/70 hover:bg-white rounded-full p-2 md:p-3 shadow-lg transition"
                     aria-label="Previous slide">
                 <i class="fas fa-chevron-left text-gray-800 text-lg" aria-hidden="true"></i>
             </button>
-            <button @click="current = current === banners - 1 ? 0 : current + 1" 
+            <button @click="next()" 
                     class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/70 hover:bg-white rounded-full p-2 md:p-3 shadow-lg transition"
                     aria-label="Next slide">
                 <i class="fas fa-chevron-right text-gray-800 text-lg" aria-hidden="true"></i>
@@ -125,7 +159,7 @@
             
             <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2" role="tablist">
                 @foreach($banners as $index => $banner)
-                    <button @click="current = {{ $index }}" 
+                    <button @click="goTo({{ $index }})" 
                             :class="current === {{ $index }} ? 'bg-green-600 w-8' : 'bg-white/70 w-3'"
                             class="h-3 rounded-full transition-all duration-300 shadow"
                             role="tab"
