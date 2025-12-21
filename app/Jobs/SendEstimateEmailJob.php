@@ -37,15 +37,15 @@ class SendEstimateEmailJob implements ShouldQueue
      */
     public $timeout = 120;
 
-    protected Estimate $estimate;
+    protected int $estimateId;
     protected ?string $customMessage;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(Estimate $estimate, ?string $customMessage = null)
+    public function __construct(int $estimateId, ?string $customMessage = null)
     {
-        $this->estimate = $estimate;
+        $this->estimateId = $estimateId;
         $this->customMessage = $customMessage;
     }
 
@@ -55,38 +55,36 @@ class SendEstimateEmailJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            // Reload estimate with fresh data
-            $this->estimate->refresh();
-            $this->estimate->load('items.product');
+            // Load estimate fresh from database
+            $estimate = Estimate::with('items.product')->findOrFail($this->estimateId);
 
-            if (empty($this->estimate->customer_email)) {
+            if (empty($estimate->customer_email)) {
                 Log::warning('Estimate email job failed: No customer email', [
-                    'estimate_id' => $this->estimate->id,
-                    'estimate_number' => $this->estimate->estimate_number,
+                    'estimate_id' => $estimate->id,
+                    'estimate_number' => $estimate->estimate_number,
                 ]);
                 return;
             }
 
             // Send the email
-            Mail::to($this->estimate->customer_email, $this->estimate->customer_name)
-                ->send(new EstimateMail($this->estimate, $this->customMessage));
+            Mail::to($estimate->customer_email, $estimate->customer_name)
+                ->send(new EstimateMail($this->estimateId, $this->customMessage));
 
             // Update estimate status
-            $this->estimate->update([
-                'status' => $this->estimate->status === 'draft' ? 'sent' : $this->estimate->status,
+            $estimate->update([
+                'status' => $estimate->status === 'draft' ? 'sent' : $estimate->status,
                 'sent_at' => now(),
             ]);
 
             Log::info('Estimate email sent successfully', [
-                'estimate_id' => $this->estimate->id,
-                'estimate_number' => $this->estimate->estimate_number,
-                'customer_email' => $this->estimate->customer_email,
+                'estimate_id' => $estimate->id,
+                'estimate_number' => $estimate->estimate_number,
+                'customer_email' => $estimate->customer_email,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Failed to send estimate email', [
-                'estimate_id' => $this->estimate->id,
-                'estimate_number' => $this->estimate->estimate_number,
+                'estimate_id' => $this->estimateId,
                 'error' => $e->getMessage(),
             ]);
 
@@ -100,8 +98,7 @@ class SendEstimateEmailJob implements ShouldQueue
     public function failed(\Throwable $exception): void
     {
         Log::error('Estimate email job failed permanently', [
-            'estimate_id' => $this->estimate->id,
-            'estimate_number' => $this->estimate->estimate_number,
+            'estimate_id' => $this->estimateId,
             'error' => $exception->getMessage(),
         ]);
     }

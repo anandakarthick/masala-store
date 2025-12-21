@@ -6,34 +6,26 @@ use App\Models\Estimate;
 use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 
-class EstimateMail extends Mailable implements ShouldQueue
+class EstimateMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public Estimate $estimate;
+    public int $estimateId;
     public ?string $customMessage;
-    public array $company;
-    protected string $pdfContent;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Estimate $estimate, ?string $customMessage = null)
+    public function __construct(int $estimateId, ?string $customMessage = null)
     {
-        $this->estimate = $estimate;
+        $this->estimateId = $estimateId;
         $this->customMessage = $customMessage;
-        $this->company = $this->getCompanyData();
-        
-        // Generate PDF content
-        $this->pdfContent = $this->generatePdfContent();
     }
 
     /**
@@ -75,57 +67,29 @@ class EstimateMail extends Mailable implements ShouldQueue
     }
 
     /**
-     * Generate PDF content
+     * Build the message.
      */
-    private function generatePdfContent(): string
+    public function build()
     {
-        $this->estimate->load('items.product');
+        $estimate = Estimate::with('items.product')->findOrFail($this->estimateId);
+        $company = $this->getCompanyData();
 
+        // Generate PDF
         $pdf = PDF::loadView('pdf.estimate', [
-            'estimate' => $this->estimate,
-            'company' => $this->company,
+            'estimate' => $estimate,
+            'company' => $company,
         ]);
-
         $pdf->setPaper('A4', 'portrait');
+        $pdfContent = $pdf->output();
 
-        return $pdf->output();
-    }
-
-    /**
-     * Get the message envelope.
-     */
-    public function envelope(): Envelope
-    {
-        return new Envelope(
-            subject: 'Estimate #' . $this->estimate->estimate_number . ' from ' . $this->company['name'],
-        );
-    }
-
-    /**
-     * Get the message content definition.
-     */
-    public function content(): Content
-    {
-        return new Content(
-            view: 'emails.estimate',
-            with: [
-                'estimate' => $this->estimate,
-                'company' => $this->company,
+        return $this->subject('Estimate #' . $estimate->estimate_number . ' from ' . $company['name'])
+            ->view('emails.estimate', [
+                'estimate' => $estimate,
+                'company' => $company,
                 'customMessage' => $this->customMessage,
-            ],
-        );
-    }
-
-    /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
-     */
-    public function attachments(): array
-    {
-        return [
-            Attachment::fromData(fn () => $this->pdfContent, 'Estimate-' . $this->estimate->estimate_number . '.pdf')
-                ->withMime('application/pdf'),
-        ];
+            ])
+            ->attachData($pdfContent, 'Estimate-' . $estimate->estimate_number . '.pdf', [
+                'mime' => 'application/pdf',
+            ]);
     }
 }

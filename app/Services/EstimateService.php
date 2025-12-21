@@ -108,8 +108,8 @@ class EstimateService
         }
 
         try {
-            // Dispatch job to queue
-            SendEstimateEmailJob::dispatch($estimate, $customMessage);
+            // Dispatch job to queue with estimate ID (not the full object)
+            SendEstimateEmailJob::dispatch($estimate->id, $customMessage);
 
             \Log::info('Estimate email job dispatched', [
                 'estimate_id' => $estimate->id,
