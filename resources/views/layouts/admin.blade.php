@@ -177,13 +177,6 @@
                             <span x-show="sidebarOpen" class="ml-3">Coupons</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="{{ route('admin.combos.index') }}" 
-                           class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-700 {{ request()->routeIs('admin.combos.*') ? 'bg-purple-600' : '' }}">
-                            <i class="fas fa-box-open w-6"></i>
-                            <span x-show="sidebarOpen" class="ml-3">Custom Combos</span>
-                        </a>
-                    </li>
                     
                     <li class="pt-4">
                         <span x-show="sidebarOpen" class="px-3 text-xs text-gray-400 uppercase">Reports</span>
