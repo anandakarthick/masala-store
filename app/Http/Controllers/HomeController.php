@@ -21,19 +21,19 @@ class HomeController extends Controller
 
         $featuredProducts = Product::active()
             ->featured()
-            ->with('category', 'primaryImage')
+            ->with('category', 'primaryImage', 'activeVariants', 'defaultVariant')
             ->take(8)
             ->get();
 
         $newArrivals = Product::active()
-            ->with('category', 'primaryImage')
+            ->with('category', 'primaryImage', 'activeVariants', 'defaultVariant')
             ->latest()
             ->take(8)
             ->get();
 
         $bestSellers = Product::active()
             ->withCount('orderItems')
-            ->with('category', 'primaryImage')
+            ->with('category', 'primaryImage', 'activeVariants', 'defaultVariant')
             ->orderByDesc('order_items_count')
             ->take(8)
             ->get();

@@ -10,7 +10,7 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::active()->with('category', 'primaryImage', 'activeVariants');
+        $query = Product::active()->with('category', 'primaryImage', 'activeVariants', 'defaultVariant');
 
         // Category filter
         if ($request->filled('category')) {
@@ -76,12 +76,12 @@ class ProductController extends Controller
             abort(404);
         }
 
-        $product->load('category', 'images', 'activeVariants', 'comboItems.includedProduct');
+        $product->load('category', 'images', 'activeVariants', 'defaultVariant', 'comboItems.includedProduct');
 
         $relatedProducts = Product::active()
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
-            ->with('primaryImage', 'activeVariants')
+            ->with('primaryImage', 'activeVariants', 'defaultVariant')
             ->take(4)
             ->get();
 
@@ -101,7 +101,7 @@ class ProductController extends Controller
 
         $products = Product::active()
             ->whereIn('category_id', $categoryIds)
-            ->with('primaryImage', 'category', 'activeVariants')
+            ->with('primaryImage', 'category', 'activeVariants', 'defaultVariant')
             ->paginate(25);
 
         $categories = Category::active()->whereNull('parent_id')->withCount('activeProducts')->get();
@@ -127,7 +127,7 @@ class ProductController extends Controller
                     ->orWhere('description', 'like', "%{$search}%")
                     ->orWhere('sku', 'like', "%{$search}%");
             })
-            ->with('primaryImage', 'activeVariants')
+            ->with('primaryImage', 'activeVariants', 'defaultVariant')
             ->paginate(25);
 
         return view('frontend.products.search', compact('products', 'search'));
@@ -139,7 +139,21 @@ class ProductController extends Controller
             ->whereNotNull('discount_price')
             ->where('discount_price', '>', 0)
             ->whereColumn('discount_price', '<', 'price')
-            ->with('primaryImage', 'category', 'activeVariants');
+            ->with('primaryImage', 'category', 'activeVariants', 'defaultVariant');
+
+        // Category filter for offers
+        if ($request->filled('category')) {
+            $category = Category::where('slug', $request->category)->first();
+            if ($category) {
+                $query->where('category_id', $category->id);
+            }
+        }
+
+        // Minimum discount filter
+        if ($request->filled('min_discount')) {
+            $minDiscount = (float) $request->min_discount;
+            $query->whereRaw('((price - discount_price) / price * 100) >= ?', [$minDiscount]);
+        }
 
         // Sorting
         $sort = $request->get('sort', 'discount');

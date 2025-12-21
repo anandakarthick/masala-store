@@ -128,65 +128,7 @@
             @if($products->count() > 0)
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                     @foreach($products as $product)
-                        <div class="bg-white rounded-xl shadow-md overflow-hidden group hover:shadow-xl transition-all duration-300 relative">
-                            <!-- Discount Badge -->
-                            @if($product->discount_percentage > 0)
-                                <div class="absolute top-2 left-2 z-10">
-                                    <span class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse">
-                                        {{ round($product->discount_percentage) }}% OFF
-                                    </span>
-                                </div>
-                            @endif
-                            
-                            <!-- Product Image -->
-                            <a href="{{ route('products.show', $product->slug) }}" class="block relative overflow-hidden">
-                                <div class="aspect-square bg-gray-100">
-                                    @if($product->primary_image_url)
-                                        <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" 
-                                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                                    @else
-                                        <div class="w-full h-full flex items-center justify-center text-gray-300">
-                                            <i class="fas fa-image text-4xl"></i>
-                                        </div>
-                                    @endif
-                                </div>
-                                
-                                <!-- Quick View Overlay -->
-                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <span class="bg-white text-gray-800 px-4 py-2 rounded-full text-sm font-medium">
-                                        View Details
-                                    </span>
-                                </div>
-                            </a>
-                            
-                            <!-- Product Info -->
-                            <div class="p-3">
-                                <p class="text-xs text-gray-500 mb-1">{{ $product->category->name ?? 'Uncategorized' }}</p>
-                                <h3 class="font-semibold text-gray-800 text-sm line-clamp-2 mb-2 group-hover:text-green-600 transition-colors">
-                                    <a href="{{ route('products.show', $product->slug) }}">{{ $product->name }}</a>
-                                </h3>
-                                
-                                <!-- Price -->
-                                <div class="flex items-center gap-2 mb-3">
-                                    <span class="text-lg font-bold text-green-600">₹{{ number_format($product->discount_price, 0) }}</span>
-                                    <span class="text-sm text-gray-400 line-through">₹{{ number_format($product->price, 0) }}</span>
-                                </div>
-                                
-                                <!-- Savings Badge -->
-                                <div class="bg-green-50 border border-green-200 rounded-lg px-2 py-1 mb-3">
-                                    <span class="text-xs text-green-700 font-medium">
-                                        <i class="fas fa-piggy-bank mr-1"></i>
-                                        You save ₹{{ number_format($product->price - $product->discount_price, 0) }}
-                                    </span>
-                                </div>
-                                
-                                <!-- Add to Cart -->
-                                <button onclick="addToCart({{ $product->id }}, 1)" 
-                                        class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2">
-                                    <i class="fas fa-cart-plus"></i> Add to Cart
-                                </button>
-                            </div>
-                        </div>
+                        @include('frontend.partials.product-card-offer', ['product' => $product])
                     @endforeach
                 </div>
 
