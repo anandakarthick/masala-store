@@ -142,13 +142,94 @@
                         @endforelse
                     </div>
                     
-                    <!-- Payment Method Instructions -->
-                    <div id="payment-instructions" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
-                        <h4 class="font-medium text-gray-700 mb-2">
-                            <i class="fas fa-info-circle mr-1"></i>Payment Instructions
-                        </h4>
-                        <p class="text-sm text-gray-600" id="payment-instructions-text"></p>
-                    </div>
+                    <!-- Payment Method Details (Instructions, QR Code, Bank Details) -->
+                    @foreach($paymentMethods as $method)
+                        <div id="payment-details-{{ $method->code }}" class="payment-details mt-4 hidden">
+                            {{-- UPI Payment Details --}}
+                            @if($method->code === 'upi')
+                                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                                    <div class="flex flex-col md:flex-row items-center gap-4">
+                                        {{-- QR Code --}}
+                                        @php
+                                            $qrCode = $method->getSetting('qr_code');
+                                        @endphp
+                                        @if($qrCode)
+                                            <div class="flex-shrink-0">
+                                                <div class="p-3 bg-white rounded-lg border-2 border-purple-300 shadow-sm">
+                                                    <img src="{{ asset('storage/' . $qrCode) }}" alt="UPI QR Code" class="w-40 h-40 object-contain">
+                                                </div>
+                                                <p class="text-xs text-purple-600 text-center mt-2">
+                                                    <i class="fas fa-camera mr-1"></i>Scan with any UPI app
+                                                </p>
+                                            </div>
+                                        @endif
+                                        
+                                        <div class="flex-1 text-center md:text-left">
+                                            @if($method->getSetting('upi_id'))
+                                                <p class="text-sm text-gray-600 mb-1">UPI ID:</p>
+                                                <p class="font-mono text-lg font-bold text-purple-700 mb-2">{{ $method->getSetting('upi_id') }}</p>
+                                            @endif
+                                            @if($method->getSetting('upi_name'))
+                                                <p class="text-sm text-gray-500">Payee: {{ $method->getSetting('upi_name') }}</p>
+                                            @endif
+                                            @if($method->instructions)
+                                                <p class="text-sm text-purple-700 mt-3">
+                                                    <i class="fas fa-info-circle mr-1"></i>{{ $method->instructions }}
+                                                </p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                            
+                            {{-- Bank Transfer Details --}}
+                            @if($method->code === 'bank_transfer')
+                                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                                    <h4 class="font-medium text-indigo-800 mb-3">
+                                        <i class="fas fa-university mr-2"></i>Bank Account Details
+                                    </h4>
+                                    <div class="grid grid-cols-2 gap-2 text-sm">
+                                        @if($method->getSetting('account_name'))
+                                            <span class="text-gray-600">Account Name:</span>
+                                            <span class="font-medium">{{ $method->getSetting('account_name') }}</span>
+                                        @endif
+                                        @if($method->getSetting('account_number'))
+                                            <span class="text-gray-600">Account No:</span>
+                                            <span class="font-medium font-mono">{{ $method->getSetting('account_number') }}</span>
+                                        @endif
+                                        @if($method->getSetting('bank_name'))
+                                            <span class="text-gray-600">Bank:</span>
+                                            <span class="font-medium">{{ $method->getSetting('bank_name') }}</span>
+                                        @endif
+                                        @if($method->getSetting('ifsc_code'))
+                                            <span class="text-gray-600">IFSC:</span>
+                                            <span class="font-medium font-mono">{{ $method->getSetting('ifsc_code') }}</span>
+                                        @endif
+                                        @if($method->getSetting('branch'))
+                                            <span class="text-gray-600">Branch:</span>
+                                            <span class="font-medium">{{ $method->getSetting('branch') }}</span>
+                                        @endif
+                                    </div>
+                                    @if($method->instructions)
+                                        <p class="text-sm text-indigo-700 mt-3">
+                                            <i class="fas fa-info-circle mr-1"></i>{{ $method->instructions }}
+                                        </p>
+                                    @endif
+                                </div>
+                            @endif
+                            
+                            {{-- COD / Razorpay Instructions --}}
+                            @if($method->code === 'cod' || $method->code === 'razorpay')
+                                @if($method->instructions)
+                                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                        <p class="text-sm text-gray-700">
+                                            <i class="fas fa-info-circle mr-1 text-green-600"></i>{{ $method->instructions }}
+                                        </p>
+                                    </div>
+                                @endif
+                            @endif
+                        </div>
+                    @endforeach
                 </div>
 
                 <!-- Notes -->
@@ -187,6 +268,20 @@
                                 <span class="text-sm font-medium">₹{{ number_format($item->total, 2) }}</span>
                             </div>
                         @endforeach
+                        
+                        {{-- Custom Combos --}}
+                        @foreach($cart->customCombos as $combo)
+                            <div class="flex items-center gap-3 bg-purple-50 p-2 rounded-lg">
+                                <div class="w-12 h-12 bg-purple-100 rounded flex-shrink-0 flex items-center justify-center">
+                                    <i class="fas fa-box-open text-purple-600"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium truncate text-purple-700">{{ $combo->combo_name }}</p>
+                                    <p class="text-xs text-purple-500">{{ $combo->items->count() }} items</p>
+                                </div>
+                                <span class="text-sm font-medium text-purple-700">₹{{ number_format($combo->final_price, 2) }}</span>
+                            </div>
+                        @endforeach
                     </div>
 
                     <!-- Coupon -->
@@ -220,9 +315,15 @@
                             <span class="text-gray-600">Subtotal</span>
                             <span>₹{{ number_format($cart->subtotal, 2) }}</span>
                         </div>
+                        @if($cart->combo_savings > 0)
+                            <div class="flex justify-between text-purple-600">
+                                <span>Combo Savings</span>
+                                <span>-₹{{ number_format($cart->combo_savings, 2) }}</span>
+                            </div>
+                        @endif
                         @if(session('coupon'))
                             <div class="flex justify-between text-green-600">
-                                <span>Discount</span>
+                                <span>Coupon Discount</span>
                                 <span>-₹{{ number_format(session('coupon')->calculateDiscount($cart->subtotal), 2) }}</span>
                             </div>
                         @endif
@@ -267,7 +368,7 @@
 
 @push('scripts')
 <script>
-// Payment method selection styling
+// Payment method selection styling and show/hide details
 document.querySelectorAll('.payment-option').forEach(option => {
     option.addEventListener('click', function() {
         // Remove highlight from all
@@ -280,22 +381,21 @@ document.querySelectorAll('.payment-option').forEach(option => {
         this.classList.remove('border-gray-200');
         this.classList.add('border-green-500', 'bg-green-50');
         
-        // Show instructions if available
-        const code = this.dataset.payment;
-        const instructions = @json($paymentMethods->pluck('instructions', 'code'));
-        const instructionsBox = document.getElementById('payment-instructions');
-        const instructionsText = document.getElementById('payment-instructions-text');
+        // Hide all payment details
+        document.querySelectorAll('.payment-details').forEach(detail => {
+            detail.classList.add('hidden');
+        });
         
-        if (instructions[code]) {
-            instructionsText.textContent = instructions[code];
-            instructionsBox.classList.remove('hidden');
-        } else {
-            instructionsBox.classList.add('hidden');
+        // Show selected payment details
+        const code = this.dataset.payment;
+        const detailBox = document.getElementById('payment-details-' + code);
+        if (detailBox) {
+            detailBox.classList.remove('hidden');
         }
     });
 });
 
-// Show instructions for default selected payment method
+// Show details for default selected payment method on page load
 document.addEventListener('DOMContentLoaded', function() {
     const checkedOption = document.querySelector('.payment-option input:checked');
     if (checkedOption) {
