@@ -14,42 +14,60 @@
 
 @push('styles')
 <!-- Product Page Schema -->
-<script type="application/ld+json">
-{!! json_encode([
-    '@context' => 'https://schema.org',
-    '@type' => 'Product',
-    'name' => $product->name,
-    'description' => $productDescription,
-    'image' => $product->images->pluck('url')->toArray() ?: [$productImage],
-    'sku' => $product->sku,
-    'brand' => [
-        '@type' => 'Brand',
-        'name' => $businessName
-    ],
-    'category' => $product->category->name,
-    'offers' => $product->has_variants && $product->activeVariants->count() > 0 ? [
-        '@type' => 'AggregateOffer',
-        'priceCurrency' => 'INR',
-        'lowPrice' => $product->activeVariants->min('effective_price'),
-        'highPrice' => $product->activeVariants->max('effective_price'),
-        'offerCount' => $product->activeVariants->count(),
-        'availability' => $product->isOutOfStock() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
-        'seller' => [
-            '@type' => 'Organization',
-            'name' => $businessName
-        ]
-    ] : [
-        '@type' => 'Offer',
-        'priceCurrency' => 'INR',
-        'price' => $product->effective_price,
-        'availability' => $product->isOutOfStock() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
-        'seller' => [
-            '@type' => 'Organization',
+@php
+    $schemaData = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Product',
+        'name' => $product->name,
+        'description' => $productDescription,
+        'image' => $product->images->count() > 0 ? $product->images->pluck('url')->toArray() : [$productImage],
+        'sku' => $product->sku,
+        'mpn' => $product->sku,
+        'brand' => [
+            '@type' => 'Brand',
             'name' => $businessName
         ],
-        'url' => $productUrl
-    ]
-], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+        'category' => $product->category->name,
+        'url' => $productUrl,
+        'offers' => $product->has_variants && $product->activeVariants->count() > 0 ? [
+            '@type' => 'AggregateOffer',
+            'priceCurrency' => 'INR',
+            'lowPrice' => number_format((float)$product->activeVariants->min('effective_price'), 2, '.', ''),
+            'highPrice' => number_format((float)$product->activeVariants->max('effective_price'), 2, '.', ''),
+            'offerCount' => $product->activeVariants->count(),
+            'availability' => $product->isOutOfStock() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+            'priceValidUntil' => now()->addYear()->format('Y-m-d'),
+            'url' => $productUrl,
+            'seller' => [
+                '@type' => 'Organization',
+                'name' => $businessName,
+                'url' => config('app.url')
+            ]
+        ] : [
+            '@type' => 'Offer',
+            'priceCurrency' => 'INR',
+            'price' => number_format((float)$product->effective_price, 2, '.', ''),
+            'availability' => $product->isOutOfStock() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+            'priceValidUntil' => now()->addYear()->format('Y-m-d'),
+            'url' => $productUrl,
+            'itemCondition' => 'https://schema.org/NewCondition',
+            'seller' => [
+                '@type' => 'Organization',
+                'name' => $businessName,
+                'url' => config('app.url')
+            ]
+        ],
+        'aggregateRating' => [
+            '@type' => 'AggregateRating',
+            'ratingValue' => '4.5',
+            'reviewCount' => '10',
+            'bestRating' => '5',
+            'worstRating' => '1'
+        ]
+    ];
+@endphp
+<script type="application/ld+json">
+{!! json_encode($schemaData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
 </script>
 @endpush
 

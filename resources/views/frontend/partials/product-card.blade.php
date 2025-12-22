@@ -1,8 +1,6 @@
 <article class="bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-lg transition" 
-     itemscope 
-     itemtype="https://schema.org/Product"
      x-data="productCard_{{ $product->id }}()">
-    <a href="{{ route('products.show', $product->slug) }}" class="block" itemprop="url">
+    <a href="{{ route('products.show', $product->slug) }}" class="block">
         <div class="relative h-40 sm:h-44 md:h-48 bg-gray-100 overflow-hidden">
             @if($product->primary_image_url)
                 <img src="{{ $product->primary_image_url }}" 
@@ -11,7 +9,6 @@
                      loading="lazy"
                      decoding="async"
                      fetchpriority="low"
-                     itemprop="image"
                      width="200"
                      height="200">
             @else
@@ -45,16 +42,14 @@
             {{ $product->category->name }}
         </a>
         
-        <h3 class="font-medium text-gray-800 mt-1 text-sm leading-tight group-hover:text-green-600 transition line-clamp-2" itemprop="name">
+        <h3 class="font-medium text-gray-800 mt-1 text-sm leading-tight group-hover:text-green-600 transition line-clamp-2">
             <a href="{{ route('products.show', $product->slug) }}">{{ $product->name }}</a>
         </h3>
         
         <!-- Weight/Variant Display -->
         <p class="text-xs text-gray-500 mt-1" x-text="currentWeightDisplay">{{ $product->weight_display }}</p>
         
-        <div class="mt-2" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
-            <meta itemprop="priceCurrency" content="INR">
-            <link itemprop="availability" href="{{ $product->isOutOfStock() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock' }}">
+        <div class="mt-2">
             
             <!-- Dynamic Price Display -->
             <div class="mb-2">

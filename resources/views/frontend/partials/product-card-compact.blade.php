@@ -1,8 +1,6 @@
 <article class="bg-white rounded-lg shadow overflow-hidden group hover:shadow-md transition" 
-     itemscope 
-     itemtype="https://schema.org/Product"
      x-data="compactCard_{{ $product->id }}()">
-    <a href="{{ route('products.show', $product->slug) }}" class="block" itemprop="url">
+    <a href="{{ route('products.show', $product->slug) }}" class="block">
         <!-- Product Image - Compact -->
         <div class="relative h-28 sm:h-32 md:h-36 bg-gray-100 overflow-hidden">
             @if($product->primary_image_url)
@@ -12,8 +10,7 @@
                      loading="lazy"
                      decoding="async"
                      width="150"
-                     height="150"
-                     itemprop="image">
+                     height="150">
             @else
                 <div class="w-full h-full flex items-center justify-center text-gray-400">
                     <i class="fas fa-image text-2xl" aria-hidden="true"></i>
@@ -37,12 +34,11 @@
     
     <!-- Product Info - Compact -->
     <div class="p-2">
-        <h3 class="font-medium text-gray-800 text-xs leading-tight group-hover:text-green-600 transition line-clamp-2 min-h-[2rem]" itemprop="name">
+        <h3 class="font-medium text-gray-800 text-xs leading-tight group-hover:text-green-600 transition line-clamp-2 min-h-[2rem]">
             <a href="{{ route('products.show', $product->slug) }}">{{ $product->name }}</a>
         </h3>
         
-        <div class="mt-1.5" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
-            <meta itemprop="priceCurrency" content="INR">
+        <div class="mt-1.5">
             
             <!-- Dynamic Price -->
             <div class="flex items-center gap-1 flex-wrap">
