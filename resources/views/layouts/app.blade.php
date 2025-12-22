@@ -38,9 +38,17 @@
     <meta name="description" content="@yield('meta_description', $defaultDescription)">
     <meta name="keywords" content="@yield('meta_keywords', $defaultKeywords)">
     <meta name="author" content="{{ $businessName }}">
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="@yield('robots', 'index, follow')">
     
-    <link rel="canonical" href="{{ url()->current() }}">
+    <link rel="canonical" href="@yield('canonical', url()->current())">
+    @stack('seo_links')
+    
+    @if(config('seo.verification.google'))
+    <meta name="google-site-verification" content="{{ config('seo.verification.google') }}">
+    @endif
+    @if(config('seo.verification.bing'))
+    <meta name="msvalidate.01" content="{{ config('seo.verification.bing') }}">
+    @endif
     
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
@@ -75,19 +83,87 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     
+    <!-- TODO: Replace Tailwind CDN with compiled CSS in production for better performance -->
+    <!-- Run: npm run build and use @vite(['resources/css/app.css', 'resources/js/app.js']) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
     
+    <!-- Organization Schema -->
     <script type="application/ld+json">
-    {
-        "{{"@"}}context": "https://schema.org",
-        "{{"@"}}type": "Organization",
-        "name": "{{ $businessName }}",
-        "url": "{{ $siteUrl }}",
-        "description": "{{ $businessTagline }}"
-    }
+    {!! json_encode([
+        '@context' => 'https://schema.org',
+        '@type' => 'Organization',
+        'name' => $businessName,
+        'url' => $siteUrl,
+        'description' => $businessTagline,
+        'logo' => $logoUrl ?? asset('images/logo.png'),
+        'contactPoint' => [
+            '@type' => 'ContactPoint',
+            'telephone' => $businessPhone,
+            'email' => $businessEmail,
+            'contactType' => 'customer service',
+            'availableLanguage' => ['English', 'Tamil']
+        ],
+        'sameAs' => $socialLinks->pluck('url')->toArray()
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+    </script>
+    
+    <!-- LocalBusiness Schema -->
+    <script type="application/ld+json">
+    {!! json_encode([
+        '@context' => 'https://schema.org',
+        '@type' => 'LocalBusiness',
+        '@id' => $siteUrl . '/#business',
+        'name' => $businessName,
+        'description' => $businessTagline,
+        'url' => $siteUrl,
+        'logo' => $logoUrl ?? asset('images/logo.png'),
+        'image' => $logoUrl ?? asset('images/logo.png'),
+        'telephone' => $businessPhone,
+        'email' => $businessEmail,
+        'address' => [
+            '@type' => 'PostalAddress',
+            'addressLocality' => 'Chennai',
+            'addressRegion' => 'Tamil Nadu',
+            'addressCountry' => 'IN'
+        ],
+        'geo' => [
+            '@type' => 'GeoCoordinates',
+            'latitude' => '13.0827',
+            'longitude' => '80.2707'
+        ],
+        'priceRange' => '₹₹',
+        'currenciesAccepted' => 'INR',
+        'paymentAccepted' => 'Cash, UPI, Credit Card, Debit Card',
+        'openingHoursSpecification' => [
+            '@type' => 'OpeningHoursSpecification',
+            'dayOfWeek' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+            'opens' => '09:00',
+            'closes' => '21:00'
+        ]
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+    </script>
+    
+    <!-- WebSite Schema with SearchAction -->
+    <script type="application/ld+json">
+    {!! json_encode([
+        '@context' => 'https://schema.org',
+        '@type' => 'WebSite',
+        'name' => $businessName,
+        'url' => $siteUrl,
+        'potentialAction' => [
+            '@type' => 'SearchAction',
+            'target' => [
+                '@type' => 'EntryPoint',
+                'urlTemplate' => route('products.search') . '?q={search_term_string}'
+            ],
+            'query-input' => 'required name=search_term_string'
+        ]
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
     </script>
     
     <style>

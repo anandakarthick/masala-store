@@ -10,6 +10,30 @@
 @section('meta_description', $companyName . ' - Buy premium quality homemade masala powders, Indian spices, turmeric, coriander, garam masala, herbal oils & natural products online. 100% pure, chemical-free. Free delivery on orders above ₹500.')
 @section('meta_keywords', 'buy masala online, homemade spices, turmeric powder, coriander powder, cumin powder, garam masala, kashmiri chilli powder, cardamom powder, herbal products, ayurvedic oils, hair growth oil, natural products India, organic spices Chennai')
 
+@push('scripts')
+<!-- Homepage ItemList Schema for Featured Products -->
+@if($featuredProducts->count() > 0)
+<script type="application/ld+json">
+{!! json_encode([
+    '@context' => 'https://schema.org',
+    '@type' => 'ItemList',
+    'name' => 'Featured Products',
+    'description' => 'Featured homemade masala and herbal products from ' . $companyName,
+    'numberOfItems' => $featuredProducts->count(),
+    'itemListElement' => $featuredProducts->map(function($product, $index) {
+        return [
+            '@type' => 'ListItem',
+            'position' => $index + 1,
+            'url' => route('products.show', $product->slug),
+            'name' => $product->name,
+            'image' => $product->primary_image_url
+        ];
+    })->toArray()
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+</script>
+@endif
+@endpush
+
 @push('styles')
 <style>
     /* Auto-fit grid for categories */

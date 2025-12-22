@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>http://localhost</loc>
+    <lastmod>2025-12-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>http://localhost/products</loc>
+    <lastmod>2025-12-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>http://localhost/products/offers</loc>
+    <lastmod>2025-12-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>http://localhost/combo</loc>
+    <lastmod>2025-12-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>http://localhost/about</loc>
+    <lastmod>2025-12-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>http://localhost/contact</loc>
+    <lastmod>2025-12-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>http://localhost/track</loc>
+    <lastmod>2025-12-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>http://localhost/page/privacy-policy</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>http://localhost/page/terms-conditions</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>http://localhost/page/return-refund-policy</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>http://localhost/page/shipping-policy</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>http://localhost/category/spices-masalas</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/categories/TtGXx4QdpimY6cr20TBBRDgK4PUdwqz0E1BZvA5H.webp</image:loc>
+      <image:title>Spices &amp; Masalas</image:title>
+      <image:caption>Discover our authentic collection of homemade Indian spices and masala powders. Each spice is carefully sourced and freshly ground to preserve its natural aroma, flavor, and health benefits. From everyday essentials like turmeric and coriander to aromatic garam masala and specialty blends, our spices bring authentic taste to your kitchen. All products are 100% pure with no added preservatives or artificial colors.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/category/health-millet-products</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/categories/2prIvTm6AedGHMbXEdn4enqQ4z64nqIqmnXu0yPG.webp</image:loc>
+      <image:title>Health &amp; Millet Products</image:title>
+      <image:caption>Explore our range of nutritious millet products and health foods. Millets are ancient grains packed with essential nutrients, fiber, and minerals. Perfect for health-conscious individuals, diabetics, and those seeking gluten-free alternatives. Our collection includes ragi (finger millet), jowar (sorghum), bajra (pearl millet), foxtail millet, and various millet-based ready mixes. Embrace a healthier lifestyle with our natural, chemical-free products.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/category/baby-care</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/categories/OR7otydX6xC08RYRPvBtQOsDy4PnvkVlCdrVwTjR.jpg</image:loc>
+      <image:title>Baby Care</image:title>
+      <image:caption>Nurture your little ones with our range of natural and homemade baby care products. We understand that babies deserve the purest and safest products. Our collection includes nutritious homemade baby foods, gentle massage oils, natural bath powders, and herbal remedies specially formulated for infants and toddlers. All products are made with carefully selected natural ingredients, free from harmful chemicals, preservatives, and artificial additives.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/category/ayurvedic-wellness</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/categories/k8qj3kjmYHNbl625xykdk27aR40GNXlDXUBUytvO.jpg</image:loc>
+      <image:title>Ayurvedic &amp; Wellness</image:title>
+      <image:caption>Discover the healing power of Ayurveda with our authentic wellness products. Rooted in ancient Indian wisdom, our Ayurvedic collection includes herbal oils for hair and skin, natural immunity boosters, digestive aids, and traditional remedies for various health concerns. Each product is crafted using time-tested formulations and pure herbal ingredients. Experience holistic wellness the natural way with our chemical-free, preservative-free Ayurvedic products.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/category/combo-masalas</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/categories/jqno6cGOXnlIDHnfuxaUIbrRb0idF7kcx1H8NfxA.webp</image:loc>
+      <image:title>Combo masalas</image:title>
+      <image:caption>Our Combo Masala Pack brings together a perfect selection of essential spices to add rich taste, aroma, and authentic flavor to your everyday cooking. Made from carefully selected natural spices, each masala is hygienically processed and packed to retain freshness and quality.
+
+This combo is ideal for daily home cooking, gifting, and bulk purchase, offering convenience and value in one pack. Free from artificial colors and preservatives, our combo masala ensures healthy and delicious meals for your family.
+
+Why Choose Our Combo Masala?
+✔ 100% natural ingredients
+✔ Authentic homemade taste
+✔ No added colors or preservatives
+✔ Hygienically packed for long freshness
+✔ Best value for money</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/category/scented-candles</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/categories/Hdr5yw7yeQm4nCG3HSCLxQUQbk74hZ5n4MFQFirm.webp</image:loc>
+      <image:title>Scented Candles</image:title>
+      <image:caption>Our Scented Candles are crafted to create a calm, relaxing, and refreshing atmosphere in your space. Made using high-quality wax and soothing fragrances, these candles burn cleanly and evenly, filling your home with long-lasting aroma.
+
+Perfect for home décor, relaxation, meditation, festive occasions, and gifting, our scented candles add warmth and elegance to every moment. Each candle is carefully poured and beautifully packed, making it an ideal choice for both personal use and return gifts.
+
+Why Choose Our Scented Candles?
+✔ Long-lasting fragrance
+✔ Clean and even burn
+✔ Premium quality wax
+✔ Elegant design &amp; packaging
+✔ Ideal for gifting &amp; special occasions</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/category/return-gift-candles</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/categories/3s02PRXxFDRqcZoMV2dy3vLCmXeQHf7alQ9Tmw02.jpg</image:loc>
+      <image:title>Return Gift Candles</image:title>
+      <image:caption>Our Return Gift Candles are thoughtfully crafted to make every occasion memorable. Made with high-quality wax and soothing fragrances, these candles offer a clean, long-lasting burn and an elegant look that suits all types of events.
+
+Perfect for weddings, birthdays, housewarming ceremonies, baby showers, poojas, and corporate events, these candles are beautifully packed and available with customized labels and packaging. They are affordable, meaningful, and loved by guests of all ages.
+
+Why Choose Our Return Gift Candles?
+✔ Elegant &amp; attractive design
+✔ Long-lasting fragrance
+✔ Clean and safe burn
+✔ Ideal for bulk &amp; customized orders
+✔ Suitable for all occasions</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/products/turmeric-powder</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/products/0X6gU6iLySgHG4ojAgFcuRu9IKyFQpOSf9TNL77Q.jpg</image:loc>
+      <image:title>Turmeric Powder</image:title>
+      <image:caption>Turmeric powder is a bright yellow spice derived from the root of the Curcuma longa plant, commonly used in cooking, particularly in South Asian, Middle Eastern, and Southeast Asian cuisines.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/ZPBLRC83JoOCoMnZWYYclBYK0jFYCoZV9Ve3Aq0b.webp</image:loc>
+      <image:title>Turmeric Powder</image:title>
+      <image:caption>Turmeric powder is a bright yellow spice derived from the root of the Curcuma longa plant, commonly used in cooking, particularly in South Asian, Middle Eastern, and Southeast Asian cuisines.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/DcF5a3J8kmM2U0JwWs6tVJRGn2fd6hPjcVJDfEeb.jpg</image:loc>
+      <image:title>Turmeric Powder</image:title>
+      <image:caption>Turmeric powder is a bright yellow spice derived from the root of the Curcuma longa plant, commonly used in cooking, particularly in South Asian, Middle Eastern, and Southeast Asian cuisines.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/yBlJrZTh24Mi94vMJaG2EPbXya0vqIXox9PVseTK.jpg</image:loc>
+      <image:title>Turmeric Powder</image:title>
+      <image:caption>Turmeric powder is a bright yellow spice derived from the root of the Curcuma longa plant, commonly used in cooking, particularly in South Asian, Middle Eastern, and Southeast Asian cuisines.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/products/hair-growth-oil</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/products/U5mX1m9LTRGfrqaCdnpERXeG0FUMmM9bOQ5DdYkd.jpg</image:loc>
+      <image:title>Hair Growth Oil</image:title>
+      <image:caption>Herbal Hair Growth Oil made with natural oils and Ayurvedic herbs. Reduces hair fall, boosts hair growth, strengthens roots, and promotes thicker, healthier hair. 100% chemical-free.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/7A808yL9l1w877sqDMJCir6ls1hJW1qjsrqu9LBV.jpg</image:loc>
+      <image:title>Hair Growth Oil</image:title>
+      <image:caption>Herbal Hair Growth Oil made with natural oils and Ayurvedic herbs. Reduces hair fall, boosts hair growth, strengthens roots, and promotes thicker, healthier hair. 100% chemical-free.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/fsD66RrVYGtXESkd9SJh9kOwmRT4Nt3G8gfnbNCd.jpg</image:loc>
+      <image:title>Hair Growth Oil</image:title>
+      <image:caption>Herbal Hair Growth Oil made with natural oils and Ayurvedic herbs. Reduces hair fall, boosts hair growth, strengthens roots, and promotes thicker, healthier hair. 100% chemical-free.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/ECb8VTvJWunN6ln4UalU38T9unmr9MPLVJgon5kV.webp</image:loc>
+      <image:title>Hair Growth Oil</image:title>
+      <image:caption>Herbal Hair Growth Oil made with natural oils and Ayurvedic herbs. Reduces hair fall, boosts hair growth, strengthens roots, and promotes thicker, healthier hair. 100% chemical-free.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/products/knee-pain-relief-oil</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/products/LA4ck6MjudsUWgoiscclbOwnwFx3qpQRfho7IeWS.webp</image:loc>
+      <image:title>Knee Pain Relief Oil</image:title>
+      <image:caption>Herbal Knee Pain Relief Oil made with Ayurvedic ingredients. Helps reduce joint pain, inflammation, swelling &amp; stiffness. 100% natural, chemical-free, and fast-absorbing.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/H8URTEYgzGE9lCzGV0mBG6Ts2RwT5WhPqrSxqmt2.jpg</image:loc>
+      <image:title>Knee Pain Relief Oil</image:title>
+      <image:caption>Herbal Knee Pain Relief Oil made with Ayurvedic ingredients. Helps reduce joint pain, inflammation, swelling &amp; stiffness. 100% natural, chemical-free, and fast-absorbing.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/CYswIJzEnGjBGsG5wpvajX8BsSyWIj8E2a6ZlpkQ.jpg</image:loc>
+      <image:title>Knee Pain Relief Oil</image:title>
+      <image:caption>Herbal Knee Pain Relief Oil made with Ayurvedic ingredients. Helps reduce joint pain, inflammation, swelling &amp; stiffness. 100% natural, chemical-free, and fast-absorbing.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/b1YxjaV6pEqcF694GwSRi85wRWdksX7KVSkJdBp3.jpg</image:loc>
+      <image:title>Knee Pain Relief Oil</image:title>
+      <image:caption>Herbal Knee Pain Relief Oil made with Ayurvedic ingredients. Helps reduce joint pain, inflammation, swelling &amp; stiffness. 100% natural, chemical-free, and fast-absorbing.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/products/bath-powder</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/products/aTGgYlFa2xfrGVpoRa5cNGkqtt6sZa37BpIKVwtl.jpg</image:loc>
+      <image:title>Bath Powder</image:title>
+      <image:caption>100% Homemade Herbal Bath Powder made with natural herbs, grains, and flowers. Deep cleanses, brightens skin, controls body odor, and keeps skin soft &amp; smooth. Chemical-free alternative to soap.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/E2Y5K8pHTNww5GOGkHgnFFhFQVtcr2XKY6v9YCDe.jpg</image:loc>
+      <image:title>Bath Powder</image:title>
+      <image:caption>100% Homemade Herbal Bath Powder made with natural herbs, grains, and flowers. Deep cleanses, brightens skin, controls body odor, and keeps skin soft &amp; smooth. Chemical-free alternative to soap.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/NVbjYTIiJRLZHx6gFtIRDfXLm4VRFSwn8RCMNo13.webp</image:loc>
+      <image:title>Bath Powder</image:title>
+      <image:caption>100% Homemade Herbal Bath Powder made with natural herbs, grains, and flowers. Deep cleanses, brightens skin, controls body odor, and keeps skin soft &amp; smooth. Chemical-free alternative to soap.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/qaDtBulUea2BlQy5WAJBKd8JvQorcjdngv7AN2d5.webp</image:loc>
+      <image:title>Bath Powder</image:title>
+      <image:caption>100% Homemade Herbal Bath Powder made with natural herbs, grains, and flowers. Deep cleanses, brightens skin, controls body odor, and keeps skin soft &amp; smooth. Chemical-free alternative to soap.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/38VcGzRnUa7INKBShtoUitLpWt8oJhVx7vHWkh5Q.jpg</image:loc>
+      <image:title>Bath Powder</image:title>
+      <image:caption>100% Homemade Herbal Bath Powder made with natural herbs, grains, and flowers. Deep cleanses, brightens skin, controls body odor, and keeps skin soft &amp; smooth. Chemical-free alternative to soap.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/products/black-urad-dal-powder</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/products/Bzx5TOUpFAGEcIldcn35EDDM49XHCvqNayDv2wDC.jpg</image:loc>
+      <image:title>Black Urad Dal Powder</image:title>
+      <image:caption>Pure Homemade Black Urad Dal (Kali Urad) Powder made from premium whole black gram. Freshly roasted, finely ground, protein-rich, and 100% natural.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/dQcrN4ysoHOypEkMmHsHFY45Z8qVXsi9lsbRus4C.jpg</image:loc>
+      <image:title>Black Urad Dal Powder</image:title>
+      <image:caption>Pure Homemade Black Urad Dal (Kali Urad) Powder made from premium whole black gram. Freshly roasted, finely ground, protein-rich, and 100% natural.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/QsPuGJ35EHOQB2oS6zkUsfQIIwPrbIfMrcLzUDW4.webp</image:loc>
+      <image:title>Black Urad Dal Powder</image:title>
+      <image:caption>Pure Homemade Black Urad Dal (Kali Urad) Powder made from premium whole black gram. Freshly roasted, finely ground, protein-rich, and 100% natural.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/w0NvrKxqBH3rFzIr9AOg3pEVJhB5iEFq0TZMa3de.webp</image:loc>
+      <image:title>Black Urad Dal Powder</image:title>
+      <image:caption>Pure Homemade Black Urad Dal (Kali Urad) Powder made from premium whole black gram. Freshly roasted, finely ground, protein-rich, and 100% natural.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/7td9jSrlLvpV6t2zT6rlv94BY45Yq7RKjtUxw7lC.webp</image:loc>
+      <image:title>Black Urad Dal Powder</image:title>
+      <image:caption>Pure Homemade Black Urad Dal (Kali Urad) Powder made from premium whole black gram. Freshly roasted, finely ground, protein-rich, and 100% natural.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/products/ragi-powder</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/products/Yp9JcgQJ1ciImriVUDT31miW1SOZKRrwcq66iahi.webp</image:loc>
+      <image:title>Ragi Powder</image:title>
+      <image:caption>Nutritious Homemade Ragi Powder made from premium finger millet. Freshly ground, 100% natural, rich in calcium, fiber, and iron — ideal for porridge, health drinks &amp; baby food.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/DjS1NWSq2BAspsmykGK71BV3H2gN0tmRwZYJtj00.jpg</image:loc>
+      <image:title>Ragi Powder</image:title>
+      <image:caption>Nutritious Homemade Ragi Powder made from premium finger millet. Freshly ground, 100% natural, rich in calcium, fiber, and iron — ideal for porridge, health drinks &amp; baby food.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/W7lnqlo0q3LMqLuxoZKryte2mbwVsOacFeUC2kNr.jpg</image:loc>
+      <image:title>Ragi Powder</image:title>
+      <image:caption>Nutritious Homemade Ragi Powder made from premium finger millet. Freshly ground, 100% natural, rich in calcium, fiber, and iron — ideal for porridge, health drinks &amp; baby food.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/AblzUkUKujQ2MY8Tiya5RaD7OCkqtmFxUlyKZQSm.webp</image:loc>
+      <image:title>Ragi Powder</image:title>
+      <image:caption>Nutritious Homemade Ragi Powder made from premium finger millet. Freshly ground, 100% natural, rich in calcium, fiber, and iron — ideal for porridge, health drinks &amp; baby food.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/products/cardamom-powder</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/products/37S2rvKZZswd1dwPXWr8I0eJUGp91DCwN4BIegZj.webp</image:loc>
+      <image:title>Cardamom Powder</image:title>
+      <image:caption>Pure Homemade Cardamom Powder made from high-quality green elaichi. Freshly ground, intensely aromatic, chemical-free, and perfect for sweets, desserts, tea, and cooking.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/iy97nr1enQwJegsBGYXyWGXJoTjqy73hotCe8Ny5.jpg</image:loc>
+      <image:title>Cardamom Powder</image:title>
+      <image:caption>Pure Homemade Cardamom Powder made from high-quality green elaichi. Freshly ground, intensely aromatic, chemical-free, and perfect for sweets, desserts, tea, and cooking.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/UXnabXhmwUCRLcfgCxDjUmzrHQPiN25iQWYM9gyb.webp</image:loc>
+      <image:title>Cardamom Powder</image:title>
+      <image:caption>Pure Homemade Cardamom Powder made from high-quality green elaichi. Freshly ground, intensely aromatic, chemical-free, and perfect for sweets, desserts, tea, and cooking.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/QXhGmZEH5UZXyRWXBYXJb7KqjlQWHAj9pAIivWDt.webp</image:loc>
+      <image:title>Cardamom Powder</image:title>
+      <image:caption>Pure Homemade Cardamom Powder made from high-quality green elaichi. Freshly ground, intensely aromatic, chemical-free, and perfect for sweets, desserts, tea, and cooking.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/products/garam-masala</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/products/ymG46w7Oj4v67sI9SeufppyWxCvnW82CBxp2avso.jpg</image:loc>
+      <image:title>Garam Masala</image:title>
+      <image:caption>Authentic Homemade Garam Masala made with premium whole spices, roasted and ground in small batches for maximum aroma, purity, and traditional Indian flavor.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/tuvtNRlCxsvD8RFoOboEVPFKcj588EP9YcgC4CJ3.jpg</image:loc>
+      <image:title>Garam Masala</image:title>
+      <image:caption>Authentic Homemade Garam Masala made with premium whole spices, roasted and ground in small batches for maximum aroma, purity, and traditional Indian flavor.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/NHUm3OEaGwl7rFY0qLnXznC8cMCJS3hiPkjs9l1H.jpg</image:loc>
+      <image:title>Garam Masala</image:title>
+      <image:caption>Authentic Homemade Garam Masala made with premium whole spices, roasted and ground in small batches for maximum aroma, purity, and traditional Indian flavor.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/0Py5QFtfswvHAMIQA1za3v3G6ulUf4WiYdSTBZN0.jpg</image:loc>
+      <image:title>Garam Masala</image:title>
+      <image:caption>Authentic Homemade Garam Masala made with premium whole spices, roasted and ground in small batches for maximum aroma, purity, and traditional Indian flavor.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/products/kashmiri-chilli-powder</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/products/z4g1KFoFFW0xbVQn11QCTtPo9jXM7DVZRydPIaGj.jpg</image:loc>
+      <image:title>Kashmiri Chilli Powder</image:title>
+      <image:caption>Pure Homemade Kashmiri Chilli Powder made from premium sun-dried Kashmiri chillies. Naturally bright red color, mild heat, and rich aroma — perfect for vibrant and flavorful cooking.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/GRZxRewzMceq5JuGvSuxQaYb02tjLxQcT1dbQUQS.png</image:loc>
+      <image:title>Kashmiri Chilli Powder</image:title>
+      <image:caption>Pure Homemade Kashmiri Chilli Powder made from premium sun-dried Kashmiri chillies. Naturally bright red color, mild heat, and rich aroma — perfect for vibrant and flavorful cooking.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/bIr2AxzBHRVn1CvgwiDg7X5iyCRsMFXQ24yIg7Pi.webp</image:loc>
+      <image:title>Kashmiri Chilli Powder</image:title>
+      <image:caption>Pure Homemade Kashmiri Chilli Powder made from premium sun-dried Kashmiri chillies. Naturally bright red color, mild heat, and rich aroma — perfect for vibrant and flavorful cooking.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/nHNVMIFtnscvVWjFn87jX8IZysWNjbl2DXbxfTnP.jpg</image:loc>
+      <image:title>Kashmiri Chilli Powder</image:title>
+      <image:caption>Pure Homemade Kashmiri Chilli Powder made from premium sun-dried Kashmiri chillies. Naturally bright red color, mild heat, and rich aroma — perfect for vibrant and flavorful cooking.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/products/cumin-powder</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/products/EV5yH3J1uuXOhR1VWyhEHVjo6And4SZXzyyaHqH6.jpg</image:loc>
+      <image:title>Cumin Powder</image:title>
+      <image:caption>Pure Homemade Cumin Powder made from premium hand-roasted cumin seeds. Aromatic, flavorful, chemical-free, and perfect for enhancing taste in every Indian dish.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/GH1qbr5z8KF9A5q3EAAMQ7eNF0hbYAWTVZfVpEAq.jpg</image:loc>
+      <image:title>Cumin Powder</image:title>
+      <image:caption>Pure Homemade Cumin Powder made from premium hand-roasted cumin seeds. Aromatic, flavorful, chemical-free, and perfect for enhancing taste in every Indian dish.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/tbtukdz6lRifZ6EoXVNJkQ9FNaE9l2QiduS28x3S.jpg</image:loc>
+      <image:title>Cumin Powder</image:title>
+      <image:caption>Pure Homemade Cumin Powder made from premium hand-roasted cumin seeds. Aromatic, flavorful, chemical-free, and perfect for enhancing taste in every Indian dish.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/n9QJxx170Suc9rowBMZZpHSQDI9tjGF7hcwz4s9x.jpg</image:loc>
+      <image:title>Cumin Powder</image:title>
+      <image:caption>Pure Homemade Cumin Powder made from premium hand-roasted cumin seeds. Aromatic, flavorful, chemical-free, and perfect for enhancing taste in every Indian dish.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost/products/coriander-powder</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>http://localhost/storage/products/ODDpFt9Rh3pcJtNOeu64ORkjefpcKeU7r5FoJbjm.jpg</image:loc>
+      <image:title>Coriander Powder</image:title>
+      <image:caption>Pure Homemade Coriander Powder made from handpicked premium coriander seeds. Freshly ground, chemical-free, aromatic, and perfect for enhancing everyday Indian cooking.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/wCEnKUf2sYJ3yLeEE3AM53mrNDxwgb165Zdmp57S.png</image:loc>
+      <image:title>Coriander Powder</image:title>
+      <image:caption>Pure Homemade Coriander Powder made from handpicked premium coriander seeds. Freshly ground, chemical-free, aromatic, and perfect for enhancing everyday Indian cooking.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/qHwt4f4xpWtG8tKwPVu0XAWBX0JXyDmHDGM0IBen.jpg</image:loc>
+      <image:title>Coriander Powder</image:title>
+      <image:caption>Pure Homemade Coriander Powder made from handpicked premium coriander seeds. Freshly ground, chemical-free, aromatic, and perfect for enhancing everyday Indian cooking.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>http://localhost/storage/products/HwPEoT2BBeoXtr7A0D1vTUB8nlRCEzf9lTTzE3nL.jpg</image:loc>
+      <image:title>Coriander Powder</image:title>
+      <image:caption>Pure Homemade Coriander Powder made from handpicked premium coriander seeds. Freshly ground, chemical-free, aromatic, and perfect for enhancing everyday Indian cooking.</image:caption>
+    </image:image>
+  </url>
+</urlset>

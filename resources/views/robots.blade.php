@@ -13,16 +13,24 @@ Disallow: /admin/*
 Disallow: /api/
 Disallow: /storage/
 Disallow: /_debugbar/
+Disallow: /telescope/
 
 # Disallow search result pages with parameters (to avoid duplicate content)
 Disallow: /*?sort=
 Disallow: /*?page=
 Disallow: /*?q=
+Disallow: /*?min_price=
+Disallow: /*?max_price=
 
 # Allow important CSS and JS for rendering
 Allow: /build/
 Allow: /*.css$
 Allow: /*.js$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.png$
+Allow: /*.webp$
+Allow: /*.gif$
 
 # Crawl delay (optional - be nice to servers)
 Crawl-delay: 1
@@ -39,3 +47,13 @@ Crawl-delay: 1
 User-agent: Googlebot-Image
 Allow: /storage/products/
 Allow: /images/
+
+# Block AI training bots (optional)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /

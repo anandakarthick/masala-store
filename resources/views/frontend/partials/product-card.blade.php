@@ -6,9 +6,11 @@
         <div class="relative h-40 sm:h-44 md:h-48 bg-gray-100 overflow-hidden">
             @if($product->primary_image_url)
                 <img src="{{ $product->primary_image_url }}" 
-                     alt="{{ $product->name }}" 
+                     alt="{{ $product->name }} - {{ $product->category->name }} | {{ $product->weight_display }}" 
                      class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                      loading="lazy"
+                     decoding="async"
+                     fetchpriority="low"
                      itemprop="image"
                      width="200"
                      height="200">

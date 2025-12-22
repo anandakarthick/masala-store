@@ -12,6 +12,47 @@
 @section('meta_description', $productDescription)
 @section('meta_keywords', $product->name . ', buy ' . $product->name . ' online, ' . $product->category->name . ', homemade ' . $product->name . ', ' . $businessName)
 
+@push('styles')
+<!-- Product Page Schema -->
+<script type="application/ld+json">
+{!! json_encode([
+    '@context' => 'https://schema.org',
+    '@type' => 'Product',
+    'name' => $product->name,
+    'description' => $productDescription,
+    'image' => $product->images->pluck('url')->toArray() ?: [$productImage],
+    'sku' => $product->sku,
+    'brand' => [
+        '@type' => 'Brand',
+        'name' => $businessName
+    ],
+    'category' => $product->category->name,
+    'offers' => $product->has_variants && $product->activeVariants->count() > 0 ? [
+        '@type' => 'AggregateOffer',
+        'priceCurrency' => 'INR',
+        'lowPrice' => $product->activeVariants->min('effective_price'),
+        'highPrice' => $product->activeVariants->max('effective_price'),
+        'offerCount' => $product->activeVariants->count(),
+        'availability' => $product->isOutOfStock() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+        'seller' => [
+            '@type' => 'Organization',
+            'name' => $businessName
+        ]
+    ] : [
+        '@type' => 'Offer',
+        'priceCurrency' => 'INR',
+        'price' => $product->effective_price,
+        'availability' => $product->isOutOfStock() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+        'seller' => [
+            '@type' => 'Organization',
+            'name' => $businessName
+        ],
+        'url' => $productUrl
+    ]
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+</script>
+@endpush
+
 @section('content')
 <div class="container mx-auto px-4 py-6">
     <!-- Breadcrumb -->

@@ -7,9 +7,12 @@
         <div class="relative h-28 sm:h-32 md:h-36 bg-gray-100 overflow-hidden">
             @if($product->primary_image_url)
                 <img src="{{ $product->primary_image_url }}" 
-                     alt="{{ $product->name }}" 
+                     alt="{{ $product->name }} - {{ $product->category->name }}" 
                      class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                      loading="lazy"
+                     decoding="async"
+                     width="150"
+                     height="150"
                      itemprop="image">
             @else
                 <div class="w-full h-full flex items-center justify-center text-gray-400">

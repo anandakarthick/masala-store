@@ -18,6 +18,44 @@
 
 @section('canonical', $currentCategory ? route('category.show', $currentCategory->slug) : route('products.index'))
 
+@push('seo_links')
+@if($products->currentPage() > 1)
+    <link rel="prev" href="{{ $products->previousPageUrl() }}">
+@endif
+@if($products->hasMorePages())
+    <link rel="next" href="{{ $products->nextPageUrl() }}">
+@endif
+@endpush
+
+@push('scripts')
+<!-- Category/Products Page Schema -->
+@if($products->count() > 0)
+<script type="application/ld+json">
+{!! json_encode([
+    '@context' => 'https://schema.org',
+    '@type' => 'CollectionPage',
+    'name' => $currentCategory ? $currentCategory->name : 'All Products',
+    'description' => $pageDescription,
+    'url' => $currentCategory ? route('category.show', $currentCategory->slug) : route('products.index'),
+    'mainEntity' => [
+        '@type' => 'ItemList',
+        'name' => $currentCategory ? $currentCategory->name . ' Products' : 'All Products',
+        'numberOfItems' => $products->total(),
+        'itemListElement' => $products->map(function($product, $index) {
+            return [
+                '@type' => 'ListItem',
+                'position' => $index + 1,
+                'url' => route('products.show', $product->slug),
+                'name' => $product->name,
+                'image' => $product->primary_image_url
+            ];
+        })->toArray()
+    ]
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+</script>
+@endif
+@endpush
+
 @section('content')
 <div class="container mx-auto px-4 py-6">
     <!-- Breadcrumb -->
