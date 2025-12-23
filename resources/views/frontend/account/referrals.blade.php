@@ -47,10 +47,13 @@
                 <!-- Share Options -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h3 class="font-semibold mb-4">Share Your Referral Link</h3>
+                    @php
+                        $referralLink = url('/register?ref=' . $user->referral_code);
+                    @endphp
                     <div class="flex flex-col md:flex-row gap-4 items-start">
                         <div class="flex-1">
                             <div class="flex">
-                                <input type="text" value="{{ $stats['referral_link'] }}" id="referralLink" readonly
+                                <input type="text" value="{{ $referralLink }}" id="referralLink" readonly
                                        class="flex-1 border border-gray-300 rounded-l-lg px-4 py-2 bg-gray-50 text-gray-700 text-sm">
                                 <button onclick="copyReferralLink()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-lg transition">
                                     <i class="fas fa-copy"></i>
@@ -58,25 +61,25 @@
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            <a href="https://wa.me/?text={{ urlencode('Use my referral code ' . $user->referral_code . ' to get special discount! ' . $stats['referral_link']) }}" 
+                            <a href="https://wa.me/?text={{ urlencode('Use my referral code ' . $user->referral_code . ' to get special discount! ' . $referralLink) }}" 
                                target="_blank" 
                                class="w-10 h-10 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center transition"
                                title="Share on WhatsApp">
                                 <i class="fab fa-whatsapp text-lg"></i>
                             </a>
-                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode($stats['referral_link']) }}" 
+                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode($referralLink) }}" 
                                target="_blank"
                                class="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center transition"
                                title="Share on Facebook">
                                 <i class="fab fa-facebook-f text-lg"></i>
                             </a>
-                            <a href="https://twitter.com/intent/tweet?text={{ urlencode('Use my referral code ' . $user->referral_code . ' to get special discount!') }}&url={{ urlencode($stats['referral_link']) }}" 
+                            <a href="https://twitter.com/intent/tweet?text={{ urlencode('Use my referral code ' . $user->referral_code . ' to get special discount!') }}&url={{ urlencode($referralLink) }}" 
                                target="_blank"
                                class="w-10 h-10 bg-sky-500 hover:bg-sky-600 text-white rounded-full flex items-center justify-center transition"
                                title="Share on Twitter">
                                 <i class="fab fa-twitter text-lg"></i>
                             </a>
-                            <a href="mailto:?subject=Check out this store!&body={{ urlencode('Use my referral code ' . $user->referral_code . ' to get special discount! ' . $stats['referral_link']) }}" 
+                            <a href="mailto:?subject=Check out this store!&body={{ urlencode('Use my referral code ' . $user->referral_code . ' to get special discount! ' . $referralLink) }}" 
                                class="w-10 h-10 bg-gray-600 hover:bg-gray-700 text-white rounded-full flex items-center justify-center transition"
                                title="Share via Email">
                                 <i class="fas fa-envelope text-lg"></i>

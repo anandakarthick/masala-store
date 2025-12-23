@@ -209,7 +209,13 @@ class User extends Authenticatable
      */
     public function getReferralLinkAttribute(): string
     {
-        return route('register', ['ref' => $this->referral_code]);
+        // Ensure user has a referral code
+        if (empty($this->referral_code)) {
+            $this->referral_code = self::generateUniqueReferralCode();
+            $this->save();
+        }
+        
+        return url('/register?ref=' . $this->referral_code);
     }
 
     /**
