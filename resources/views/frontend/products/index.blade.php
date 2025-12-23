@@ -30,6 +30,48 @@
 @push('scripts')
 <!-- Category/Products Page Schema -->
 @if($products->count() > 0)
+@php
+    $siteUrl = config('app.url', url('/'));
+    
+    // Shipping details for all products
+    $shippingDetails = [
+        '@type' => 'OfferShippingDetails',
+        'shippingRate' => [
+            '@type' => 'MonetaryAmount',
+            'value' => '0',
+            'currency' => 'INR'
+        ],
+        'shippingDestination' => [
+            '@type' => 'DefinedRegion',
+            'addressCountry' => 'IN'
+        ],
+        'deliveryTime' => [
+            '@type' => 'ShippingDeliveryTime',
+            'handlingTime' => [
+                '@type' => 'QuantitativeValue',
+                'minValue' => 1,
+                'maxValue' => 2,
+                'unitCode' => 'DAY'
+            ],
+            'transitTime' => [
+                '@type' => 'QuantitativeValue',
+                'minValue' => 3,
+                'maxValue' => 7,
+                'unitCode' => 'DAY'
+            ]
+        ]
+    ];
+    
+    // Merchant return policy
+    $returnPolicy = [
+        '@type' => 'MerchantReturnPolicy',
+        'applicableCountry' => 'IN',
+        'returnPolicyCategory' => 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        'merchantReturnDays' => 7,
+        'returnMethod' => 'https://schema.org/ReturnByMail',
+        'returnFees' => 'https://schema.org/FreeReturn'
+    ];
+@endphp
 <script type="application/ld+json">
 {!! json_encode([
     '@context' => 'https://schema.org',
@@ -41,12 +83,18 @@
         '@type' => 'ItemList',
         'name' => $currentCategory ? $currentCategory->name . ' Products' : 'All Products',
         'numberOfItems' => $products->total(),
-        'itemListElement' => $products->map(function($product, $index) use ($businessName) {
+        'itemListElement' => $products->map(function($product, $index) use ($businessName, $siteUrl, $shippingDetails, $returnPolicy) {
             $price = $product->discount_price ?? $product->price;
             if ($product->has_variants && $product->activeVariants->count() > 0) {
                 $defaultVariant = $product->defaultVariant ?? $product->activeVariants->first();
                 $price = $defaultVariant->discount_price ?? $defaultVariant->price;
             }
+            
+            $description = $product->short_description ?? '';
+            if (empty($description) && $product->description) {
+                $description = \Str::limit(strip_tags($product->description), 160);
+            }
+            
             return [
                 '@type' => 'ListItem',
                 'position' => $index + 1,
@@ -56,8 +104,8 @@
                     'name' => $product->name,
                     'url' => route('products.show', $product->slug),
                     'image' => $product->primary_image_url,
-                    'description' => $product->short_description ?? \Str::limit(strip_tags($product->description), 160),
-                    'sku' => $product->sku,
+                    'description' => $description ?: $product->name . ' - Buy online from ' . $businessName,
+                    'sku' => $product->sku ?? 'SKU-' . $product->id,
                     'brand' => [
                         '@type' => 'Brand',
                         'name' => $businessName
@@ -68,10 +116,15 @@
                         'priceCurrency' => 'INR',
                         'price' => number_format((float) $price, 2, '.', ''),
                         'availability' => $product->isOutOfStock() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+                        'itemCondition' => 'https://schema.org/NewCondition',
+                        'priceValidUntil' => now()->addYear()->format('Y-m-d'),
                         'seller' => [
                             '@type' => 'Organization',
-                            'name' => $businessName
-                        ]
+                            'name' => $businessName,
+                            'url' => $siteUrl
+                        ],
+                        'shippingDetails' => $shippingDetails,
+                        'hasMerchantReturnPolicy' => $returnPolicy
                     ]
                 ]
             ];

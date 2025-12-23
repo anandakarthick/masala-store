@@ -15,21 +15,50 @@
 @push('styles')
 <!-- Product Page Schema -->
 @php
-    $schemaData = [
-        '@context' => 'https://schema.org',
-        '@type' => 'Product',
-        'name' => $product->name,
-        'description' => $productDescription,
-        'image' => $product->images->count() > 0 ? $product->images->pluck('url')->toArray() : [$productImage],
-        'sku' => $product->sku,
-        'mpn' => $product->sku,
-        'brand' => [
-            '@type' => 'Brand',
-            'name' => $businessName
+    $siteUrl = config('app.url', url('/'));
+    
+    // Shipping details
+    $shippingDetails = [
+        '@type' => 'OfferShippingDetails',
+        'shippingRate' => [
+            '@type' => 'MonetaryAmount',
+            'value' => '0',
+            'currency' => 'INR'
         ],
-        'category' => $product->category->name,
-        'url' => $productUrl,
-        'offers' => $product->has_variants && $product->activeVariants->count() > 0 ? [
+        'shippingDestination' => [
+            '@type' => 'DefinedRegion',
+            'addressCountry' => 'IN'
+        ],
+        'deliveryTime' => [
+            '@type' => 'ShippingDeliveryTime',
+            'handlingTime' => [
+                '@type' => 'QuantitativeValue',
+                'minValue' => 1,
+                'maxValue' => 2,
+                'unitCode' => 'DAY'
+            ],
+            'transitTime' => [
+                '@type' => 'QuantitativeValue',
+                'minValue' => 3,
+                'maxValue' => 7,
+                'unitCode' => 'DAY'
+            ]
+        ]
+    ];
+    
+    // Merchant return policy
+    $returnPolicy = [
+        '@type' => 'MerchantReturnPolicy',
+        'applicableCountry' => 'IN',
+        'returnPolicyCategory' => 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        'merchantReturnDays' => 7,
+        'returnMethod' => 'https://schema.org/ReturnByMail',
+        'returnFees' => 'https://schema.org/FreeReturn'
+    ];
+    
+    // Build offers based on variants or single product
+    if ($product->has_variants && $product->activeVariants->count() > 0) {
+        $offers = [
             '@type' => 'AggregateOffer',
             'priceCurrency' => 'INR',
             'lowPrice' => number_format((float)$product->activeVariants->min('effective_price'), 2, '.', ''),
@@ -38,12 +67,17 @@
             'availability' => $product->isOutOfStock() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
             'priceValidUntil' => now()->addYear()->format('Y-m-d'),
             'url' => $productUrl,
+            'itemCondition' => 'https://schema.org/NewCondition',
             'seller' => [
                 '@type' => 'Organization',
                 'name' => $businessName,
-                'url' => config('app.url')
-            ]
-        ] : [
+                'url' => $siteUrl
+            ],
+            'shippingDetails' => $shippingDetails,
+            'hasMerchantReturnPolicy' => $returnPolicy
+        ];
+    } else {
+        $offers = [
             '@type' => 'Offer',
             'priceCurrency' => 'INR',
             'price' => number_format((float)$product->effective_price, 2, '.', ''),
@@ -54,17 +88,53 @@
             'seller' => [
                 '@type' => 'Organization',
                 'name' => $businessName,
-                'url' => config('app.url')
-            ]
+                'url' => $siteUrl
+            ],
+            'shippingDetails' => $shippingDetails,
+            'hasMerchantReturnPolicy' => $returnPolicy
+        ];
+    }
+    
+    // Full product description
+    $fullDescription = $product->short_description ?? '';
+    if ($product->description) {
+        $fullDescription .= ' ' . strip_tags($product->description);
+    }
+    $fullDescription = trim($fullDescription) ?: $productDescription;
+    
+    $schemaData = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Product',
+        'name' => $product->name,
+        'description' => Str::limit($fullDescription, 5000),
+        'image' => $product->images->count() > 0 ? $product->images->pluck('url')->toArray() : [$productImage],
+        'sku' => $product->sku ?? 'SKU-' . $product->id,
+        'mpn' => $product->sku ?? 'MPN-' . $product->id,
+        'gtin' => $product->barcode ?? null,
+        'brand' => [
+            '@type' => 'Brand',
+            'name' => $businessName
         ],
-        'aggregateRating' => $product->review_count > 0 ? [
+        'category' => $product->category->name,
+        'url' => $productUrl,
+        'offers' => $offers
+    ];
+    
+    // Add aggregate rating only if reviews exist
+    if ($product->review_count > 0) {
+        $schemaData['aggregateRating'] = [
             '@type' => 'AggregateRating',
-            'ratingValue' => $product->average_rating,
+            'ratingValue' => number_format($product->average_rating, 1),
             'reviewCount' => $product->review_count,
             'bestRating' => '5',
             'worstRating' => '1'
-        ] : null
-    ];
+        ];
+    }
+    
+    // Remove null values
+    $schemaData = array_filter($schemaData, function($value) {
+        return $value !== null;
+    });
 @endphp
 <script type="application/ld+json">
 {!! json_encode($schemaData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
