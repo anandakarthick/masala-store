@@ -42,9 +42,24 @@
                         </tr>
                         @if($order->discount_amount > 0)
                         <tr>
-                            <td colspan="3" class="px-6 py-3 text-right text-sm text-green-600">Discount:</td>
+                            <td colspan="3" class="px-6 py-3 text-right text-sm text-green-600">
+                                Discount:
+                                @if($order->first_time_discount_applied > 0)
+                                    <span class="ml-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                        🎉 First-Time Customer
+                                    </span>
+                                @endif
+                            </td>
                             <td class="px-6 py-3 text-right font-medium text-green-600">-₹{{ number_format($order->discount_amount, 2) }}</td>
                         </tr>
+                        @if($order->first_time_discount_applied > 0 && $order->discount_amount > $order->first_time_discount_applied)
+                        <tr>
+                            <td colspan="3" class="px-6 py-3 text-right text-xs text-gray-500 italic">
+                                (Includes ₹{{ number_format($order->first_time_discount_applied, 2) }} first-time discount)
+                            </td>
+                            <td></td>
+                        </tr>
+                        @endif
                         @endif
                         <tr>
                             <td colspan="3" class="px-6 py-3 text-right text-sm text-gray-600">GST:</td>

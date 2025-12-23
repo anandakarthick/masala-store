@@ -41,13 +41,39 @@
         '@type' => 'ItemList',
         'name' => $currentCategory ? $currentCategory->name . ' Products' : 'All Products',
         'numberOfItems' => $products->total(),
-        'itemListElement' => $products->map(function($product, $index) {
+        'itemListElement' => $products->map(function($product, $index) use ($businessName) {
+            $price = $product->discount_price ?? $product->price;
+            if ($product->has_variants && $product->activeVariants->count() > 0) {
+                $defaultVariant = $product->defaultVariant ?? $product->activeVariants->first();
+                $price = $defaultVariant->discount_price ?? $defaultVariant->price;
+            }
             return [
                 '@type' => 'ListItem',
                 'position' => $index + 1,
-                'url' => route('products.show', $product->slug),
-                'name' => $product->name,
-                'image' => $product->primary_image_url
+                'item' => [
+                    '@type' => 'Product',
+                    '@id' => route('products.show', $product->slug),
+                    'name' => $product->name,
+                    'url' => route('products.show', $product->slug),
+                    'image' => $product->primary_image_url,
+                    'description' => $product->short_description ?? \Str::limit(strip_tags($product->description), 160),
+                    'sku' => $product->sku,
+                    'brand' => [
+                        '@type' => 'Brand',
+                        'name' => $businessName
+                    ],
+                    'offers' => [
+                        '@type' => 'Offer',
+                        'url' => route('products.show', $product->slug),
+                        'priceCurrency' => 'INR',
+                        'price' => number_format((float) $price, 2, '.', ''),
+                        'availability' => $product->isOutOfStock() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+                        'seller' => [
+                            '@type' => 'Organization',
+                            'name' => $businessName
+                        ]
+                    ]
+                ]
             ];
         })->toArray()
     ]

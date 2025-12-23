@@ -10,6 +10,7 @@ use App\Models\OrderCustomCombo;
 use App\Models\PaymentMethod;
 use App\Models\Setting;
 use App\Models\StockMovement;
+use App\Services\FirstTimeCustomerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -30,10 +31,13 @@ class CheckoutController extends Controller
             ? 0 
             : Setting::defaultShippingCharge();
 
+        // Check first-time customer discount eligibility
+        $firstTimeDiscount = FirstTimeCustomerService::isEligible(auth()->id(), $cart->subtotal);
+
         // Get active payment methods available for this order amount
         $paymentMethods = PaymentMethod::availableForAmount($cart->subtotal + $shippingCharge)->get();
 
-        return view('frontend.checkout.index', compact('cart', 'user', 'shippingCharge', 'paymentMethods'));
+        return view('frontend.checkout.index', compact('cart', 'user', 'shippingCharge', 'paymentMethods', 'firstTimeDiscount'));
     }
 
     public function applyCoupon(Request $request)
@@ -127,6 +131,7 @@ class CheckoutController extends Controller
         $gstAmount = $cart->gst_amount;
         $shippingCharge = $subtotal >= Setting::freeShippingAmount() ? 0 : Setting::defaultShippingCharge();
         $discountAmount = 0;
+        $firstTimeDiscountAmount = 0;
 
         // Apply coupon
         $coupon = session('coupon');
@@ -134,10 +139,21 @@ class CheckoutController extends Controller
             $discountAmount = $coupon->calculateDiscount($subtotal);
         }
 
-        // Calculate payment method extra charge
-        $paymentCharge = $paymentMethod->calculateExtraCharge($subtotal + $gstAmount + $shippingCharge - $discountAmount);
+        // Apply first-time customer discount (only if logged in and eligible)
+        if (auth()->check()) {
+            $firstTimeEligibility = FirstTimeCustomerService::isEligible(auth()->id(), $subtotal);
+            if ($firstTimeEligibility['eligible']) {
+                $firstTimeDiscountAmount = $firstTimeEligibility['discount_amount'];
+            }
+        }
 
-        $totalAmount = $subtotal + $gstAmount + $shippingCharge - $discountAmount + $paymentCharge;
+        // Total discount = coupon + first-time discount
+        $totalDiscount = $discountAmount + $firstTimeDiscountAmount;
+
+        // Calculate payment method extra charge
+        $paymentCharge = $paymentMethod->calculateExtraCharge($subtotal + $gstAmount + $shippingCharge - $totalDiscount);
+
+        $totalAmount = $subtotal + $gstAmount + $shippingCharge - $totalDiscount + $paymentCharge;
 
         // Billing address
         $billingSame = $request->boolean('billing_same', true);
@@ -161,7 +177,8 @@ class CheckoutController extends Controller
                 'billing_pincode' => $billingSame ? $validated['shipping_pincode'] : $validated['billing_pincode'],
                 'order_type' => $validated['order_type'] ?? 'retail',
                 'subtotal' => $subtotal,
-                'discount_amount' => $discountAmount,
+                'discount_amount' => $totalDiscount,
+                'first_time_discount_applied' => $firstTimeDiscountAmount,
                 'gst_amount' => $gstAmount,
                 'shipping_charge' => $shippingCharge,
                 'total_amount' => $totalAmount,

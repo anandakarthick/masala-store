@@ -284,6 +284,29 @@
                         @endforeach
                     </div>
 
+                    <!-- First-Time Customer Discount -->
+                    @if(isset($firstTimeDiscount) && $firstTimeDiscount['eligible'])
+                        <div class="border-t mt-4 pt-4">
+                            <div class="bg-gradient-to-r from-green-50 to-yellow-50 border border-green-200 p-3 rounded-lg">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-lg">🎉</span>
+                                    <span class="font-semibold text-green-700">First-Time Customer Offer!</span>
+                                </div>
+                                <p class="text-sm text-green-600">You get {{ $firstTimeDiscount['discount_percentage'] }}% OFF on this order</p>
+                                <p class="text-xs text-gray-500 mt-1">Only {{ $firstTimeDiscount['remaining_slots'] }} slots remaining!</p>
+                            </div>
+                        </div>
+                    @elseif(!auth()->check() && \App\Services\FirstTimeCustomerService::isEnabled())
+                        <div class="border-t mt-4 pt-4">
+                            <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                                <p class="text-sm text-blue-700">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    <a href="{{ route('login') }}" class="font-semibold underline">Login</a> to avail first-time customer discount!
+                                </p>
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Coupon -->
                     <div class="border-t mt-4 pt-4">
                         @if(session('coupon'))
@@ -327,6 +350,12 @@
                                 <span>-₹{{ number_format(session('coupon')->calculateDiscount($cart->subtotal), 2) }}</span>
                             </div>
                         @endif
+                        @if(isset($firstTimeDiscount) && $firstTimeDiscount['eligible'] && $firstTimeDiscount['discount_amount'] > 0)
+                            <div class="flex justify-between text-green-600">
+                                <span>🎉 First-Time Discount ({{ $firstTimeDiscount['discount_percentage'] }}%)</span>
+                                <span>-₹{{ number_format($firstTimeDiscount['discount_amount'], 2) }}</span>
+                            </div>
+                        @endif
                         <div class="flex justify-between">
                             <span class="text-gray-600">GST</span>
                             <span>₹{{ number_format($cart->gst_amount, 2) }}</span>
@@ -343,13 +372,20 @@
 
                     <div class="border-t mt-4 pt-4">
                         @php
-                            $discount = session('coupon') ? session('coupon')->calculateDiscount($cart->subtotal) : 0;
-                            $total = $cart->subtotal - $discount + $cart->gst_amount + $shippingCharge;
+                            $couponDiscount = session('coupon') ? session('coupon')->calculateDiscount($cart->subtotal) : 0;
+                            $firstTimeDiscountAmt = (isset($firstTimeDiscount) && $firstTimeDiscount['eligible']) ? $firstTimeDiscount['discount_amount'] : 0;
+                            $totalDiscount = $couponDiscount + $firstTimeDiscountAmt;
+                            $total = $cart->subtotal - $totalDiscount + $cart->gst_amount + $shippingCharge;
                         @endphp
                         <div class="flex justify-between text-lg font-bold">
                             <span>Total</span>
                             <span class="text-green-600">₹{{ number_format($total, 2) }}</span>
                         </div>
+                        @if($totalDiscount > 0)
+                            <p class="text-xs text-green-600 text-right mt-1">
+                                You save ₹{{ number_format($totalDiscount, 2) }} on this order!
+                            </p>
+                        @endif
                     </div>
 
                     <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold mt-6 transition-colors">

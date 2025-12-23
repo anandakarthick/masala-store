@@ -20,13 +20,39 @@
     'name' => 'Featured Products',
     'description' => 'Featured homemade masala and herbal products from ' . $companyName,
     'numberOfItems' => $featuredProducts->count(),
-    'itemListElement' => $featuredProducts->map(function($product, $index) {
+    'itemListElement' => $featuredProducts->map(function($product, $index) use ($siteUrl) {
+        $price = $product->discount_price ?? $product->price;
+        if ($product->has_variants && $product->activeVariants->count() > 0) {
+            $defaultVariant = $product->defaultVariant ?? $product->activeVariants->first();
+            $price = $defaultVariant->discount_price ?? $defaultVariant->price;
+        }
         return [
             '@type' => 'ListItem',
             'position' => $index + 1,
-            'url' => route('products.show', $product->slug),
-            'name' => $product->name,
-            'image' => $product->primary_image_url
+            'item' => [
+                '@type' => 'Product',
+                '@id' => route('products.show', $product->slug),
+                'name' => $product->name,
+                'url' => route('products.show', $product->slug),
+                'image' => $product->primary_image_url,
+                'description' => $product->short_description ?? \Str::limit(strip_tags($product->description), 160),
+                'sku' => $product->sku,
+                'brand' => [
+                    '@type' => 'Brand',
+                    'name' => \App\Models\Setting::get('business_name', 'SV Masala')
+                ],
+                'offers' => [
+                    '@type' => 'Offer',
+                    'url' => route('products.show', $product->slug),
+                    'priceCurrency' => 'INR',
+                    'price' => number_format((float) $price, 2, '.', ''),
+                    'availability' => $product->isOutOfStock() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+                    'seller' => [
+                        '@type' => 'Organization',
+                        'name' => \App\Models\Setting::get('business_name', 'SV Masala')
+                    ]
+                ]
+            ]
         ];
     })->toArray()
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}

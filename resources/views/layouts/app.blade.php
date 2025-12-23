@@ -414,6 +414,36 @@
         </div>
     @endif
 
+    <!-- First-Time Customer Discount Banner -->
+    @php
+        $firstTimeOfferMessage = \App\Services\FirstTimeCustomerService::getOfferMessage();
+        $showFirstTimeBanner = $firstTimeOfferMessage && (!auth()->check() || \App\Services\FirstTimeCustomerService::isFirstTimeCustomer());
+    @endphp
+    @if($showFirstTimeBanner)
+        <div class="bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 text-white py-2" x-data="{ showBanner: true }" x-show="showBanner">
+            <div class="container mx-auto px-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 flex-1 justify-center">
+                        <span class="text-lg">🎁</span>
+                        <span class="font-semibold text-sm sm:text-base">{{ $firstTimeOfferMessage }}</span>
+                        @if(!auth()->check())
+                            <a href="{{ route('login') }}" class="ml-2 bg-white text-orange-600 px-3 py-1 rounded-full text-xs font-bold hover:bg-orange-100 transition">
+                                Login Now
+                            </a>
+                        @else
+                            <a href="{{ route('products.index') }}" class="ml-2 bg-white text-orange-600 px-3 py-1 rounded-full text-xs font-bold hover:bg-orange-100 transition">
+                                Shop Now
+                            </a>
+                        @endif
+                    </div>
+                    <button @click="showBanner = false" class="text-white hover:text-yellow-200 ml-2">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <main class="flex-1">
         @yield('content')
     </main>

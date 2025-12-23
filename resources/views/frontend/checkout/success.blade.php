@@ -36,6 +36,34 @@
                         </p>
                     </div>
                 </div>
+                
+                {{-- Show discount breakdown --}}
+                @if($order->discount_amount > 0 || $order->first_time_discount_applied > 0)
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <h4 class="font-semibold text-green-600 mb-2">🎉 You Saved!</h4>
+                        <div class="space-y-1 text-sm">
+                            @if($order->first_time_discount_applied > 0)
+                                <div class="flex justify-between text-green-600">
+                                    <span>First-Time Customer Discount</span>
+                                    <span class="font-medium">-₹{{ number_format($order->first_time_discount_applied, 2) }}</span>
+                                </div>
+                            @endif
+                            @php
+                                $couponDiscount = $order->discount_amount - $order->first_time_discount_applied;
+                            @endphp
+                            @if($couponDiscount > 0)
+                                <div class="flex justify-between text-green-600">
+                                    <span>Coupon Discount</span>
+                                    <span class="font-medium">-₹{{ number_format($couponDiscount, 2) }}</span>
+                                </div>
+                            @endif
+                            <div class="flex justify-between font-semibold text-green-700 pt-1 border-t border-green-200">
+                                <span>Total Savings</span>
+                                <span>₹{{ number_format($order->discount_amount, 2) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
 
             <!-- Order Items -->

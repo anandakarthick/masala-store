@@ -30,7 +30,16 @@ class SettingsController extends Controller
             'free_shipping_amount' => 'nullable|numeric|min:0',
             'default_shipping_charge' => 'nullable|numeric|min:0',
             'logo' => 'nullable|image|max:2048',
+            // First-time customer discount settings
+            'first_time_discount_enabled' => 'nullable|boolean',
+            'first_time_discount_max_customers' => 'nullable|integer|min:1|max:10000',
+            'first_time_discount_percentage' => 'nullable|numeric|min:1|max:100',
+            'first_time_discount_min_order' => 'nullable|numeric|min:0',
+            'first_time_discount_max_amount' => 'nullable|numeric|min:0',
         ]);
+
+        // Handle checkbox for first_time_discount_enabled
+        $validated['first_time_discount_enabled'] = $request->boolean('first_time_discount_enabled');
 
         foreach ($validated as $key => $value) {
             if ($key === 'logo') {
@@ -43,7 +52,9 @@ class SettingsController extends Controller
                     Setting::set('logo', $value, 'image', 'general');
                 }
             } else {
-                Setting::set($key, $value, 'text', 'general');
+                // Determine group based on key
+                $group = str_starts_with($key, 'first_time_discount') ? 'promotions' : 'general';
+                Setting::set($key, $value, 'text', $group);
             }
         }
 

@@ -91,6 +91,64 @@
     </div>
 </div>
 
+<!-- First-Time Customer Discount Stats -->
+@php
+    $ftcEnabled = \App\Services\FirstTimeCustomerService::isEnabled();
+    $ftcMaxCustomers = \App\Services\FirstTimeCustomerService::getMaxCustomers();
+    $ftcUsedCount = \App\Services\FirstTimeCustomerService::getUsedCount();
+    $ftcRemaining = \App\Services\FirstTimeCustomerService::getRemainingSlots();
+    $ftcPercentage = \App\Services\FirstTimeCustomerService::getDiscountPercentage();
+    $ftcTotalSavings = \App\Models\Order::where('first_time_discount_applied', '>', 0)->sum('first_time_discount_applied');
+@endphp
+@if($ftcEnabled && $ftcMaxCustomers > 0)
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">
+                <i class="fas fa-gift text-yellow-500 mr-2"></i>First-Time Customer Discount Stats
+            </h3>
+            <a href="{{ route('admin.settings.index') }}" class="text-sm text-orange-600 hover:underline">
+                <i class="fas fa-cog mr-1"></i>Configure
+            </a>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="text-center p-4 bg-green-50 rounded-lg">
+                <p class="text-sm text-gray-600">Status</p>
+                <p class="text-lg font-bold {{ $ftcRemaining > 0 ? 'text-green-600' : 'text-red-600' }}">
+                    {{ $ftcRemaining > 0 ? 'Active' : 'Exhausted' }}
+                </p>
+            </div>
+            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                <p class="text-sm text-gray-600">Discount</p>
+                <p class="text-lg font-bold text-blue-600">{{ $ftcPercentage }}%</p>
+            </div>
+            <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                <p class="text-sm text-gray-600">Used / Total</p>
+                <p class="text-lg font-bold text-yellow-600">{{ $ftcUsedCount }} / {{ $ftcMaxCustomers }}</p>
+            </div>
+            <div class="text-center p-4 bg-orange-50 rounded-lg">
+                <p class="text-sm text-gray-600">Remaining</p>
+                <p class="text-lg font-bold text-orange-600">{{ $ftcRemaining }}</p>
+            </div>
+            <div class="text-center p-4 bg-purple-50 rounded-lg">
+                <p class="text-sm text-gray-600">Total Discounts Given</p>
+                <p class="text-lg font-bold text-purple-600">₹{{ number_format($ftcTotalSavings, 2) }}</p>
+            </div>
+        </div>
+        
+        {{-- Progress Bar --}}
+        <div class="mt-4">
+            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                <span>Usage Progress</span>
+                <span>{{ $ftcMaxCustomers > 0 ? round(($ftcUsedCount / $ftcMaxCustomers) * 100) : 0 }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-3">
+                <div class="bg-gradient-to-r from-green-500 to-yellow-500 h-3 rounded-full transition-all" 
+                     style="width: {{ $ftcMaxCustomers > 0 ? min(100, ($ftcUsedCount / $ftcMaxCustomers) * 100) : 0 }}%"></div>
+            </div>
+        </div>
+    </div>
+@endif
+
 <!-- Tables Row -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Recent Orders -->
