@@ -91,6 +91,8 @@ class CheckoutController extends Controller
             'order_type' => 'nullable|in:retail,bulk,return_gift',
             'payment_method' => 'required|string',
             'customer_notes' => 'nullable|string',
+            'use_wallet' => 'nullable|boolean',
+            'wallet_amount' => 'nullable|numeric|min:0',
         ]);
 
         // Validate payment method
@@ -150,10 +152,31 @@ class CheckoutController extends Controller
         // Total discount = coupon + first-time discount
         $totalDiscount = $discountAmount + $firstTimeDiscountAmount;
 
-        // Calculate payment method extra charge
-        $paymentCharge = $paymentMethod->calculateExtraCharge($subtotal + $gstAmount + $shippingCharge - $totalDiscount);
+        // Calculate payment method extra charge (before wallet deduction)
+        $amountBeforeWallet = $subtotal + $gstAmount + $shippingCharge - $totalDiscount;
+        
+        // Handle wallet payment
+        $walletAmountUsed = 0;
+        $user = auth()->user();
+        
+        if ($request->boolean('use_wallet') && auth()->check() && $user->wallet_balance > 0) {
+            $requestedWalletAmount = (float) ($validated['wallet_amount'] ?? 0);
+            
+            // Validate wallet amount
+            $maxWalletUsable = min($user->wallet_balance, $amountBeforeWallet);
+            $walletAmountUsed = min($requestedWalletAmount, $maxWalletUsable);
+            
+            if ($walletAmountUsed < 0) {
+                $walletAmountUsed = 0;
+            }
+        }
 
-        $totalAmount = $subtotal + $gstAmount + $shippingCharge - $totalDiscount + $paymentCharge;
+        // Calculate payment method extra charge on remaining amount (after wallet)
+        $amountAfterWallet = $amountBeforeWallet - $walletAmountUsed;
+        $paymentCharge = $paymentMethod->calculateExtraCharge($amountAfterWallet);
+
+        $totalAmount = $amountBeforeWallet + $paymentCharge;
+        $amountToPay = $amountAfterWallet + $paymentCharge; // Amount to pay via payment method
 
         // Billing address
         $billingSame = $request->boolean('billing_same', true);
@@ -179,6 +202,7 @@ class CheckoutController extends Controller
                 'subtotal' => $subtotal,
                 'discount_amount' => $totalDiscount,
                 'first_time_discount_applied' => $firstTimeDiscountAmount,
+                'wallet_amount_used' => $walletAmountUsed,
                 'gst_amount' => $gstAmount,
                 'shipping_charge' => $shippingCharge,
                 'total_amount' => $totalAmount,
@@ -187,6 +211,16 @@ class CheckoutController extends Controller
                 'status' => 'pending',
                 'customer_notes' => $validated['customer_notes'],
             ]);
+
+            // Deduct wallet amount if used
+            if ($walletAmountUsed > 0 && $user) {
+                $user->deductFromWallet(
+                    $walletAmountUsed,
+                    'order',
+                    "Payment for Order #{$order->order_number}",
+                    $order->id
+                );
+            }
 
             // Create order items from regular cart items and update stock
             foreach ($cart->items as $item) {
@@ -293,6 +327,14 @@ class CheckoutController extends Controller
 
             DB::commit();
 
+            // If full amount paid with wallet, mark as paid and send emails
+            if ($walletAmountUsed >= $totalAmount || $amountToPay <= 0) {
+                $order->update(['payment_status' => 'paid']);
+                SendOrderEmails::dispatch($order->fresh()->load('items.product'));
+                return redirect()->route('checkout.success', $order)
+                    ->with('success', 'Order placed successfully! Paid fully with wallet.');
+            }
+
             // Send order emails in background (for COD orders immediately, for online after payment)
             if ($paymentMethod->isCod()) {
                 SendOrderEmails::dispatch($order->fresh()->load('items.product'));
@@ -318,7 +360,10 @@ class CheckoutController extends Controller
 
         $paymentMethod = PaymentMethod::where('code', $order->payment_method)->first();
 
-        return view('frontend.checkout.payment', compact('order', 'paymentMethod'));
+        // Calculate amount to pay (total - wallet used)
+        $amountToPay = $order->total_amount - ($order->wallet_amount_used ?? 0);
+
+        return view('frontend.checkout.payment', compact('order', 'paymentMethod', 'amountToPay'));
     }
 
     public function success(Order $order)

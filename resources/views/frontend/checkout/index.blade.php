@@ -6,7 +6,7 @@
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-2xl font-bold mb-6">Checkout</h1>
 
-    <form action="{{ route('checkout.process') }}" method="POST">
+    <form action="{{ route('checkout.process') }}" method="POST" id="checkoutForm">
         @csrf
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Checkout Form -->
@@ -95,6 +95,61 @@
                         </label>
                     </div>
                 </div>
+
+                <!-- Wallet Payment Option (Only for logged in users with balance) -->
+                @if(auth()->check() && $user->wallet_balance > 0)
+                    @php
+                        $couponDiscount = session('coupon') ? session('coupon')->calculateDiscount($cart->subtotal) : 0;
+                        $firstTimeDiscountAmt = (isset($firstTimeDiscount) && $firstTimeDiscount['eligible']) ? $firstTimeDiscount['discount_amount'] : 0;
+                        $totalDiscount = $couponDiscount + $firstTimeDiscountAmt;
+                        $orderTotal = $cart->subtotal - $totalDiscount + $cart->gst_amount + $shippingCharge;
+                        $walletBalance = $user->wallet_balance;
+                        $maxWalletUsable = min($walletBalance, $orderTotal);
+                    @endphp
+                    <div class="bg-white rounded-lg shadow-md p-6" x-data="{ useWallet: false, walletAmount: {{ $maxWalletUsable }} }">
+                        <h2 class="text-lg font-semibold mb-4">
+                            <i class="fas fa-wallet text-green-600 mr-2"></i>Pay with Wallet
+                        </h2>
+                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <p class="text-sm text-gray-600">Available Balance</p>
+                                    <p class="text-2xl font-bold text-green-600">₹{{ number_format($walletBalance, 2) }}</p>
+                                </div>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" name="use_wallet" value="1" x-model="useWallet"
+                                           class="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                                    <span class="ml-2 font-medium text-gray-700">Use Wallet</span>
+                                </label>
+                            </div>
+                            
+                            <div x-show="useWallet" x-collapse>
+                                <div class="pt-3 border-t border-green-200">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount to use from wallet</label>
+                                    <div class="flex items-center gap-3">
+                                        <div class="relative flex-1">
+                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
+                                            <input type="number" name="wallet_amount" x-model="walletAmount" 
+                                                   min="0" max="{{ $maxWalletUsable }}" step="0.01"
+                                                   class="w-full pl-8 border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                        </div>
+                                        <button type="button" @click="walletAmount = {{ $maxWalletUsable }}"
+                                                class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg text-sm font-medium">
+                                            Use Max
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Maximum usable: ₹{{ number_format($maxWalletUsable, 2) }}
+                                        @if($walletBalance >= $orderTotal)
+                                            <span class="text-green-600">(Full order can be paid with wallet!)</span>
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
 
                 <!-- Payment Method -->
                 <div class="bg-white rounded-lg shadow-md p-6">
