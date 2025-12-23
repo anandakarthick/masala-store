@@ -1,4 +1,23 @@
 <?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Referral extends Model
+{
+    protected $fillable = [
+        'referrer_id',
+        'referred_id',
+        'status',
+        'reward_amount',
+        'orders_rewarded',
+        'first_order_id',
+        'completed_at',
+    ];
+
+    protected $casts = [
         'reward_amount' => 'decimal:2',
         'orders_rewarded' => 'integer',
         'completed_at' => 'datetime',
