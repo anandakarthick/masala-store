@@ -128,6 +128,20 @@
                                                 <p class="text-sm text-gray-500">
                                                     Joined {{ $referral->created_at->format('d M Y') }}
                                                 </p>
+                                                @php
+                                                    $referredOrders = $referral->referred->orders()->whereNotIn('status', ['cancelled'])->get();
+                                                    $hasDeliveredOrder = $referredOrders->where('status', 'delivered')->count() > 0;
+                                                    $hasPendingOrder = $referredOrders->whereIn('status', ['pending', 'confirmed', 'processing', 'packed', 'shipped'])->count() > 0;
+                                                @endphp
+                                                @if($referral->status === 'pending')
+                                                    @if($hasDeliveredOrder)
+                                                        <p class="text-xs text-green-600">Order delivered - Reward processing</p>
+                                                    @elseif($hasPendingOrder)
+                                                        <p class="text-xs text-blue-600">Order placed - Awaiting delivery</p>
+                                                    @else
+                                                        <p class="text-xs text-gray-500">Waiting for first order</p>
+                                                    @endif
+                                                @endif
                                             </div>
                                         </div>
                                         <div class="text-right">
@@ -135,7 +149,7 @@
                                                 {{ $referral->status === 'completed' ? 'bg-green-100 text-green-700' : '' }}
                                                 {{ $referral->status === 'pending' ? 'bg-yellow-100 text-yellow-700' : '' }}
                                                 {{ $referral->status === 'expired' ? 'bg-gray-100 text-gray-600' : '' }}">
-                                                {{ ucfirst($referral->status) }}
+                                                {{ $referral->status === 'completed' ? 'Rewarded' : ucfirst($referral->status) }}
                                             </span>
                                             @if($referral->reward_amount > 0)
                                                 <p class="text-sm text-green-600 font-medium mt-1">
@@ -166,7 +180,7 @@
                 <!-- How It Works -->
                 <div class="bg-white rounded-lg shadow-md p-6 mt-6">
                     <h3 class="font-semibold mb-4">How It Works</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div class="text-center">
                             <div class="w-12 h-12 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
                                 <span class="text-xl font-bold text-blue-600">1</span>
@@ -182,12 +196,23 @@
                             <p class="text-sm text-gray-500">They register using your code and place an order</p>
                         </div>
                         <div class="text-center">
+                            <div class="w-12 h-12 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center">
+                                <span class="text-xl font-bold text-purple-600">3</span>
+                            </div>
+                            <h4 class="font-medium mb-1">Order Delivered</h4>
+                            <p class="text-sm text-gray-500">Wait for their order to be successfully delivered</p>
+                        </div>
+                        <div class="text-center">
                             <div class="w-12 h-12 mx-auto mb-3 bg-yellow-100 rounded-full flex items-center justify-center">
-                                <span class="text-xl font-bold text-yellow-600">3</span>
+                                <span class="text-xl font-bold text-yellow-600">4</span>
                             </div>
                             <h4 class="font-medium mb-1">Earn Rewards</h4>
                             <p class="text-sm text-gray-500">You receive {{ $programInfo['reward_text'] }} in your wallet!</p>
                         </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        <strong>Note:</strong> Rewards are credited to your wallet after the referred customer's order is delivered.
                     </div>
                 </div>
             @else

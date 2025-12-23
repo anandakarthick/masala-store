@@ -12,7 +12,9 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Services\InvoiceService;
+use App\Services\ReferralService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -221,6 +223,9 @@ class OrderController extends Controller
         if ($newStatus === 'delivered') {
             $order->update(['delivered_at' => now()]);
             
+            // Process referral reward when order is delivered
+            $this->processReferralRewardOnDelivery($order);
+            
             // Send review request email when order is delivered
             if ($order->customer_email && !$order->hasReviewBeenRequested()) {
                 // Delay the review request email by 1 hour to give customer time to receive the order
@@ -281,5 +286,53 @@ class OrderController extends Controller
         ]);
 
         return back()->with('success', 'Note added successfully.');
+    }
+
+    /**
+     * Process referral reward when order is delivered
+     */
+    protected function processReferralRewardOnDelivery(Order $order): void
+    {
+        try {
+            // Check if referral program is enabled
+            if (!ReferralService::isEnabled()) {
+                Log::info('Referral program is disabled, skipping reward processing', [
+                    'order_id' => $order->id
+                ]);
+                return;
+            }
+
+            // Check if order has a user who was referred
+            $customer = $order->user;
+            if (!$customer || !$customer->wasReferred()) {
+                Log::info('Order user was not referred, skipping reward', [
+                    'order_id' => $order->id,
+                    'user_id' => $customer?->id
+                ]);
+                return;
+            }
+
+            // Process the referral reward
+            $result = ReferralService::processOrderReferralReward($order);
+
+            if ($result) {
+                Log::info('Referral reward processed successfully on delivery', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'referred_user_id' => $customer->id,
+                    'referrer_id' => $customer->referred_by
+                ]);
+            } else {
+                Log::info('Referral reward not processed (conditions not met)', [
+                    'order_id' => $order->id
+                ]);
+            }
+        } catch (\Exception $e) {
+            // Log error but don't break the order status update
+            Log::error('Failed to process referral reward on delivery', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }
