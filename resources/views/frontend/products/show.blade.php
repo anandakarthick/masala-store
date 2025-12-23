@@ -129,6 +129,33 @@
             'bestRating' => '5',
             'worstRating' => '1'
         ];
+        
+        // Add individual reviews (up to 10 most recent)
+        $productReviews = $product->reviews()
+            ->where('is_approved', true)
+            ->latest()
+            ->take(10)
+            ->get();
+            
+        if ($productReviews->count() > 0) {
+            $schemaData['review'] = $productReviews->map(function($review) {
+                return [
+                    '@type' => 'Review',
+                    'reviewRating' => [
+                        '@type' => 'Rating',
+                        'ratingValue' => $review->rating,
+                        'bestRating' => '5',
+                        'worstRating' => '1'
+                    ],
+                    'author' => [
+                        '@type' => 'Person',
+                        'name' => $review->user->name ?? 'Anonymous'
+                    ],
+                    'datePublished' => $review->created_at->toIso8601String(),
+                    'reviewBody' => $review->comment ?? $review->title ?? 'Great product!'
+                ];
+            })->toArray();
+        }
     }
     
     // Remove null values
