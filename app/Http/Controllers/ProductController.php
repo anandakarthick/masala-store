@@ -78,6 +78,29 @@ class ProductController extends Controller
 
         $product->load('category', 'images', 'activeVariants', 'defaultVariant', 'comboItems.includedProduct');
 
+        // Load approved reviews with user info
+        $reviews = $product->reviews()
+            ->where('is_approved', true)
+            ->with('user', 'orderItem')
+            ->latest()
+            ->paginate(10);
+
+        // Calculate review statistics
+        $reviewStats = [
+            'average' => $product->average_rating,
+            'total' => $product->review_count,
+            'distribution' => [],
+        ];
+        
+        // Get rating distribution
+        for ($i = 5; $i >= 1; $i--) {
+            $count = $product->approvedReviews()->where('rating', $i)->count();
+            $reviewStats['distribution'][$i] = [
+                'count' => $count,
+                'percentage' => $reviewStats['total'] > 0 ? round(($count / $reviewStats['total']) * 100) : 0
+            ];
+        }
+
         $relatedProducts = Product::active()
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
@@ -85,7 +108,7 @@ class ProductController extends Controller
             ->take(4)
             ->get();
 
-        return view('frontend.products.show', compact('product', 'relatedProducts'));
+        return view('frontend.products.show', compact('product', 'relatedProducts', 'reviews', 'reviewStats'));
     }
 
     public function category(Category $category)

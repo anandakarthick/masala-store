@@ -185,10 +185,23 @@
                 </div>
 
                 <!-- Back Button -->
-                <div class="mt-6 pt-6 border-t">
+                <div class="mt-6 pt-6 border-t flex items-center justify-between">
                     <a href="{{ route('account.orders') }}" class="text-green-600 hover:text-green-700">
                         <i class="fas fa-arrow-left mr-1"></i> Back to Orders
                     </a>
+                    
+                    @if($order->canBeReviewed())
+                        @if($order->isFullyReviewed())
+                            <span class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg">
+                                <i class="fas fa-check-circle mr-1"></i> All Items Reviewed
+                            </span>
+                        @else
+                            <a href="{{ route('account.orders.review', $order) }}" 
+                               class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors">
+                                <i class="fas fa-star mr-1"></i> Write a Review
+                            </a>
+                        @endif
+                    @endif
                 </div>
             </div>
         </div>

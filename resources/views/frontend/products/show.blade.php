@@ -57,13 +57,13 @@
                 'url' => config('app.url')
             ]
         ],
-        'aggregateRating' => [
+        'aggregateRating' => $product->review_count > 0 ? [
             '@type' => 'AggregateRating',
-            'ratingValue' => '4.5',
-            'reviewCount' => '10',
+            'ratingValue' => $product->average_rating,
+            'reviewCount' => $product->review_count,
             'bestRating' => '5',
             'worstRating' => '1'
-        ]
+        ] : null
     ];
 @endphp
 <script type="application/ld+json">
@@ -414,6 +414,133 @@
             </div>
         </section>
         @endif
+
+        <!-- Customer Reviews Section -->
+        <section class="mt-8 pt-6 border-t" aria-labelledby="reviews-heading">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                <h2 id="reviews-heading" class="text-lg font-bold">Customer Reviews</h2>
+                @if($reviewStats['total'] > 0)
+                    <div class="flex items-center gap-2 mt-2 md:mt-0">
+                        <div class="flex text-yellow-400">
+                            @for($i = 1; $i <= 5; $i++)
+                                @if($i <= round($reviewStats['average']))
+                                    <i class="fas fa-star"></i>
+                                @elseif($i - 0.5 <= $reviewStats['average'])
+                                    <i class="fas fa-star-half-alt"></i>
+                                @else
+                                    <i class="far fa-star"></i>
+                                @endif
+                            @endfor
+                        </div>
+                        <span class="font-semibold">{{ $reviewStats['average'] }}</span>
+                        <span class="text-gray-500 text-sm">({{ $reviewStats['total'] }} {{ Str::plural('review', $reviewStats['total']) }})</span>
+                    </div>
+                @endif
+            </div>
+
+            @if($reviewStats['total'] > 0)
+                <!-- Rating Distribution -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Average Rating Display -->
+                        <div class="text-center md:text-left">
+                            <div class="text-5xl font-bold text-gray-800">{{ $reviewStats['average'] }}</div>
+                            <div class="flex justify-center md:justify-start text-yellow-400 text-xl mt-2">
+                                @for($i = 1; $i <= 5; $i++)
+                                    @if($i <= round($reviewStats['average']))
+                                        <i class="fas fa-star"></i>
+                                    @elseif($i - 0.5 <= $reviewStats['average'])
+                                        <i class="fas fa-star-half-alt"></i>
+                                    @else
+                                        <i class="far fa-star"></i>
+                                    @endif
+                                @endfor
+                            </div>
+                            <p class="text-gray-500 text-sm mt-1">Based on {{ $reviewStats['total'] }} {{ Str::plural('review', $reviewStats['total']) }}</p>
+                        </div>
+                        
+                        <!-- Rating Bars -->
+                        <div class="space-y-2">
+                            @for($i = 5; $i >= 1; $i--)
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm text-gray-600 w-6">{{ $i }}<i class="fas fa-star text-yellow-400 text-xs ml-0.5"></i></span>
+                                    <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-yellow-400 rounded-full" style="width: {{ $reviewStats['distribution'][$i]['percentage'] }}%"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-500 w-8">{{ $reviewStats['distribution'][$i]['count'] }}</span>
+                                </div>
+                            @endfor
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews List -->
+                <div class="space-y-4">
+                    @foreach($reviews as $review)
+                        <div class="border rounded-lg p-4">
+                            <div class="flex items-start justify-between mb-2">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <div class="flex text-yellow-400">
+                                            @for($i = 1; $i <= 5; $i++)
+                                                <i class="fas fa-star {{ $i <= $review->rating ? '' : 'text-gray-300' }}"></i>
+                                            @endfor
+                                        </div>
+                                        @if($review->is_verified_purchase)
+                                            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                                <i class="fas fa-check-circle mr-1"></i>Verified Purchase
+                                            </span>
+                                        @endif
+                                    </div>
+                                    @if($review->title)
+                                        <h4 class="font-semibold text-gray-800 mt-1">{{ $review->title }}</h4>
+                                    @endif
+                                </div>
+                                <span class="text-xs text-gray-500">{{ $review->created_at->diffForHumans() }}</span>
+                            </div>
+                            
+                            @if($review->comment)
+                                <p class="text-gray-600 text-sm mb-3">{{ $review->comment }}</p>
+                            @endif
+                            
+                            @if($review->images && count($review->images) > 0)
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    @foreach($review->images as $image)
+                                        <a href="{{ asset('storage/' . $image) }}" target="_blank" class="block">
+                                            <img src="{{ asset('storage/' . $image) }}" 
+                                                 alt="Review image" 
+                                                 class="w-16 h-16 object-cover rounded-lg hover:opacity-80 transition-opacity">
+                                        </a>
+                                    @endforeach
+                                </div>
+                            @endif
+                            
+                            <div class="flex items-center gap-2 text-sm text-gray-500">
+                                <span class="font-medium text-gray-700">{{ $review->user->name ?? 'Anonymous' }}</span>
+                                @if($review->orderItem && $review->orderItem->variant_name)
+                                    <span>•</span>
+                                    <span>{{ $review->orderItem->variant_name }}</span>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <!-- Pagination -->
+                @if($reviews->hasPages())
+                    <div class="mt-6">
+                        {{ $reviews->links() }}
+                    </div>
+                @endif
+            @else
+                <!-- No Reviews Yet -->
+                <div class="text-center py-8 bg-gray-50 rounded-lg">
+                    <div class="text-4xl mb-3">⭐</div>
+                    <h3 class="font-semibold text-gray-700 mb-1">No Reviews Yet</h3>
+                    <p class="text-gray-500 text-sm">Be the first to review this product after purchase!</p>
+                </div>
+            @endif
+        </section>
     </article>
 
     <!-- Related Products -->

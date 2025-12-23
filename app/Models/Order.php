@@ -43,6 +43,8 @@ class Order extends Model
         'seen_at',
         'invoice_number',
         'invoice_generated_at',
+        'review_requested_at',
+        'review_token',
     ];
 
     protected $casts = [
@@ -56,6 +58,7 @@ class Order extends Model
         'invoice_generated_at' => 'datetime',
         'seen_at' => 'datetime',
         'is_seen_by_admin' => 'boolean',
+        'review_requested_at' => 'datetime',
     ];
 
     protected static function boot()
@@ -85,6 +88,14 @@ class Order extends Model
     public function customCombos(): HasMany
     {
         return $this->hasMany(OrderCustomCombo::class);
+    }
+
+    /**
+     * Reviews for this order
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
     }
 
     /**
@@ -200,5 +211,55 @@ class Order extends Model
     public function getTotalItemsAttribute(): int
     {
         return $this->items->sum('quantity');
+    }
+
+    /**
+     * Check if order can be reviewed
+     */
+    public function canBeReviewed(): bool
+    {
+        return $this->status === 'delivered' && $this->user_id !== null;
+    }
+
+    /**
+     * Check if order has been fully reviewed
+     */
+    public function isFullyReviewed(): bool
+    {
+        if (!$this->canBeReviewed()) {
+            return false;
+        }
+        
+        $reviewedItemIds = $this->reviews()->pluck('order_item_id')->toArray();
+        $orderItemIds = $this->items()->pluck('id')->toArray();
+        
+        return empty(array_diff($orderItemIds, $reviewedItemIds));
+    }
+
+    /**
+     * Get items that haven't been reviewed yet
+     */
+    public function getUnreviewedItems()
+    {
+        $reviewedItemIds = $this->reviews()->pluck('order_item_id')->toArray();
+        return $this->items()->whereNotIn('id', $reviewedItemIds)->get();
+    }
+
+    /**
+     * Generate review token for email link
+     */
+    public function generateReviewToken(): string
+    {
+        $token = Str::random(64);
+        $this->update(['review_token' => $token]);
+        return $token;
+    }
+
+    /**
+     * Check if review has been requested
+     */
+    public function hasReviewBeenRequested(): bool
+    {
+        return $this->review_requested_at !== null;
     }
 }

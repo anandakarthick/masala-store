@@ -46,6 +46,22 @@
             <a href="{{ route('products.show', $product->slug) }}">{{ $product->name }}</a>
         </h3>
         
+        <!-- Rating Display -->
+        @if($product->review_count > 0)
+            <div class="flex items-center gap-1 mt-1">
+                <div class="flex text-yellow-400 text-xs">
+                    @for($i = 1; $i <= 5; $i++)
+                        @if($i <= round($product->average_rating))
+                            <i class="fas fa-star"></i>
+                        @else
+                            <i class="far fa-star text-gray-300"></i>
+                        @endif
+                    @endfor
+                </div>
+                <span class="text-xs text-gray-500">({{ $product->review_count }})</span>
+            </div>
+        @endif
+        
         <!-- Weight/Variant Display -->
         <p class="text-xs text-gray-500 mt-1" x-text="currentWeightDisplay">{{ $product->weight_display }}</p>
         

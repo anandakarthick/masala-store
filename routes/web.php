@@ -25,6 +25,8 @@ use App\Http\Controllers\Admin\SellingPlatformController as AdminSellingPlatform
 use App\Http\Controllers\Admin\VariantAttributeController as AdminVariantAttributeController;
 use App\Http\Controllers\Admin\EstimateController as AdminEstimateController;
 use App\Http\Controllers\RazorpayController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use Illuminate\Support\Facades\Route;
 
 // Test route for debugging - no blade
@@ -144,12 +146,18 @@ Route::middleware('auth')->prefix('account')->name('account.')->group(function (
     Route::get('/', [CustomerAccountController::class, 'dashboard'])->name('dashboard');
     Route::get('/orders', [CustomerAccountController::class, 'orders'])->name('orders');
     Route::get('/orders/{order}', [CustomerAccountController::class, 'orderDetail'])->name('orders.show');
+    Route::get('/orders/{order}/review', [ReviewController::class, 'create'])->name('orders.review');
+    Route::post('/orders/{order}/review', [ReviewController::class, 'store'])->name('orders.review.store');
     Route::get('/profile', [CustomerAccountController::class, 'profile'])->name('profile');
     Route::put('/profile', [CustomerAccountController::class, 'updateProfile'])->name('profile.update');
     Route::get('/change-password', [CustomerAccountController::class, 'changePassword'])->name('password');
     Route::put('/change-password', [CustomerAccountController::class, 'updatePassword'])->name('password.update');
     Route::get('/wishlist', [CustomerAccountController::class, 'wishlist'])->name('wishlist');
 });
+
+// Review via token (for guest orders or direct email link)
+Route::get('/review/{token}', [ReviewController::class, 'createByToken'])->name('review.token');
+Route::post('/review/{token}', [ReviewController::class, 'storeByToken'])->name('review.token.store');
 
 /*
 |--------------------------------------------------------------------------
@@ -212,6 +220,18 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('orders/{order}/update-delivery', [AdminOrderController::class, 'updateDelivery'])->name('orders.update-delivery');
     Route::get('orders/{order}/invoice', [AdminOrderController::class, 'generateInvoice'])->name('orders.invoice');
     Route::post('orders/{order}/add-note', [AdminOrderController::class, 'addNote'])->name('orders.add-note');
+
+    // Reviews
+    Route::prefix('reviews')->name('reviews.')->group(function () {
+        Route::get('/', [AdminReviewController::class, 'index'])->name('index');
+        Route::get('/{review}', [AdminReviewController::class, 'show'])->name('show');
+        Route::post('/{review}/approve', [AdminReviewController::class, 'approve'])->name('approve');
+        Route::post('/{review}/reject', [AdminReviewController::class, 'reject'])->name('reject');
+        Route::post('/{review}/toggle-featured', [AdminReviewController::class, 'toggleFeatured'])->name('toggle-featured');
+        Route::delete('/{review}', [AdminReviewController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-approve', [AdminReviewController::class, 'bulkApprove'])->name('bulk-approve');
+        Route::post('/bulk-delete', [AdminReviewController::class, 'bulkDelete'])->name('bulk-delete');
+    });
 
     // Customers
     Route::resource('customers', AdminCustomerController::class);

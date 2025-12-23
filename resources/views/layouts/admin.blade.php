@@ -190,6 +190,17 @@
                             <span x-show="sidebarOpen" class="ml-3">Coupons</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('admin.reviews.index') }}" 
+                           class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-700 {{ request()->routeIs('admin.reviews.*') ? 'bg-green-600' : '' }}">
+                            <i class="fas fa-star w-6"></i>
+                            <span x-show="sidebarOpen" class="ml-3">Reviews</span>
+                            @php $pendingReviews = \App\Models\Review::where('is_approved', false)->count(); @endphp
+                            @if($pendingReviews > 0)
+                                <span x-show="sidebarOpen" class="ml-auto bg-yellow-500 text-xs px-2 py-0.5 rounded-full">{{ $pendingReviews }}</span>
+                            @endif
+                        </a>
+                    </li>
                     
                     <li class="pt-4">
                         <span x-show="sidebarOpen" class="px-3 text-xs text-gray-400 uppercase">Reports</span>

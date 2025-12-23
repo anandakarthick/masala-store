@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendOrderEmails;
 use App\Jobs\SendOrderStatusEmail;
+use App\Jobs\SendReviewRequestEmail;
 use App\Models\DeliveryPartner;
 use App\Models\Order;
 use App\Models\Product;
@@ -54,7 +55,7 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load('user', 'items.product');
+        $order->load('user', 'items.product', 'reviews.product', 'reviews.orderItem', 'reviews.user');
         $deliveryPartners = DeliveryPartner::active()->get();
 
         // Mark order as seen by admin
@@ -219,6 +220,13 @@ class OrderController extends Controller
 
         if ($newStatus === 'delivered') {
             $order->update(['delivered_at' => now()]);
+            
+            // Send review request email when order is delivered
+            if ($order->customer_email && !$order->hasReviewBeenRequested()) {
+                // Delay the review request email by 1 hour to give customer time to receive the order
+                SendReviewRequestEmail::dispatch($order->fresh()->load('items.product'))
+                    ->delay(now()->addHour());
+            }
         }
 
         // Send status update email in background
