@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use App\Models\Referral;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Services\ReferralService;
 use Illuminate\Http\Request;
 
 class ReferralController extends Controller
@@ -110,5 +112,102 @@ class ReferralController extends Controller
             ->get();
 
         return view('admin.referrals.top-referrers', compact('topReferrers'));
+    }
+
+    /**
+     * Process referral reward manually
+     */
+    public function processReward(Referral $referral)
+    {
+        // Check if already completed
+        if ($referral->status === 'completed') {
+            return back()->with('error', 'This referral has already been completed.');
+        }
+
+        // Get the referred user's first valid order
+        $referredUser = $referral->referred;
+        $order = $referredUser->orders()
+            ->whereNotIn('status', ['cancelled'])
+            ->oldest()
+            ->first();
+
+        if (!$order) {
+            return back()->with('error', 'The referred user has not placed any valid orders yet.');
+        }
+
+        // Check if referral system is enabled
+        if (!ReferralService::isEnabled()) {
+            return back()->with('error', 'Referral program is currently disabled. Enable it in settings first.');
+        }
+
+        // Process the reward
+        $result = ReferralService::processOrderReferralReward($order);
+
+        if ($result) {
+            return back()->with('success', 'Referral reward processed successfully! The referrer has been credited.');
+        } else {
+            return back()->with('error', 'Could not process the referral reward. Check the logs for details.');
+        }
+    }
+
+    /**
+     * Process all pending referrals that have valid orders
+     */
+    public function processAllPending()
+    {
+        if (!ReferralService::isEnabled()) {
+            return back()->with('error', 'Referral program is currently disabled. Enable it in settings first.');
+        }
+
+        $pendingReferrals = Referral::pending()->with('referred')->get();
+        $processed = 0;
+        $skipped = 0;
+
+        foreach ($pendingReferrals as $referral) {
+            $referredUser = $referral->referred;
+            
+            // Get the referred user's first valid order
+            $order = $referredUser->orders()
+                ->whereNotIn('status', ['cancelled'])
+                ->oldest()
+                ->first();
+
+            if ($order) {
+                $result = ReferralService::processOrderReferralReward($order);
+                if ($result) {
+                    $processed++;
+                } else {
+                    $skipped++;
+                }
+            } else {
+                $skipped++;
+            }
+        }
+
+        return back()->with('success', "Processed {$processed} referrals. Skipped {$skipped} (no valid orders or already rewarded).");
+    }
+
+    /**
+     * Mark referral as completed manually (without reward)
+     */
+    public function markCompleted(Referral $referral)
+    {
+        if ($referral->status === 'completed') {
+            return back()->with('error', 'This referral is already completed.');
+        }
+
+        $referral->markAsCompleted();
+
+        return back()->with('success', 'Referral marked as completed.');
+    }
+
+    /**
+     * Mark referral as expired
+     */
+    public function markExpired(Referral $referral)
+    {
+        $referral->update(['status' => 'expired']);
+
+        return back()->with('success', 'Referral marked as expired.');
     }
 }

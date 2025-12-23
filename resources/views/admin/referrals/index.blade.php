@@ -27,6 +27,30 @@
     </div>
 </div>
 
+<!-- Process All Pending Button -->
+@if($stats['pending_referrals'] > 0)
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="font-semibold text-yellow-800">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    {{ $stats['pending_referrals'] }} Pending Referral(s)
+                </h3>
+                <p class="text-sm text-yellow-700 mt-1">
+                    These referrals have not been rewarded yet. Click to process all pending referrals that have valid orders.
+                </p>
+            </div>
+            <form action="{{ route('admin.referrals.process-all-pending') }}" method="POST" class="ml-4">
+                @csrf
+                <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium"
+                        onclick="return confirm('This will process rewards for all pending referrals with valid orders. Continue?')">
+                    <i class="fas fa-play-circle mr-1"></i> Process All Pending
+                </button>
+            </form>
+        </div>
+    </div>
+@endif
+
 <!-- Filters -->
 <div class="bg-white rounded-lg shadow-md p-4 mb-6">
     <form action="{{ route('admin.referrals.index') }}" method="GET" class="flex flex-wrap gap-4">
@@ -92,6 +116,12 @@
                             <div>
                                 <div class="font-medium text-gray-900">{{ $referral->referred->name ?? 'Deleted User' }}</div>
                                 <div class="text-sm text-gray-500">{{ $referral->referred->email ?? '' }}</div>
+                                @php
+                                    $referredOrderCount = $referral->referred ? $referral->referred->orders()->whereNotIn('status', ['cancelled'])->count() : 0;
+                                @endphp
+                                <div class="text-xs {{ $referredOrderCount > 0 ? 'text-green-600' : 'text-gray-400' }}">
+                                    {{ $referredOrderCount }} order(s)
+                                </div>
                             </div>
                         </div>
                     </td>
@@ -122,12 +152,43 @@
                         {{ $referral->created_at->format('d M Y') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        @if($referral->referrer)
-                            <a href="{{ route('admin.referrals.user-wallet', $referral->referrer) }}" 
-                               class="text-blue-600 hover:text-blue-800" title="View Wallet">
-                                <i class="fas fa-wallet"></i>
-                            </a>
-                        @endif
+                        <div class="flex items-center gap-2">
+                            @if($referral->referrer)
+                                <a href="{{ route('admin.referrals.user-wallet', $referral->referrer) }}" 
+                                   class="text-blue-600 hover:text-blue-800" title="View Wallet">
+                                    <i class="fas fa-wallet"></i>
+                                </a>
+                            @endif
+                            
+                            @if($referral->status === 'pending')
+                                {{-- Process Reward Button --}}
+                                <form action="{{ route('admin.referrals.process-reward', $referral) }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit" class="text-green-600 hover:text-green-800" title="Process Reward"
+                                            onclick="return confirm('Process referral reward for this user?')">
+                                        <i class="fas fa-gift"></i>
+                                    </button>
+                                </form>
+                                
+                                {{-- Mark as Completed (without reward) --}}
+                                <form action="{{ route('admin.referrals.mark-completed', $referral) }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit" class="text-gray-600 hover:text-gray-800" title="Mark Completed (no reward)"
+                                            onclick="return confirm('Mark this referral as completed without processing reward?')">
+                                        <i class="fas fa-check-circle"></i>
+                                    </button>
+                                </form>
+                                
+                                {{-- Mark as Expired --}}
+                                <form action="{{ route('admin.referrals.mark-expired', $referral) }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit" class="text-red-600 hover:text-red-800" title="Mark as Expired"
+                                            onclick="return confirm('Mark this referral as expired?')">
+                                        <i class="fas fa-times-circle"></i>
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
                     </td>
                 </tr>
             @empty
@@ -147,5 +208,16 @@
             {{ $referrals->links() }}
         </div>
     @endif
+</div>
+
+<!-- Legend -->
+<div class="mt-6 bg-white rounded-lg shadow-md p-4">
+    <h4 class="font-semibold text-gray-700 mb-2">Action Icons Legend:</h4>
+    <div class="flex flex-wrap gap-4 text-sm">
+        <span><i class="fas fa-wallet text-blue-600 mr-1"></i> View Wallet</span>
+        <span><i class="fas fa-gift text-green-600 mr-1"></i> Process Reward (credit referrer's wallet)</span>
+        <span><i class="fas fa-check-circle text-gray-600 mr-1"></i> Mark Completed (without reward)</span>
+        <span><i class="fas fa-times-circle text-red-600 mr-1"></i> Mark as Expired</span>
+    </div>
 </div>
 @endsection

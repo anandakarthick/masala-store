@@ -355,5 +355,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/top-referrers', [AdminReferralController::class, 'topReferrers'])->name('top-referrers');
         Route::get('/user/{user}/wallet', [AdminReferralController::class, 'userWallet'])->name('user-wallet');
         Route::post('/user/{user}/wallet/adjust', [AdminReferralController::class, 'adjustWallet'])->name('adjust-wallet');
+        Route::post('/{referral}/process-reward', [AdminReferralController::class, 'processReward'])->name('process-reward');
+        Route::post('/process-all-pending', [AdminReferralController::class, 'processAllPending'])->name('process-all-pending');
+        Route::post('/{referral}/mark-completed', [AdminReferralController::class, 'markCompleted'])->name('mark-completed');
+        Route::post('/{referral}/mark-expired', [AdminReferralController::class, 'markExpired'])->name('mark-expired');
     });
 });

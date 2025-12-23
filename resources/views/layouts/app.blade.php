@@ -402,6 +402,34 @@
     <!-- Spacer for fixed top bar + header -->
     <div class="h-[120px] sm:h-[130px] lg:h-[110px]"></div>
 
+    <!-- First-Time Customer Discount Banner -->
+    @php
+        $firstTimeOfferMessage = \App\Services\FirstTimeCustomerService::getOfferMessage();
+        $showFirstTimeBanner = $firstTimeOfferMessage && (!auth()->check() || \App\Services\FirstTimeCustomerService::isFirstTimeCustomer());
+    @endphp
+    @if($showFirstTimeBanner)
+        <div class="bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 text-white py-2.5 shadow-md relative" x-data="{ showBanner: true }" x-show="showBanner" x-cloak>
+            <div class="container mx-auto px-4 pr-10">
+                <div class="flex items-center justify-center gap-2 flex-wrap">
+                    <span class="text-xl">🎁</span>
+                    <span class="font-bold text-sm sm:text-base text-center">{{ $firstTimeOfferMessage }}</span>
+                    @if(!auth()->check())
+                        <a href="{{ route('login') }}" class="ml-2 bg-white text-orange-600 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-orange-100 transition shadow-sm whitespace-nowrap">
+                            Login Now
+                        </a>
+                    @else
+                        <a href="{{ route('products.index') }}" class="ml-2 bg-white text-orange-600 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-orange-100 transition shadow-sm whitespace-nowrap">
+                            Shop Now
+                        </a>
+                    @endif
+                </div>
+            </div>
+            <button @click="showBanner = false" class="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-yellow-200" title="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    @endif
+
     @if(session('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 container mx-auto mt-4 rounded">
             {{ session('success') }}
@@ -411,36 +439,6 @@
     @if(session('error'))
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 container mx-auto mt-4 rounded">
             {{ session('error') }}
-        </div>
-    @endif
-
-    <!-- First-Time Customer Discount Banner -->
-    @php
-        $firstTimeOfferMessage = \App\Services\FirstTimeCustomerService::getOfferMessage();
-        $showFirstTimeBanner = $firstTimeOfferMessage && (!auth()->check() || \App\Services\FirstTimeCustomerService::isFirstTimeCustomer());
-    @endphp
-    @if($showFirstTimeBanner)
-        <div class="bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 text-white py-2" x-data="{ showBanner: true }" x-show="showBanner">
-            <div class="container mx-auto px-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2 flex-1 justify-center">
-                        <span class="text-lg">🎁</span>
-                        <span class="font-semibold text-sm sm:text-base">{{ $firstTimeOfferMessage }}</span>
-                        @if(!auth()->check())
-                            <a href="{{ route('login') }}" class="ml-2 bg-white text-orange-600 px-3 py-1 rounded-full text-xs font-bold hover:bg-orange-100 transition">
-                                Login Now
-                            </a>
-                        @else
-                            <a href="{{ route('products.index') }}" class="ml-2 bg-white text-orange-600 px-3 py-1 rounded-full text-xs font-bold hover:bg-orange-100 transition">
-                                Shop Now
-                            </a>
-                        @endif
-                    </div>
-                    <button @click="showBanner = false" class="text-white hover:text-yellow-200 ml-2">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
         </div>
     @endif
 
