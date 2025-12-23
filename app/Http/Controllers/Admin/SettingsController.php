@@ -36,10 +36,19 @@ class SettingsController extends Controller
             'first_time_discount_percentage' => 'nullable|numeric|min:1|max:100',
             'first_time_discount_min_order' => 'nullable|numeric|min:0',
             'first_time_discount_max_amount' => 'nullable|numeric|min:0',
+            // Referral program settings
+            'referral_enabled' => 'nullable|boolean',
+            'referral_reward_type' => 'nullable|in:fixed,percentage',
+            'referral_reward_amount' => 'nullable|numeric|min:0',
+            'referral_max_reward_amount' => 'nullable|numeric|min:0',
+            'referral_min_order_amount' => 'nullable|numeric|min:0',
+            'referral_first_order_only' => 'nullable|in:0,1',
+            'referral_max_rewards_per_referral' => 'nullable|integer|min:0|max:100',
         ]);
 
-        // Handle checkbox for first_time_discount_enabled
+        // Handle checkboxes
         $validated['first_time_discount_enabled'] = $request->boolean('first_time_discount_enabled');
+        $validated['referral_enabled'] = $request->boolean('referral_enabled');
 
         foreach ($validated as $key => $value) {
             if ($key === 'logo') {
@@ -53,7 +62,13 @@ class SettingsController extends Controller
                 }
             } else {
                 // Determine group based on key
-                $group = str_starts_with($key, 'first_time_discount') ? 'promotions' : 'general';
+                if (str_starts_with($key, 'first_time_discount')) {
+                    $group = 'promotions';
+                } elseif (str_starts_with($key, 'referral_')) {
+                    $group = 'referral';
+                } else {
+                    $group = 'general';
+                }
                 Setting::set($key, $value, 'text', $group);
             }
         }

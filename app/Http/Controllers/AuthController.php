@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cart;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\ReferralService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -45,9 +46,16 @@ class AuthController extends Controller
         ])->onlyInput('email');
     }
 
-    public function showRegister()
+    public function showRegister(Request $request)
     {
-        return view('auth.register');
+        $referralCode = $request->get('ref');
+        $referralInfo = null;
+        
+        if ($referralCode) {
+            $referralInfo = ReferralService::validateReferralCode($referralCode);
+        }
+        
+        return view('auth.register', compact('referralCode', 'referralInfo'));
     }
 
     public function register(Request $request)
@@ -57,6 +65,7 @@ class AuthController extends Controller
             'email' => 'required|email|unique:users,email',
             'phone' => 'required|string|max:15',
             'password' => 'required|min:8|confirmed',
+            'referral_code' => 'nullable|string|max:20',
         ]);
 
         $customerRole = Role::getCustomerRole();
@@ -69,13 +78,24 @@ class AuthController extends Controller
             'role_id' => $customerRole?->id,
         ]);
 
+        // Process referral code if provided
+        $referralCode = $validated['referral_code'] ?? $request->get('ref');
+        if ($referralCode) {
+            ReferralService::processReferralCode($user, $referralCode);
+        }
+
         Auth::login($user);
 
         // Merge guest cart
         $cart = Cart::getCart();
         $cart->mergeGuestCart();
 
-        return redirect()->route('home')->with('success', 'Registration successful! Welcome to our store.');
+        $message = 'Registration successful! Welcome to our store.';
+        if ($user->wasReferred()) {
+            $message .= ' Your referral bonus will be applied when your referrer earns rewards!';
+        }
+
+        return redirect()->route('home')->with('success', $message);
     }
 
     public function logout(Request $request)
@@ -102,5 +122,16 @@ class AuthController extends Controller
         // Password::sendResetLink($request->only('email'));
 
         return back()->with('success', 'Password reset link sent to your email.');
+    }
+
+    /**
+     * Validate referral code (AJAX)
+     */
+    public function validateReferralCode(Request $request)
+    {
+        $code = $request->get('code');
+        $result = ReferralService::validateReferralCode($code);
+        
+        return response()->json($result);
     }
 }

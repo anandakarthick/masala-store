@@ -26,6 +26,7 @@ use App\Http\Controllers\Admin\VariantAttributeController as AdminVariantAttribu
 use App\Http\Controllers\Admin\EstimateController as AdminEstimateController;
 use App\Http\Controllers\RazorpayController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\Admin\ReferralController as AdminReferralController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use Illuminate\Support\Facades\Route;
 
@@ -153,6 +154,10 @@ Route::middleware('auth')->prefix('account')->name('account.')->group(function (
     Route::get('/change-password', [CustomerAccountController::class, 'changePassword'])->name('password');
     Route::put('/change-password', [CustomerAccountController::class, 'updatePassword'])->name('password.update');
     Route::get('/wishlist', [CustomerAccountController::class, 'wishlist'])->name('wishlist');
+    
+    // Wallet & Referrals
+    Route::get('/wallet', [CustomerAccountController::class, 'wallet'])->name('wallet');
+    Route::get('/referrals', [CustomerAccountController::class, 'referrals'])->name('referrals');
 });
 
 // Review via token (for guest orders or direct email link)
@@ -342,5 +347,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/{platform}/orders', [AdminSellingPlatformController::class, 'orders'])->name('orders');
         Route::post('/{platform}/orders', [AdminSellingPlatformController::class, 'storeOrder'])->name('store-order');
         Route::post('/{platform}/fetch-orders', [AdminSellingPlatformController::class, 'fetchOrdersFromApi'])->name('fetch-orders-api');
+    });
+
+    // Referrals & Wallet Management
+    Route::prefix('referrals')->name('referrals.')->group(function () {
+        Route::get('/', [AdminReferralController::class, 'index'])->name('index');
+        Route::get('/top-referrers', [AdminReferralController::class, 'topReferrers'])->name('top-referrers');
+        Route::get('/user/{user}/wallet', [AdminReferralController::class, 'userWallet'])->name('user-wallet');
+        Route::post('/user/{user}/wallet/adjust', [AdminReferralController::class, 'adjustWallet'])->name('adjust-wallet');
     });
 });

@@ -23,43 +23,89 @@
                 <h1 class="text-xl font-bold text-gray-800 mb-6">Welcome, {{ $user->name }}!</h1>
                 
                 <!-- Stats Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
                     <div class="bg-green-50 rounded-lg p-4 border border-green-100">
                         <div class="flex items-center">
-                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-shopping-bag text-green-600 text-xl"></i>
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-shopping-bag text-green-600"></i>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm text-gray-600">Total Orders</p>
-                                <p class="text-2xl font-bold text-gray-800">{{ $stats['total_orders'] }}</p>
+                            <div class="ml-3">
+                                <p class="text-xs text-gray-600">Total Orders</p>
+                                <p class="text-xl font-bold text-gray-800">{{ $stats['total_orders'] }}</p>
                             </div>
                         </div>
                     </div>
                     
                     <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-100">
                         <div class="flex items-center">
-                            <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                            <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-clock text-yellow-600"></i>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm text-gray-600">Pending Orders</p>
-                                <p class="text-2xl font-bold text-gray-800">{{ $stats['pending_orders'] }}</p>
+                            <div class="ml-3">
+                                <p class="text-xs text-gray-600">Pending</p>
+                                <p class="text-xl font-bold text-gray-800">{{ $stats['pending_orders'] }}</p>
                             </div>
                         </div>
                     </div>
                     
                     <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
                         <div class="flex items-center">
-                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-rupee-sign text-blue-600 text-xl"></i>
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-rupee-sign text-blue-600"></i>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm text-gray-600">Total Spent</p>
-                                <p class="text-2xl font-bold text-gray-800">₹{{ number_format($stats['total_spent'], 2) }}</p>
+                            <div class="ml-3">
+                                <p class="text-xs text-gray-600">Total Spent</p>
+                                <p class="text-xl font-bold text-gray-800">₹{{ number_format($stats['total_spent'], 0) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Wallet Balance -->
+                    <div class="bg-emerald-50 rounded-lg p-4 border border-emerald-100">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-wallet text-emerald-600"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-xs text-gray-600">Wallet</p>
+                                <p class="text-xl font-bold text-emerald-700">₹{{ number_format($stats['wallet_balance'], 0) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Referral Earnings -->
+                    <div class="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-users text-purple-600"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-xs text-gray-600">Referrals</p>
+                                <p class="text-xl font-bold text-purple-700">{{ $stats['successful_referrals'] }}</p>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Referral Banner -->
+                @if(\App\Services\ReferralService::isEnabled())
+                    <div class="mb-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white">
+                        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-gift text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold">Refer & Earn!</h3>
+                                    <p class="text-sm text-blue-100">Share your code <span class="font-mono bg-white/20 px-2 py-0.5 rounded">{{ $user->referral_code }}</span> with friends</p>
+                                </div>
+                            </div>
+                            <a href="{{ route('account.referrals') }}" class="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition text-sm">
+                                View Referrals <i class="fas fa-arrow-right ml-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                @endif
 
                 <!-- Recent Orders -->
                 <div class="mt-6">
@@ -124,17 +170,17 @@
                         <i class="fas fa-shopping-bag text-2xl text-green-600 mb-2"></i>
                         <span class="text-sm text-gray-700">My Orders</span>
                     </a>
+                    <a href="{{ route('account.wallet') }}" class="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-green-50 transition">
+                        <i class="fas fa-wallet text-2xl text-green-600 mb-2"></i>
+                        <span class="text-sm text-gray-700">My Wallet</span>
+                    </a>
+                    <a href="{{ route('account.referrals') }}" class="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-green-50 transition">
+                        <i class="fas fa-users text-2xl text-green-600 mb-2"></i>
+                        <span class="text-sm text-gray-700">Refer & Earn</span>
+                    </a>
                     <a href="{{ route('account.profile') }}" class="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-green-50 transition">
                         <i class="fas fa-user text-2xl text-green-600 mb-2"></i>
                         <span class="text-sm text-gray-700">Edit Profile</span>
-                    </a>
-                    <a href="{{ route('account.password') }}" class="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-green-50 transition">
-                        <i class="fas fa-lock text-2xl text-green-600 mb-2"></i>
-                        <span class="text-sm text-gray-700">Change Password</span>
-                    </a>
-                    <a href="{{ route('tracking.index') }}" class="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-green-50 transition">
-                        <i class="fas fa-truck text-2xl text-green-600 mb-2"></i>
-                        <span class="text-sm text-gray-700">Track Order</span>
                     </a>
                 </div>
             </div>

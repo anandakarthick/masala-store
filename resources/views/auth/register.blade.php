@@ -11,9 +11,18 @@
                 <p class="text-gray-600">Join us for exclusive offers</p>
             </div>
 
+            @if(isset($referralInfo) && $referralInfo['valid'])
+                <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-gift text-green-600"></i>
+                        <span class="text-green-700 font-medium">{{ $referralInfo['message'] }}</span>
+                    </div>
+                </div>
+            @endif
+
             <!-- Google Sign In Button -->
             <div class="mb-6">
-                <a href="{{ route('auth.google') }}" 
+                <a href="{{ route('auth.google') }}{{ isset($referralCode) && $referralCode ? '?ref=' . $referralCode : '' }}" 
                    class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-400 transition duration-200 shadow-sm">
                     <svg class="w-5 h-5" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -37,6 +46,12 @@
 
             <form action="{{ route('register') }}" method="POST">
                 @csrf
+                
+                <!-- Hidden referral code from URL -->
+                @if(isset($referralCode) && $referralCode)
+                    <input type="hidden" name="referral_code" value="{{ $referralCode }}">
+                @endif
+
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
@@ -80,6 +95,21 @@
                         <input type="password" name="password_confirmation" required
                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
                     </div>
+
+                    <!-- Referral Code Field (only show if not already provided via URL) -->
+                    @if(!isset($referralCode) || !$referralCode)
+                        <div x-data="{ showReferral: false }">
+                            <button type="button" @click="showReferral = !showReferral" class="text-sm text-green-600 hover:text-green-700 font-medium">
+                                <i class="fas fa-gift mr-1"></i> Have a referral code?
+                            </button>
+                            <div x-show="showReferral" x-collapse class="mt-2">
+                                <input type="text" name="referral_code" value="{{ old('referral_code') }}" placeholder="Enter referral code"
+                                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500 uppercase"
+                                       style="text-transform: uppercase;">
+                                <p class="text-xs text-gray-500 mt-1">Enter the code shared by your friend</p>
+                            </div>
+                        </div>
+                    @endif
 
                     <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition duration-200">
                         Create Account

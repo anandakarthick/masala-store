@@ -29,6 +29,27 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{{ route('account.wallet') }}" 
+                       class="flex items-center justify-between px-3 py-2 rounded-lg text-sm {{ request()->routeIs('account.wallet') ? 'bg-green-50 text-green-600' : 'text-gray-700 hover:bg-gray-50' }}">
+                        <span class="flex items-center">
+                            <i class="fas fa-wallet w-5"></i>
+                            <span class="ml-2">My Wallet</span>
+                        </span>
+                        @if(auth()->user()->wallet_balance > 0)
+                            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                ₹{{ number_format(auth()->user()->wallet_balance, 0) }}
+                            </span>
+                        @endif
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('account.referrals') }}" 
+                       class="flex items-center px-3 py-2 rounded-lg text-sm {{ request()->routeIs('account.referrals') ? 'bg-green-50 text-green-600' : 'text-gray-700 hover:bg-gray-50' }}">
+                        <i class="fas fa-users w-5"></i>
+                        <span class="ml-2">Refer & Earn</span>
+                    </a>
+                </li>
+                <li>
                     <a href="{{ route('account.profile') }}" 
                        class="flex items-center px-3 py-2 rounded-lg text-sm {{ request()->routeIs('account.profile') ? 'bg-green-50 text-green-600' : 'text-gray-700 hover:bg-gray-50' }}">
                         <i class="fas fa-user w-5"></i>

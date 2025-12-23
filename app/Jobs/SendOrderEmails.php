@@ -7,6 +7,7 @@ use App\Mail\AdminNewOrderMail;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Services\InvoiceService;
+use App\Services\ReferralService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -57,6 +58,9 @@ class SendOrderEmails implements ShouldQueue
                 ]);
             }
 
+            // Process referral reward (this will queue its own email)
+            $this->processReferralReward();
+
             // Clean up temp PDF file after sending
             if ($pdfPath && file_exists($pdfPath)) {
                 unlink($pdfPath);
@@ -68,6 +72,28 @@ class SendOrderEmails implements ShouldQueue
                 'error' => $e->getMessage()
             ]);
             throw $e;
+        }
+    }
+
+    /**
+     * Process referral reward for this order
+     */
+    protected function processReferralReward(): void
+    {
+        try {
+            $result = ReferralService::processOrderReferralReward($this->order);
+            
+            if ($result) {
+                Log::info('Referral reward processed for order', [
+                    'order_id' => $this->order->id,
+                ]);
+            }
+        } catch (\Exception $e) {
+            // Log but don't throw - referral processing shouldn't break order emails
+            Log::error('Failed to process referral reward', [
+                'order_id' => $this->order->id,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 

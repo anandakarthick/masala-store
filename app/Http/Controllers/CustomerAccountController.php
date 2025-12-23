@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Referral;
+use App\Models\WalletTransaction;
+use App\Services\ReferralService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -17,6 +20,9 @@ class CustomerAccountController extends Controller
             'total_orders' => $user->orders()->count(),
             'pending_orders' => $user->orders()->whereIn('status', ['pending', 'confirmed', 'processing', 'packed', 'shipped'])->count(),
             'total_spent' => $user->orders()->where('payment_status', 'paid')->sum('total_amount'),
+            'wallet_balance' => $user->wallet_balance,
+            'referral_earnings' => $user->total_referral_earnings,
+            'successful_referrals' => $user->successful_referrals_count,
         ];
 
         return view('frontend.account.dashboard', compact('user', 'recentOrders', 'stats'));
@@ -92,5 +98,48 @@ class CustomerAccountController extends Controller
     {
         $wishlists = auth()->user()->wishlists()->with('product.primaryImage')->paginate(12);
         return view('frontend.account.wishlist', compact('wishlists'));
+    }
+
+    /**
+     * Wallet page
+     */
+    public function wallet()
+    {
+        $user = auth()->user();
+        $transactions = $user->walletTransactions()
+            ->with(['order', 'referenceUser'])
+            ->latest()
+            ->paginate(15);
+
+        $stats = [
+            'balance' => $user->wallet_balance,
+            'total_credits' => $user->walletTransactions()->credits()->sum('amount'),
+            'total_debits' => $user->walletTransactions()->debits()->sum('amount'),
+            'referral_earnings' => $user->walletTransactions()->referral()->credits()->sum('amount'),
+        ];
+
+        return view('frontend.account.wallet', compact('user', 'transactions', 'stats'));
+    }
+
+    /**
+     * Referrals page
+     */
+    public function referrals()
+    {
+        $user = auth()->user();
+        
+        // Get referral program info
+        $programInfo = ReferralService::getProgramInfo();
+        
+        // Get user's referrals
+        $referrals = Referral::where('referrer_id', $user->id)
+            ->with(['referred', 'firstOrder'])
+            ->latest()
+            ->paginate(15);
+
+        // Referral stats
+        $stats = ReferralService::getUserStats($user);
+
+        return view('frontend.account.referrals', compact('user', 'referrals', 'stats', 'programInfo'));
     }
 }
