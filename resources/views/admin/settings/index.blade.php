@@ -223,26 +223,36 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         Reward Type <span class="text-red-500">*</span>
                     </label>
-                    <select name="referral_reward_type" 
-                            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="fixed" {{ \App\Models\Setting::get('referral_reward_type', 'fixed') === 'fixed' ? 'selected' : '' }}>Fixed Amount</option>
-                        <option value="percentage" {{ \App\Models\Setting::get('referral_reward_type') === 'percentage' ? 'selected' : '' }}>Percentage of Order</option>
+                    <select name="referral_reward_type" id="referralRewardType"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500"
+                            onchange="updateRewardTypeUI()">
+                        <option value="fixed" {{ \App\Models\Setting::get('referral_reward_type', 'fixed') === 'fixed' ? 'selected' : '' }}>Fixed Amount (e.g., ₹50)</option>
+                        <option value="percentage" {{ \App\Models\Setting::get('referral_reward_type') === 'percentage' ? 'selected' : '' }}>Percentage of Order Value (e.g., 5%)</option>
                     </select>
-                    <p class="text-xs text-gray-500 mt-1">How to calculate the reward</p>
+                    <p class="text-xs text-gray-500 mt-1">Choose how the reward is calculated</p>
                 </div>
 
                 <!-- Reward Amount -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" id="rewardAmountLabel">
                         Reward Amount <span class="text-red-500">*</span>
                     </label>
                     <div class="relative">
-                        <input type="number" name="referral_reward_amount" 
+                        <span id="rewardPrefix" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
+                        <input type="number" name="referral_reward_amount" id="referralRewardAmount"
                                value="{{ \App\Models\Setting::get('referral_reward_amount', 50) }}"
-                               min="1" step="0.01"
-                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500">
+                               min="0.01" step="0.01"
+                               class="w-full border border-gray-300 rounded-lg pl-8 pr-4 py-2 focus:ring-blue-500 focus:border-blue-500">
+                        <span id="rewardSuffix" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hidden">%</span>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">₹ or % based on reward type</p>
+                    <p class="text-xs text-gray-500 mt-1" id="rewardAmountHelp">Fixed amount given as reward</p>
+                    <!-- Quick select buttons for percentage -->
+                    <div id="percentageQuickSelect" class="hidden mt-2 flex gap-2">
+                        <button type="button" onclick="setRewardPercentage(5)" class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200">5%</button>
+                        <button type="button" onclick="setRewardPercentage(10)" class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200">10%</button>
+                        <button type="button" onclick="setRewardPercentage(15)" class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200">15%</button>
+                        <button type="button" onclick="setRewardPercentage(20)" class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200">20%</button>
+                    </div>
                 </div>
 
                 <!-- Max Reward Amount (for percentage type) -->
@@ -303,13 +313,20 @@
                     $refRewardAmount = \App\Models\Setting::get('referral_reward_amount', 50);
                     $refFirstOnly = \App\Models\Setting::get('referral_first_order_only', '1') == '1';
                     $refMinOrder = \App\Models\Setting::get('referral_min_order_amount', 0);
+                    $refMaxReward = \App\Models\Setting::get('referral_max_reward_amount', 500);
                 @endphp
-                <p class="text-blue-700">
+                <p class="text-blue-700" id="referralPreview">
                     🎁 Refer a friend and earn 
-                    <strong>{{ $refRewardType === 'percentage' ? $refRewardAmount . '%' : '₹' . number_format($refRewardAmount, 0) }}</strong>
+                    <strong>{{ $refRewardType === 'percentage' ? $refRewardAmount . '% of order value' : '₹' . number_format($refRewardAmount, 0) }}</strong>
                     when they place {{ $refFirstOnly ? 'their first order' : 'an order' }}!
                     @if($refMinOrder > 0) (Min. order ₹{{ number_format($refMinOrder, 0) }}) @endif
+                    @if($refRewardType === 'percentage' && $refMaxReward > 0) (Max ₹{{ number_format($refMaxReward, 0) }}) @endif
                 </p>
+                @if($refRewardType === 'percentage')
+                    <div class="mt-2 text-sm text-blue-600">
+                        <strong>Example:</strong> If order value is ₹1000, referrer gets ₹{{ number_format(min($refRewardAmount * 10, $refMaxReward > 0 ? $refMaxReward : 999999), 0) }}
+                    </div>
+                @endif
             </div>
         </div>
     </div>
@@ -320,4 +337,42 @@
         </button>
     </div>
 </form>
+
+@push('scripts')
+<script>
+function updateRewardTypeUI() {
+    const rewardType = document.getElementById('referralRewardType').value;
+    const prefix = document.getElementById('rewardPrefix');
+    const suffix = document.getElementById('rewardSuffix');
+    const input = document.getElementById('referralRewardAmount');
+    const helpText = document.getElementById('rewardAmountHelp');
+    const quickSelect = document.getElementById('percentageQuickSelect');
+    
+    if (rewardType === 'percentage') {
+        prefix.classList.add('hidden');
+        suffix.classList.remove('hidden');
+        input.classList.remove('pl-8');
+        input.classList.add('pr-8');
+        helpText.textContent = 'Percentage of order value (e.g., 5 means 5% of order)';
+        quickSelect.classList.remove('hidden');
+    } else {
+        prefix.classList.remove('hidden');
+        suffix.classList.add('hidden');
+        input.classList.add('pl-8');
+        input.classList.remove('pr-8');
+        helpText.textContent = 'Fixed amount given as reward';
+        quickSelect.classList.add('hidden');
+    }
+}
+
+function setRewardPercentage(value) {
+    document.getElementById('referralRewardAmount').value = value;
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateRewardTypeUI();
+});
+</script>
+@endpush
 @endsection

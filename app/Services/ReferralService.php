@@ -300,10 +300,17 @@ class ReferralService
 
         $rewardType = self::getRewardType();
         $rewardAmount = self::getRewardAmount();
+        $maxRewardAmount = self::getMaxRewardAmount();
         
-        $rewardText = $rewardType === 'percentage' 
-            ? "{$rewardAmount}%" 
-            : "₹" . number_format($rewardAmount, 0);
+        // Build reward text based on type
+        if ($rewardType === 'percentage') {
+            $rewardText = "{$rewardAmount}% of order value";
+            if ($maxRewardAmount > 0) {
+                $rewardText .= " (max ₹" . number_format($maxRewardAmount, 0) . ")";
+            }
+        } else {
+            $rewardText = "₹" . number_format($rewardAmount, 0);
+        }
 
         return [
             'enabled' => true,
@@ -313,7 +320,7 @@ class ReferralService
             'min_order_amount' => self::getMinOrderAmount(),
             'first_order_only' => self::isFirstOrderOnly(),
             'max_rewards_per_referral' => self::getMaxRewardsPerReferral(),
-            'max_reward_amount' => self::getMaxRewardAmount(),
+            'max_reward_amount' => $maxRewardAmount,
         ];
     }
 
