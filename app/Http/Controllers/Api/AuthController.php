@@ -472,24 +472,30 @@ class AuthController extends Controller
         try {
             DB::beginTransaction();
             
-            // Check if there's a guest user with this device_id
-            $guestUser = User::where('device_id', $deviceId)
+            // Clear device_id from ANY other user that has this device_id
+            // This handles both guest users and other logged-in users who used this device
+            User::where('device_id', $deviceId)
+                ->where('id', '!=', $user->id)
+                ->update(['device_id' => null]);
+            
+            // Check if there's a guest user with this device_id (already cleared above, but check for token transfer)
+            $guestUser = User::where('fcm_token', $validated['fcm_token'])
                 ->where('is_guest', true)
+                ->where('id', '!=', $user->id)
                 ->first();
             
-            if ($guestUser && $guestUser->id !== $user->id) {
-                Log::info('Found guest user for device, transferring FCM token', [
+            if ($guestUser) {
+                Log::info('Found guest user for FCM token, transferring devices', [
                     'guest_user_id' => $guestUser->id,
                     'logged_in_user_id' => $user->id,
-                    'device_id' => $deviceId,
                 ]);
                 
                 // Transfer device tokens from guest to logged-in user
                 UserDevice::where('user_id', $guestUser->id)
                     ->update(['user_id' => $user->id]);
                 
-                // Clear device_id from guest user first (to avoid unique constraint)
-                $guestUser->update(['device_id' => null]);
+                // Clear FCM token from guest user
+                $guestUser->update(['fcm_token' => null, 'device_id' => null]);
                 
                 // Optionally delete the guest user if they have no orders/activity
                 if ($guestUser->orders()->count() === 0) {
@@ -517,7 +523,7 @@ class AuthController extends Controller
                 'fcm_token' => $validated['fcm_token'],
                 'device_type' => $validated['device_type'],
                 'fcm_token_updated_at' => now(),
-                'device_id' => $deviceId, // Now safe to set since guest user's device_id was cleared
+                'device_id' => $deviceId,
             ]);
 
             DB::commit();

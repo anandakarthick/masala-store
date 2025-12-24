@@ -90,17 +90,45 @@ class User extends Authenticatable
      */
     public static function findOrCreateGuestByDeviceId(string $deviceId): self
     {
+        // First, try to find existing user with this device_id
         $user = self::where('device_id', $deviceId)->first();
 
-        if (!$user) {
+        if ($user) {
+            return $user;
+        }
+
+        // If not found, create a new guest user
+        // Use a unique suffix to avoid email collisions
+        $uniqueSuffix = $deviceId . '_' . time() . '_' . Str::random(4);
+        
+        try {
             $user = self::create([
                 'device_id' => $deviceId,
                 'name' => 'Guest User',
-                'email' => 'guest_' . $deviceId . '@guest.local',
+                'email' => 'guest_' . $uniqueSuffix . '@guest.local',
                 'password' => Hash::make(Str::random(32)),
                 'is_guest' => true,
                 'is_active' => true,
             ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // If there's a duplicate key error, try to find the user again
+            // (race condition handling)
+            if ($e->errorInfo[1] == 1062) {
+                $user = self::where('device_id', $deviceId)->first();
+                if (!$user) {
+                    // If still no user found, the duplicate is on email, create with new email
+                    $user = self::create([
+                        'device_id' => $deviceId,
+                        'name' => 'Guest User',
+                        'email' => 'guest_' . Str::uuid() . '@guest.local',
+                        'password' => Hash::make(Str::random(32)),
+                        'is_guest' => true,
+                        'is_active' => true,
+                    ]);
+                }
+            } else {
+                throw $e;
+            }
         }
 
         return $user;
