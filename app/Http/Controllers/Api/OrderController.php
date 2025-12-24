@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\Setting;
 use App\Models\StockMovement;
+use App\Models\UserAddress;
 use App\Services\FirstTimeCustomerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -106,6 +107,14 @@ class OrderController extends Controller
             ])
             ->values();
 
+        // Get saved addresses
+        $addresses = UserAddress::where('user_id', $user->id)
+            ->orderBy('is_default', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $defaultAddress = $addresses->where('is_default', true)->first();
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -120,7 +129,18 @@ class OrderController extends Controller
                 'first_time_discount' => $firstTimeDiscount,
                 'wallet_balance' => (float) $user->wallet_balance,
                 'payment_methods' => $paymentMethods,
-                'saved_address' => [
+                'addresses' => $addresses,
+                'default_address' => $defaultAddress,
+                'saved_address' => $defaultAddress ? [
+                    'name' => $defaultAddress->full_name,
+                    'phone' => $defaultAddress->phone,
+                    'email' => $user->email,
+                    'address' => $defaultAddress->address_line_1 . ($defaultAddress->address_line_2 ? ', ' . $defaultAddress->address_line_2 : ''),
+                    'city' => $defaultAddress->city,
+                    'state' => $defaultAddress->state,
+                    'pincode' => $defaultAddress->pincode,
+                    'landmark' => $defaultAddress->landmark,
+                ] : [
                     'name' => $user->name,
                     'phone' => $user->phone,
                     'email' => $user->email,
@@ -201,6 +221,7 @@ class OrderController extends Controller
             'coupon_code' => 'nullable|string',
             'use_wallet' => 'nullable|boolean',
             'wallet_amount' => 'nullable|numeric|min:0',
+            'address_id' => 'nullable|integer', // Optional: use saved address
         ]);
 
         $user = $request->user();
@@ -240,6 +261,7 @@ class OrderController extends Controller
         $shippingCharge = $subtotal >= Setting::freeShippingAmount() ? 0 : Setting::defaultShippingCharge();
         $discountAmount = 0;
         $firstTimeDiscountAmount = 0;
+        $coupon = null;
 
         // Apply coupon
         if (!empty($validated['coupon_code'])) {
@@ -297,7 +319,7 @@ class OrderController extends Controller
                 'payment_status' => 'pending',
                 'status' => 'pending',
                 'customer_notes' => $validated['customer_notes'] ?? null,
-                'order_source' => $user->device_type ?? 'android', // Get from user's device type
+                'order_source' => $user->device_type ?? 'android',
             ]);
 
             // Deduct wallet

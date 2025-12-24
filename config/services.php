@@ -52,8 +52,17 @@ return [
     |--------------------------------------------------------------------------
     */
     'fcm' => [
-        'project_id' => env('FCM_PROJECT_ID', 'sv-product'),
+        'project_id' => env('FCM_PROJECT_ID', 'sv-products'),
         'service_account_path' => env('FCM_SERVICE_ACCOUNT_PATH', storage_path('app/firebase-service-account.json')),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Google Maps API
+    |--------------------------------------------------------------------------
+    */
+    'google_maps' => [
+        'api_key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
 ];

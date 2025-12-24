@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\WishlistController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Api\ConfigController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,6 +26,9 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/google-info', [AuthController::class, 'googleLoginWithInfo']);
     Route::post('/auth/login-phone', [AuthController::class, 'loginWithPhone']);
     Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp']);
+    
+    // App Config (Public)
+    Route::get('/config', [ConfigController::class, 'index']);
     
     // Products & Categories (Public)
     Route::get('/home', [ProductController::class, 'home']);
@@ -55,6 +60,14 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::post('/auth/fcm-token', [AuthController::class, 'updateFcmToken']);
         Route::delete('/auth/fcm-token', [AuthController::class, 'removeFcmToken']);
+        
+        // Addresses
+        Route::get('/addresses', [AddressController::class, 'index']);
+        Route::get('/addresses/{id}', [AddressController::class, 'show']);
+        Route::post('/addresses', [AddressController::class, 'store']);
+        Route::put('/addresses/{id}', [AddressController::class, 'update']);
+        Route::delete('/addresses/{id}', [AddressController::class, 'destroy']);
+        Route::post('/addresses/{id}/default', [AddressController::class, 'setDefault']);
         
         // Wishlist
         Route::get('/wishlist', [WishlistController::class, 'index']);
