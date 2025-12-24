@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use App\Models\UserDevice;
 use Google\Client as GoogleClient;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 
 class FCMService
 {
@@ -16,9 +18,34 @@ class FCMService
 
     public function __construct()
     {
-        $this->projectId = config('services.fcm.project_id');
-        $this->serviceAccountPath = config('services.fcm.service_account_path');
+        $this->serviceAccountPath = config('services.fcm.service_account_path') 
+            ?? storage_path('app/firebase-service-account.json');
+        
+        // Read project_id directly from service account file to avoid config cache issues
+        $this->projectId = $this->getProjectIdFromServiceAccount();
         $this->fcmUrl = "https://fcm.googleapis.com/v1/projects/{$this->projectId}/messages:send";
+        
+        Log::debug('FCM Service initialized', [
+            'project_id' => $this->projectId,
+            'fcm_url' => $this->fcmUrl,
+        ]);
+    }
+
+    /**
+     * Get project ID directly from service account JSON file
+     */
+    private function getProjectIdFromServiceAccount(): string
+    {
+        if (file_exists($this->serviceAccountPath)) {
+            $content = file_get_contents($this->serviceAccountPath);
+            $json = json_decode($content, true);
+            if (isset($json['project_id'])) {
+                return $json['project_id'];
+            }
+        }
+        
+        // Fallback to config
+        return config('services.fcm.project_id', 'sv-products');
     }
 
     /**
@@ -62,14 +89,39 @@ class FCMService
     }
 
     /**
+     * Get all active FCM tokens for a user
+     */
+    private function getTokensForUser(int $userId): array
+    {
+        $tokens = [];
+        
+        // First try user_devices table if it exists
+        if (Schema::hasTable('user_devices')) {
+            $tokens = UserDevice::getActiveTokensForUser($userId);
+            Log::info('FCM tokens from user_devices', ['user_id' => $userId, 'count' => count($tokens)]);
+        }
+        
+        // If no tokens found, fallback to users table
+        if (empty($tokens)) {
+            $user = User::find($userId);
+            if ($user && $user->fcm_token) {
+                $tokens = [$user->fcm_token];
+                Log::info('FCM token from users table (fallback)', ['user_id' => $userId]);
+            }
+        }
+        
+        return $tokens;
+    }
+
+    /**
      * Send push notification to all devices of a user
      */
     public function sendToUser(int $userId, string $title, string $body, array $data = []): bool
     {
-        $tokens = UserDevice::getActiveTokensForUser($userId);
+        $tokens = $this->getTokensForUser($userId);
         
         if (empty($tokens)) {
-            Log::info('No active devices for user', ['user_id' => $userId]);
+            Log::info('No FCM tokens found for user', ['user_id' => $userId]);
             return false;
         }
 
@@ -84,8 +136,8 @@ class FCMService
             }
         }
 
-        // Remove invalid tokens
-        if (!empty($invalidTokens)) {
+        // Remove invalid tokens from user_devices if table exists
+        if (!empty($invalidTokens) && Schema::hasTable('user_devices')) {
             UserDevice::removeInvalidTokens($invalidTokens);
         }
 
@@ -137,6 +189,12 @@ class FCMService
                     ],
                 ],
             ];
+
+            Log::info('Sending FCM notification', [
+                'token_preview' => substr($token, 0, 30) . '...',
+                'title' => $title,
+                'fcm_url' => $this->fcmUrl,
+            ]);
 
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $accessToken,

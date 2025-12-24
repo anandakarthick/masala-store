@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -26,6 +27,8 @@ class User extends Authenticatable
         'state',
         'pincode',
         'is_active',
+        'is_guest',
+        'device_id',
         'google_id',
         'avatar',
         'provider',
@@ -49,6 +52,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'is_guest' => 'boolean',
             'wallet_balance' => 'decimal:2',
             'referred_at' => 'datetime',
         ];
@@ -61,9 +65,9 @@ class User extends Authenticatable
     {
         parent::boot();
 
-        // Generate referral code on user creation
+        // Generate referral code on user creation (only for non-guest users)
         static::creating(function ($user) {
-            if (empty($user->referral_code)) {
+            if (empty($user->referral_code) && !$user->is_guest) {
                 $user->referral_code = self::generateUniqueReferralCode();
             }
         });
@@ -79,6 +83,80 @@ class User extends Authenticatable
         } while (self::where('referral_code', $code)->exists());
 
         return $code;
+    }
+
+    /**
+     * Find or create a guest user by device_id
+     */
+    public static function findOrCreateGuestByDeviceId(string $deviceId): self
+    {
+        $user = self::where('device_id', $deviceId)->first();
+
+        if (!$user) {
+            $user = self::create([
+                'device_id' => $deviceId,
+                'name' => 'Guest User',
+                'email' => 'guest_' . $deviceId . '@guest.local',
+                'password' => Hash::make(Str::random(32)),
+                'is_guest' => true,
+                'is_active' => true,
+            ]);
+        }
+
+        return $user;
+    }
+
+    /**
+     * Convert guest user to regular user (when they register/login)
+     */
+    public function convertFromGuest(array $userData): self
+    {
+        if (!$this->is_guest) {
+            return $this;
+        }
+
+        $this->update([
+            'name' => $userData['name'] ?? $this->name,
+            'email' => $userData['email'] ?? $this->email,
+            'phone' => $userData['phone'] ?? null,
+            'password' => isset($userData['password']) ? Hash::make($userData['password']) : $this->password,
+            'is_guest' => false,
+            'google_id' => $userData['google_id'] ?? null,
+            'avatar' => $userData['avatar'] ?? null,
+            'provider' => $userData['provider'] ?? null,
+        ]);
+
+        // Generate referral code for converted user
+        if (empty($this->referral_code)) {
+            $this->referral_code = self::generateUniqueReferralCode();
+            $this->save();
+        }
+
+        return $this->fresh();
+    }
+
+    /**
+     * Scope for guest users
+     */
+    public function scopeGuests($query)
+    {
+        return $query->where('is_guest', true);
+    }
+
+    /**
+     * Scope for registered users
+     */
+    public function scopeRegistered($query)
+    {
+        return $query->where('is_guest', false);
+    }
+
+    /**
+     * Check if user is a guest
+     */
+    public function isGuest(): bool
+    {
+        return $this->is_guest ?? false;
     }
 
     public function role(): BelongsTo
@@ -104,6 +182,14 @@ class User extends Authenticatable
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
+    }
+
+    /**
+     * User devices for push notifications
+     */
+    public function devices(): HasMany
+    {
+        return $this->hasMany(UserDevice::class);
     }
 
     /**

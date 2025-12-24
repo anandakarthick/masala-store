@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -73,7 +74,9 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $user = User::where('email', $validated['email'])->first();
+        $user = User::where('email', $validated['email'])
+            ->where('is_guest', false)
+            ->first();
 
         if (!$user || !Hash::check($validated['password'], $user->password)) {
             throw ValidationException::withMessages([
@@ -88,12 +91,9 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // Revoke all existing tokens
         $user->tokens()->delete();
-
         $token = $user->createToken('mobile-app')->plainTextToken;
 
-        // Merge guest cart if session ID provided
         $sessionId = $request->header('X-Session-Id');
         if ($sessionId) {
             $this->mergeGuestCartForMobile($user, $sessionId);
@@ -124,23 +124,18 @@ class AuthController extends Controller
                 'avatar' => 'nullable|string',
             ]);
 
-            // Get avatar safely (it's optional)
             $avatar = $request->input('avatar', null);
 
-            Log::info('Validated data:', $validated);
-            Log::info('Avatar:', ['avatar' => $avatar]);
-
-            // Find user by google_id first
-            $user = User::where('google_id', $validated['google_id'])->first();
-            Log::info('User by google_id:', ['found' => $user ? true : false]);
+            $user = User::where('google_id', $validated['google_id'])
+                ->where('is_guest', false)
+                ->first();
 
             if (!$user) {
-                // Check if user exists with this email
-                $user = User::where('email', $validated['email'])->first();
-                Log::info('User by email:', ['found' => $user ? true : false]);
+                $user = User::where('email', $validated['email'])
+                    ->where('is_guest', false)
+                    ->first();
 
                 if ($user) {
-                    // Link Google account to existing user
                     $updateData = [
                         'google_id' => $validated['google_id'],
                         'provider' => 'google',
@@ -151,9 +146,7 @@ class AuthController extends Controller
                     $user->update($updateData);
                     Log::info('Updated existing user with google_id');
                 } else {
-                    // Create new user
                     $customerRole = Role::where('slug', 'customer')->first();
-                    Log::info('Customer role:', ['id' => $customerRole?->id]);
 
                     $user = User::create([
                         'name' => $validated['name'],
@@ -165,11 +158,11 @@ class AuthController extends Controller
                         'role_id' => $customerRole?->id,
                         'email_verified_at' => now(),
                         'is_active' => true,
+                        'is_guest' => false,
                     ]);
                     Log::info('Created new user:', ['id' => $user->id]);
                 }
             } else {
-                // Update avatar if provided
                 if ($avatar) {
                     $user->update(['avatar' => $avatar]);
                 }
@@ -182,13 +175,9 @@ class AuthController extends Controller
                 ], 403);
             }
 
-            // Revoke existing tokens
             $user->tokens()->delete();
-
             $token = $user->createToken('mobile-app')->plainTextToken;
-            Log::info('Token created successfully');
 
-            // Merge guest cart if session ID provided
             $sessionId = $request->header('X-Session-Id');
             if ($sessionId) {
                 $this->mergeGuestCartForMobile($user, $sessionId);
@@ -232,7 +221,9 @@ class AuthController extends Controller
             'phone' => 'required|string|max:15',
         ]);
 
-        $user = User::where('phone', $validated['phone'])->first();
+        $user = User::where('phone', $validated['phone'])
+            ->where('is_guest', false)
+            ->first();
 
         if (!$user) {
             return response()->json([
@@ -241,7 +232,6 @@ class AuthController extends Controller
             ], 404);
         }
 
-        // In production, send OTP here
         return response()->json([
             'success' => true,
             'message' => 'OTP sent successfully',
@@ -261,7 +251,9 @@ class AuthController extends Controller
             'otp' => 'required|string|size:6',
         ]);
 
-        $user = User::where('phone', $validated['phone'])->first();
+        $user = User::where('phone', $validated['phone'])
+            ->where('is_guest', false)
+            ->first();
 
         if (!$user) {
             return response()->json([
@@ -401,7 +393,6 @@ class AuthController extends Controller
         try {
             Log::info('Merging guest cart', ['user_id' => $user->id, 'session_id' => $sessionId]);
             
-            // Find guest cart by session ID
             $guestCart = Cart::where('session_id', $sessionId)
                 ->whereNull('user_id')
                 ->first();
@@ -413,22 +404,17 @@ class AuthController extends Controller
 
             Log::info('Guest cart found', ['cart_id' => $guestCart->id, 'items' => $guestCart->items->count()]);
 
-            // Get or create user's cart
             $userCart = Cart::firstOrCreate(['user_id' => $user->id]);
 
-            // Merge regular items
             foreach ($guestCart->items as $item) {
-                // Check if item already exists in user cart
                 $existingItem = $userCart->items()
                     ->where('product_id', $item->product_id)
                     ->where('variant_id', $item->variant_id)
                     ->first();
 
                 if ($existingItem) {
-                    // Add quantities
                     $existingItem->increment('quantity', $item->quantity);
                 } else {
-                    // Create new item in user cart
                     $userCart->items()->create([
                         'product_id' => $item->product_id,
                         'variant_id' => $item->variant_id,
@@ -437,7 +423,6 @@ class AuthController extends Controller
                 }
             }
 
-            // Merge custom combos if any
             foreach ($guestCart->customCombos as $combo) {
                 $newCombo = $userCart->customCombos()->create([
                     'combo_setting_id' => $combo->combo_setting_id,
@@ -458,7 +443,6 @@ class AuthController extends Controller
                 }
             }
 
-            // Delete guest cart
             $guestCart->items()->delete();
             $guestCart->customCombos()->delete();
             $guestCart->delete();
@@ -471,44 +455,93 @@ class AuthController extends Controller
 
     /**
      * Update FCM token for push notifications (supports multiple devices)
+     * This is called AFTER login - links the device to the logged-in user
      */
     public function updateFcmToken(Request $request)
     {
         $validated = $request->validate([
             'fcm_token' => 'required|string',
             'device_type' => 'required|in:android,ios,web',
-            'device_id' => 'nullable|string', // Unique device identifier
-            'device_name' => 'nullable|string', // Device model name
+            'device_id' => 'required|string',
+            'device_name' => 'nullable|string',
         ]);
 
         $user = $request->user();
+        $deviceId = $validated['device_id'];
         
-        // Register device (supports multiple devices per user)
-        UserDevice::registerDevice(
-            $user->id,
-            $validated['fcm_token'],
-            $validated['device_type'],
-            $validated['device_id'] ?? null,
-            $validated['device_name'] ?? null
-        );
+        try {
+            DB::beginTransaction();
+            
+            // Check if there's a guest user with this device_id
+            $guestUser = User::where('device_id', $deviceId)
+                ->where('is_guest', true)
+                ->first();
+            
+            if ($guestUser && $guestUser->id !== $user->id) {
+                Log::info('Found guest user for device, transferring FCM token', [
+                    'guest_user_id' => $guestUser->id,
+                    'logged_in_user_id' => $user->id,
+                    'device_id' => $deviceId,
+                ]);
+                
+                // Transfer device tokens from guest to logged-in user
+                UserDevice::where('user_id', $guestUser->id)
+                    ->update(['user_id' => $user->id]);
+                
+                // Clear device_id from guest user first (to avoid unique constraint)
+                $guestUser->update(['device_id' => null]);
+                
+                // Optionally delete the guest user if they have no orders/activity
+                if ($guestUser->orders()->count() === 0) {
+                    // Delete guest user's cart if any
+                    if ($guestUser->cart) {
+                        $guestUser->cart->items()->delete();
+                        $guestUser->cart->delete();
+                    }
+                    $guestUser->delete();
+                    Log::info('Deleted guest user', ['guest_user_id' => $guestUser->id]);
+                }
+            }
+            
+            // Register/update device token for logged-in user
+            UserDevice::registerDevice(
+                $user->id,
+                $validated['fcm_token'],
+                $validated['device_type'],
+                $deviceId,
+                $validated['device_name'] ?? null
+            );
 
-        // Also update user's primary device info (for backwards compatibility)
-        $user->update([
-            'fcm_token' => $validated['fcm_token'],
-            'device_type' => $validated['device_type'],
-            'fcm_token_updated_at' => now(),
-        ]);
+            // Also update user's primary device info (for backwards compatibility)
+            $user->update([
+                'fcm_token' => $validated['fcm_token'],
+                'device_type' => $validated['device_type'],
+                'fcm_token_updated_at' => now(),
+                'device_id' => $deviceId, // Now safe to set since guest user's device_id was cleared
+            ]);
 
-        Log::info('FCM token registered', [
-            'user_id' => $user->id,
-            'device_type' => $validated['device_type'],
-            'device_id' => $validated['device_id'] ?? 'not provided',
-        ]);
+            DB::commit();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Device registered for notifications',
-        ]);
+            Log::info('FCM token registered for logged-in user', [
+                'user_id' => $user->id,
+                'device_type' => $validated['device_type'],
+                'device_id' => $deviceId,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Device registered for notifications',
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating FCM token: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to register device: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -520,14 +553,11 @@ class AuthController extends Controller
         $user = $request->user();
         
         if ($fcmToken) {
-            // Remove specific device
             UserDevice::deactivateByToken($user->id, $fcmToken);
         } else {
-            // Deactivate all devices for user
             UserDevice::where('user_id', $user->id)->update(['is_active' => false]);
         }
 
-        // Also clear from user table
         $user->update([
             'fcm_token' => null,
             'device_type' => null,

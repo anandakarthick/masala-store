@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\WishlistController;
+use App\Http\Controllers\Api\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,6 +41,9 @@ Route::prefix('v1')->group(function () {
     
     // Order tracking (public)
     Route::post('/orders/track', [OrderController::class, 'track']);
+    
+    // FCM Token for Guest Users (Public - no auth required)
+    Route::post('/notifications/register-device', [NotificationController::class, 'registerDevice']);
     
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {
