@@ -17,11 +17,63 @@ use Illuminate\Support\Facades\DB;
 class OrderController extends Controller
 {
     /**
+     * Get cart helper (same logic as CartController)
+     */
+    private function getCart(Request $request): Cart
+    {
+        if ($request->user()) {
+            // First check if there's a guest cart to merge
+            $sessionId = $request->header('X-Session-Id');
+            if ($sessionId) {
+                $guestCart = Cart::where('session_id', $sessionId)
+                    ->whereNull('user_id')
+                    ->with('items')
+                    ->first();
+                
+                if ($guestCart && $guestCart->items->count() > 0) {
+                    // Get or create user cart
+                    $userCart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
+                    
+                    // Merge items
+                    foreach ($guestCart->items as $item) {
+                        $existingItem = $userCart->items()
+                            ->where('product_id', $item->product_id)
+                            ->where('variant_id', $item->variant_id)
+                            ->first();
+                        
+                        if ($existingItem) {
+                            $existingItem->increment('quantity', $item->quantity);
+                        } else {
+                            $userCart->items()->create([
+                                'product_id' => $item->product_id,
+                                'variant_id' => $item->variant_id,
+                                'quantity' => $item->quantity,
+                            ]);
+                        }
+                    }
+                    
+                    // Delete guest cart
+                    $guestCart->items()->delete();
+                    $guestCart->delete();
+                    
+                    // Refresh user cart to get updated items
+                    return $userCart->fresh();
+                }
+            }
+            
+            return Cart::firstOrCreate(['user_id' => $request->user()->id]);
+        }
+
+        $sessionId = $request->header('X-Session-Id', session()->getId());
+        return Cart::firstOrCreate(['session_id' => $sessionId]);
+    }
+
+    /**
      * Get checkout data
      */
     public function checkoutData(Request $request)
     {
-        $cart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
+        $cart = $this->getCart($request);
         $cart->load('items.product', 'items.variant');
 
         if ($cart->items->isEmpty()) {
@@ -60,6 +112,7 @@ class OrderController extends Controller
                     'subtotal' => (float) $subtotal,
                     'gst_amount' => (float) $cart->gst_amount,
                     'item_count' => $cart->total_items,
+                    'total_quantity' => $cart->total_quantity,
                 ],
                 'shipping_charge' => (float) $shippingCharge,
                 'free_shipping_amount' => (float) Setting::freeShippingAmount(),
@@ -104,7 +157,7 @@ class OrderController extends Controller
             ], 400);
         }
 
-        $cart = Cart::firstOrCreate(['user_id' => $request->user()->id]);
+        $cart = $this->getCart($request);
 
         if ($cart->subtotal < $coupon->min_order_amount) {
             return response()->json([
@@ -150,7 +203,7 @@ class OrderController extends Controller
         ]);
 
         $user = $request->user();
-        $cart = Cart::where('user_id', $user->id)->first();
+        $cart = $this->getCart($request);
         $cart->load('items.product', 'items.variant');
 
         if (!$cart || $cart->items->isEmpty()) {

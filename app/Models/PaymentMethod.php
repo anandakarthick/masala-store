@@ -92,4 +92,20 @@ class PaymentMethod extends Model
     {
         return $this->code === 'cod';
     }
+
+    /**
+     * Check if payment method is available for given amount
+     */
+    public function isAvailableForAmount($amount): bool
+    {
+        if ($this->min_order_amount > 0 && $amount < $this->min_order_amount) {
+            return false;
+        }
+
+        if ($this->max_order_amount > 0 && $amount > $this->max_order_amount) {
+            return false;
+        }
+
+        return true;
+    }
 }
