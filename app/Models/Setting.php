@@ -9,6 +9,9 @@ class Setting extends Model
 {
     protected $fillable = ['key', 'value', 'type', 'group'];
 
+    /**
+     * Get a setting value with caching
+     */
     public static function get(string $key, $default = null)
     {
         return Cache::remember("setting.{$key}", 3600, function () use ($key, $default) {
@@ -17,6 +20,18 @@ class Setting extends Model
         });
     }
 
+    /**
+     * Get a setting value without caching (fresh from database)
+     */
+    public static function getFresh(string $key, $default = null)
+    {
+        $setting = self::where('key', $key)->first();
+        return $setting ? $setting->value : $default;
+    }
+
+    /**
+     * Set a setting value
+     */
     public static function set(string $key, $value, string $type = 'text', string $group = 'general'): self
     {
         Cache::forget("setting.{$key}");
@@ -27,6 +42,20 @@ class Setting extends Model
         );
     }
 
+    /**
+     * Clear all settings cache
+     */
+    public static function clearCache(): void
+    {
+        $keys = self::pluck('key')->toArray();
+        foreach ($keys as $key) {
+            Cache::forget("setting.{$key}");
+        }
+    }
+
+    /**
+     * Get all settings in a group
+     */
     public static function getGroup(string $group): array
     {
         return self::where('group', $group)
@@ -72,7 +101,6 @@ class Setting extends Model
         if ($favicon) {
             return asset('storage/' . $favicon);
         }
-        // Fallback to logo if no favicon is set
         $logo = self::get('logo');
         return $logo ? asset('storage/' . $logo) : null;
     }

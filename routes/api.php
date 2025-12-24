@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\WishlistController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\NotificationPreferenceController;
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\ConfigController;
 use App\Http\Controllers\Api\WalletController;
@@ -100,5 +101,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/notifications', [NotificationController::class, 'index']);
         Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
         Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+        
+        // Notification Preferences
+        Route::get('/notification-preferences', [NotificationPreferenceController::class, 'index']);
+        Route::put('/notification-preferences', [NotificationPreferenceController::class, 'update']);
+        Route::put('/notification-preferences/{key}', [NotificationPreferenceController::class, 'updateSingle']);
     });
 });
