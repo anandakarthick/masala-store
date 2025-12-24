@@ -183,7 +183,7 @@ class FCMService
                         'payload' => [
                             'aps' => [
                                 'sound' => 'default',
-                                'badge' => 1,
+                                'badge' => 1, // Show badge count on iOS
                             ],
                         ],
                     ],
