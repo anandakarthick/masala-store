@@ -49,6 +49,8 @@ Route::prefix('v1')->group(function () {
         Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
         Route::put('/auth/password', [AuthController::class, 'changePassword']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
+        Route::post('/auth/fcm-token', [AuthController::class, 'updateFcmToken']);
+        Route::delete('/auth/fcm-token', [AuthController::class, 'removeFcmToken']);
         
         // Wishlist
         Route::get('/wishlist', [WishlistController::class, 'index']);

@@ -24,6 +24,7 @@ class Order extends Model
         'billing_state',
         'billing_pincode',
         'order_type',
+        'order_source',
         'subtotal',
         'discount_amount',
         'first_time_discount_applied',

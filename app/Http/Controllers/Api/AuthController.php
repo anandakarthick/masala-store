@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Cart;
+use App\Models\UserDevice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -466,5 +467,76 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             Log::error('Error merging guest cart: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Update FCM token for push notifications (supports multiple devices)
+     */
+    public function updateFcmToken(Request $request)
+    {
+        $validated = $request->validate([
+            'fcm_token' => 'required|string',
+            'device_type' => 'required|in:android,ios,web',
+            'device_id' => 'nullable|string', // Unique device identifier
+            'device_name' => 'nullable|string', // Device model name
+        ]);
+
+        $user = $request->user();
+        
+        // Register device (supports multiple devices per user)
+        UserDevice::registerDevice(
+            $user->id,
+            $validated['fcm_token'],
+            $validated['device_type'],
+            $validated['device_id'] ?? null,
+            $validated['device_name'] ?? null
+        );
+
+        // Also update user's primary device info (for backwards compatibility)
+        $user->update([
+            'fcm_token' => $validated['fcm_token'],
+            'device_type' => $validated['device_type'],
+            'fcm_token_updated_at' => now(),
+        ]);
+
+        Log::info('FCM token registered', [
+            'user_id' => $user->id,
+            'device_type' => $validated['device_type'],
+            'device_id' => $validated['device_id'] ?? 'not provided',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Device registered for notifications',
+        ]);
+    }
+
+    /**
+     * Remove FCM token for current device
+     */
+    public function removeFcmToken(Request $request)
+    {
+        $fcmToken = $request->input('fcm_token');
+        $user = $request->user();
+        
+        if ($fcmToken) {
+            // Remove specific device
+            UserDevice::deactivateByToken($user->id, $fcmToken);
+        } else {
+            // Deactivate all devices for user
+            UserDevice::where('user_id', $user->id)->update(['is_active' => false]);
+        }
+
+        // Also clear from user table
+        $user->update([
+            'fcm_token' => null,
+            'device_type' => null,
+            'fcm_token_updated_at' => null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Device unregistered from notifications',
+        ]);
     }
 }

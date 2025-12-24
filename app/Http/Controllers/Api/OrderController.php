@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\SendOrderEmails;
+use App\Jobs\SendPushNotification;
 use App\Models\Cart;
 use App\Models\Coupon;
 use App\Models\Order;
@@ -296,6 +297,7 @@ class OrderController extends Controller
                 'payment_status' => 'pending',
                 'status' => 'pending',
                 'customer_notes' => $validated['customer_notes'] ?? null,
+                'order_source' => $user->device_type ?? 'android', // Get from user's device type
             ]);
 
             // Deduct wallet
@@ -358,6 +360,12 @@ class OrderController extends Controller
                 }
                 SendOrderEmails::dispatch($order->fresh()->load('items.product'));
             }
+
+            // Send push notification for order placed
+            SendPushNotification::dispatch('order_placed', $user->id, [
+                'order_number' => $order->order_number,
+                'total' => $totalAmount,
+            ]);
 
             return response()->json([
                 'success' => true,

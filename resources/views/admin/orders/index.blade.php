@@ -46,6 +46,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
@@ -67,6 +68,19 @@
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ $order->total_items }}</td>
                         <td class="px-6 py-4 font-medium">₹{{ number_format($order->total_amount, 2) }}</td>
+                        <td class="px-6 py-4">
+                            @php
+                                $sourceIcons = [
+                                    'web' => '<i class="fas fa-globe text-blue-500" title="Web"></i>',
+                                    'android' => '<i class="fab fa-android text-green-500" title="Android"></i>',
+                                    'ios' => '<i class="fab fa-apple text-gray-700" title="iOS"></i>',
+                                ];
+                            @endphp
+                            <span class="inline-flex items-center gap-1">
+                                {!! $sourceIcons[$order->order_source ?? 'web'] ?? $sourceIcons['web'] !!}
+                                <span class="text-xs text-gray-500">{{ ucfirst($order->order_source ?? 'web') }}</span>
+                            </span>
+                        </td>
                         <td class="px-6 py-4">
                             <span class="px-2 py-1 text-xs rounded-full 
                                 {{ $order->payment_status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600' }}">
@@ -92,7 +106,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                        <td colspan="9" class="px-6 py-12 text-center text-gray-500">
                             <i class="fas fa-shopping-bag text-4xl mb-2"></i>
                             <p>No orders found</p>
                         </td>
