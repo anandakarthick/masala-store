@@ -19,6 +19,8 @@ Route::prefix('v1')->group(function () {
     // Auth routes
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
+    Route::post('/auth/google', [AuthController::class, 'googleLogin']);
+    Route::post('/auth/google-info', [AuthController::class, 'googleLoginWithInfo']);
     Route::post('/auth/login-phone', [AuthController::class, 'loginWithPhone']);
     Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp']);
     
