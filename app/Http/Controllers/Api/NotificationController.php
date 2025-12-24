@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserDevice;
+use App\Models\UserNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\JsonResponse;
 
 class NotificationController extends Controller
 {
@@ -77,5 +79,97 @@ class NotificationController extends Controller
                 'message' => 'Failed to register device',
             ], 500);
         }
+    }
+
+    /**
+     * Get user's notifications
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        // Get notifications
+        $notifications = UserNotification::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        // Format notifications
+        $formattedNotifications = collect($notifications->items())->map(function ($notification) {
+            return [
+                'id' => $notification->id,
+                'type' => $notification->type,
+                'title' => $notification->title,
+                'message' => $notification->message,
+                'data' => $notification->data,
+                'is_read' => $notification->is_read,
+                'created_at' => $notification->created_at->diffForHumans(),
+                'created_at_formatted' => $notification->created_at->format('d M Y, h:i A'),
+            ];
+        });
+
+        // Count unread
+        $unreadCount = UserNotification::where('user_id', $user->id)
+            ->where('is_read', false)
+            ->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'notifications' => $formattedNotifications,
+                'unread_count' => $unreadCount,
+            ],
+            'meta' => [
+                'current_page' => $notifications->currentPage(),
+                'last_page' => $notifications->lastPage(),
+                'per_page' => $notifications->perPage(),
+                'total' => $notifications->total(),
+            ],
+        ]);
+    }
+
+    /**
+     * Mark notification as read
+     */
+    public function markAsRead(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+        
+        $notification = UserNotification::where('user_id', $user->id)
+            ->where('id', $id)
+            ->first();
+
+        if (!$notification) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Notification not found',
+            ], 404);
+        }
+
+        $notification->markAsRead();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification marked as read',
+        ]);
+    }
+
+    /**
+     * Mark all notifications as read
+     */
+    public function markAllAsRead(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        UserNotification::where('user_id', $user->id)
+            ->where('is_read', false)
+            ->update([
+                'is_read' => true,
+                'read_at' => now(),
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'All notifications marked as read',
+        ]);
     }
 }

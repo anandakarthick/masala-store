@@ -8,6 +8,9 @@ use App\Http\Controllers\Api\WishlistController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\ConfigController;
+use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\Api\ReferralController;
+use App\Http\Controllers\Api\SupportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -50,6 +53,10 @@ Route::prefix('v1')->group(function () {
     // FCM Token for Guest Users (Public - no auth required)
     Route::post('/notifications/register-device', [NotificationController::class, 'registerDevice']);
     
+    // Help & Support (Public)
+    Route::get('/support', [SupportController::class, 'index']);
+    Route::get('/pages/{slug}', [SupportController::class, 'getPage']);
+    
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {
         
@@ -82,5 +89,16 @@ Route::prefix('v1')->group(function () {
         Route::post('/orders', [OrderController::class, 'placeOrder']);
         Route::get('/orders', [OrderController::class, 'myOrders']);
         Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
+        
+        // Wallet
+        Route::get('/wallet', [WalletController::class, 'index']);
+        
+        // Referrals
+        Route::get('/referrals', [ReferralController::class, 'index']);
+        
+        // Notifications
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+        Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
     });
 });
