@@ -112,6 +112,7 @@ class ConfigController extends Controller
                     'update_message' => $updateMessage,
                     'play_store_url' => $playStoreUrl,
                     'app_store_url' => $appStoreUrl,
+                    'logo_url' => Setting::logo(),
                 ],
                 
                 // Business Info

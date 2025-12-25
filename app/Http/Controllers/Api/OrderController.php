@@ -16,6 +16,7 @@ use App\Services\FirstTimeCustomerService;
 use App\Services\InvoiceService;
 use App\Models\ProductVariant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
@@ -633,8 +634,18 @@ class OrderController extends Controller
             ], 404);
         }
 
-        // Generate a temporary signed URL for invoice download
-        $url = url("/api/orders/{$orderNumber}/invoice");
+        // Generate a temporary token for invoice download (valid for 1 hour)
+        $token = hash('sha256', $order->id . $order->order_number . now()->timestamp . config('app.key'));
+        $expires = now()->addHour()->timestamp;
+        
+        // Store token temporarily in cache
+        Cache::put('invoice_token_' . $token, [
+            'order_id' => $order->id,
+            'user_id' => $request->user()->id,
+        ], 3600);
+
+        // Generate signed URL that doesn't require auth
+        $url = url("/api/v1/orders/{$orderNumber}/invoice-download?token={$token}&expires={$expires}");
 
         return response()->json([
             'success' => true,
@@ -642,6 +653,56 @@ class OrderController extends Controller
                 'invoice_url' => $url,
             ],
         ]);
+    }
+
+    /**
+     * Public invoice download with token (for mobile browser)
+     */
+    public function downloadInvoicePublic(Request $request, $orderNumber, InvoiceService $invoiceService)
+    {
+        $token = $request->query('token');
+        $expires = $request->query('expires');
+
+        if (!$token || !$expires) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid request.',
+            ], 400);
+        }
+
+        // Check if token has expired
+        if (now()->timestamp > (int) $expires) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Link has expired. Please try again.',
+            ], 400);
+        }
+
+        // Verify token from cache
+        $tokenData = Cache::get('invoice_token_' . $token);
+        if (!$tokenData) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired token.',
+            ], 400);
+        }
+
+        $order = Order::where('order_number', $orderNumber)
+            ->where('id', $tokenData['order_id'])
+            ->with('items.product')
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found.',
+            ], 404);
+        }
+
+        // Delete token after use (one-time use)
+        Cache::forget('invoice_token_' . $token);
+
+        return $invoiceService->downloadInvoice($order);
     }
 
     /**

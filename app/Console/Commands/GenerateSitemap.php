@@ -17,7 +17,14 @@ class GenerateSitemap extends Command
     {
         $this->info('Generating sitemap...');
 
-        $siteUrl = rtrim(config('app.url', url('/')), '/');
+        // Always use the canonical domain for sitemap
+        $siteUrl = 'https://www.svproducts.store';
+        
+        // Temporarily set the app URL for route generation
+        $originalUrl = config('app.url');
+        config(['app.url' => $siteUrl]);
+        \URL::forceRootUrl($siteUrl);
+        \URL::forceScheme('https');
         
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . PHP_EOL;
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" ';
@@ -125,6 +132,9 @@ class GenerateSitemap extends Command
                 ['Total', $totalUrls],
             ]
         );
+        
+        // Restore original URL configuration
+        config(['app.url' => $originalUrl]);
         
         return 0;
     }

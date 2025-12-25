@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Order;
 use App\Models\UserNotification;
-use App\Services\PushNotificationService;
+use App\Services\FCMService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -120,7 +120,8 @@ class SendDeliveryUpdateNotification implements ShouldQueue
         try {
             $hasAttachments = $order->hasDeliveryAttachments();
             
-            PushNotificationService::sendToUser(
+            $fcmService = app(FCMService::class);
+            $fcmService->sendToUser(
                 $order->user_id,
                 'Delivery Update 🚚',
                 $this->getNotificationMessage($order, $hasAttachments),

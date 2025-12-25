@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Order;
 use App\Models\UserNotification;
-use App\Services\PushNotificationService;
+use App\Services\FCMService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -130,7 +130,8 @@ class SendOrderCancellationNotification implements ShouldQueue
                 ? 'Order Cancelled Successfully ❌' 
                 : 'Order Cancelled ❌';
 
-            PushNotificationService::sendToUser(
+            $fcmService = app(FCMService::class);
+            $fcmService->sendToUser(
                 $order->user_id,
                 $title,
                 $this->getNotificationMessage($order),

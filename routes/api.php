@@ -51,6 +51,9 @@ Route::prefix('v1')->group(function () {
     // Order tracking (public)
     Route::post('/orders/track', [OrderController::class, 'track']);
     
+    // Invoice download with token (public - no auth needed)
+    Route::get('/orders/{orderNumber}/invoice-download', [OrderController::class, 'downloadInvoicePublic']);
+    
     // FCM Token for Guest Users (Public - no auth required)
     Route::post('/notifications/register-device', [NotificationController::class, 'registerDevice']);
     

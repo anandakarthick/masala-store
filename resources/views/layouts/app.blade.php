@@ -12,9 +12,12 @@
         $businessPhone = \App\Models\Setting::get('business_phone', '+919876543210');
         $businessEmail = \App\Models\Setting::get('business_email', 'support@svmasala.com');
         $businessAddress = \App\Models\Setting::get('business_address', 'Chennai, Tamil Nadu, India');
-        $siteUrl = config('app.url', url('/'));
+        $siteUrl = 'https://www.svproducts.store'; // Canonical domain
         $defaultDescription = $businessTagline . '. Buy authentic Indian spices online.';
         $defaultKeywords = 'homemade masala, Indian spices, turmeric powder, coriander powder, garam masala';
+        
+        // Generate canonical URL (always https://www.)
+        $canonicalUrl = $siteUrl . parse_url(url()->current(), PHP_URL_PATH);
         
         // WhatsApp Settings
         $whatsappNumber = \App\Models\Setting::get('whatsapp_number', '');
@@ -40,7 +43,7 @@
     <meta name="author" content="{{ $businessName }}">
     <meta name="robots" content="@yield('robots', 'index, follow')">
     
-    <link rel="canonical" href="@yield('canonical', url()->current())">
+    <link rel="canonical" href="@yield('canonical', $canonicalUrl)">
     @stack('seo_links')
     
     @if(config('seo.verification.google'))
