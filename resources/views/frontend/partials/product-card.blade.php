@@ -25,7 +25,7 @@
             </template>
             
             @if($product->is_combo)
-                <span class="absolute top-2 right-2 bg-green-600 text-white text-xs px-2 py-0.5 rounded">
+                <span class="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-0.5 rounded">
                     <i class="fas fa-gift mr-1" aria-hidden="true"></i>Pack
                 </span>
             @elseif($product->isOutOfStock())
@@ -38,11 +38,11 @@
     
     <div class="p-3">
         <a href="{{ route('category.show', $product->category->slug) }}" 
-           class="text-xs text-green-600 hover:text-green-700">
+           class="text-xs text-orange-500 hover:text-orange-600">
             {{ $product->category->name }}
         </a>
         
-        <h3 class="font-medium text-gray-800 mt-1 text-sm leading-tight group-hover:text-green-600 transition line-clamp-2">
+        <h3 class="font-medium text-gray-800 mt-1 text-sm leading-tight group-hover:text-orange-500 transition line-clamp-2">
             <a href="{{ route('products.show', $product->slug) }}">{{ $product->name }}</a>
         </h3>
         
@@ -71,12 +71,12 @@
             <div class="mb-2">
                 <template x-if="currentDiscountPrice">
                     <div>
-                        <span class="text-sm font-bold text-green-600">₹<span x-text="currentDiscountPrice.toFixed(2)"></span></span>
+                        <span class="text-sm font-bold text-orange-500">₹<span x-text="currentDiscountPrice.toFixed(2)"></span></span>
                         <span class="text-xs text-gray-400 line-through ml-1">₹<span x-text="currentPrice.toFixed(2)"></span></span>
                     </div>
                 </template>
                 <template x-if="!currentDiscountPrice">
-                    <span class="text-sm font-bold text-green-600">₹<span x-text="currentPrice.toFixed(2)"></span></span>
+                    <span class="text-sm font-bold text-orange-500">₹<span x-text="currentPrice.toFixed(2)"></span></span>
                 </template>
             </div>
             
@@ -86,7 +86,7 @@
                     <div class="mb-2">
                         <select x-model="selectedVariantId" 
                                 @change="onVariantChange()"
-                                class="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-green-500 focus:border-green-500 bg-white">
+                                class="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-orange-500 focus:border-orange-500 bg-white">
                             @foreach($product->activeVariants as $variant)
                                 <option value="{{ $variant->id }}" 
                                         {{ $variant->isOutOfStock() ? 'disabled' : '' }}
@@ -126,7 +126,7 @@
                         </div>
                         <button type="button" 
                                 @click="addToCartWithVariant()"
-                                class="flex-1 flex items-center justify-center gap-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition text-xs font-medium"
+                                class="flex-1 flex items-center justify-center gap-1 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg transition text-xs font-medium"
                                 aria-label="Add {{ $product->name }} to cart">
                             <i class="fas fa-cart-plus" aria-hidden="true"></i> Add
                         </button>
@@ -164,7 +164,7 @@
                         </div>
                         <button type="button" 
                                 @click="addToCartSimple()"
-                                class="flex-1 flex items-center justify-center gap-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition text-xs font-medium"
+                                class="flex-1 flex items-center justify-center gap-1 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg transition text-xs font-medium"
                                 aria-label="Add {{ $product->name }} to cart">
                             <i class="fas fa-cart-plus" aria-hidden="true"></i> Add
                         </button>

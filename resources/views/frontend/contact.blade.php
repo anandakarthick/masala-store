@@ -17,7 +17,7 @@
     <nav class="mb-6" aria-label="Breadcrumb">
         <ol class="flex items-center space-x-2 text-sm text-gray-500" itemscope itemtype="https://schema.org/BreadcrumbList">
             <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-                <a href="{{ route('home') }}" class="hover:text-green-600" itemprop="item">
+                <a href="{{ route('home') }}" class="hover:text-orange-600" itemprop="item">
                     <span itemprop="name">Home</span>
                 </a>
                 <meta itemprop="position" content="1">
@@ -39,32 +39,32 @@
         <!-- Contact Info -->
         <aside class="space-y-6" aria-label="Contact information">
             <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <i class="fas fa-map-marker-alt text-green-600 text-xl" aria-hidden="true"></i>
+                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-map-marker-alt text-orange-500 text-xl" aria-hidden="true"></i>
                 </div>
                 <h2 class="font-semibold text-gray-800 mb-2">Address</h2>
                 <address class="text-gray-600 not-italic">{{ $businessAddress }}</address>
             </div>
             
             <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <i class="fas fa-phone text-green-600 text-xl" aria-hidden="true"></i>
+                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-phone text-orange-500 text-xl" aria-hidden="true"></i>
                 </div>
                 <h2 class="font-semibold text-gray-800 mb-2">Phone</h2>
-                <a href="tel:{{ $businessPhone }}" class="text-gray-600 hover:text-green-600">{{ $businessPhone }}</a>
+                <a href="tel:{{ $businessPhone }}" class="text-gray-600 hover:text-orange-600">{{ $businessPhone }}</a>
             </div>
             
             <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <i class="fas fa-envelope text-green-600 text-xl" aria-hidden="true"></i>
+                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-envelope text-orange-500 text-xl" aria-hidden="true"></i>
                 </div>
                 <h2 class="font-semibold text-gray-800 mb-2">Email</h2>
-                <a href="mailto:{{ $businessEmail }}" class="text-gray-600 hover:text-green-600">{{ $businessEmail }}</a>
+                <a href="mailto:{{ $businessEmail }}" class="text-gray-600 hover:text-orange-600">{{ $businessEmail }}</a>
             </div>
 
             <div class="bg-white rounded-lg shadow-md p-6">
                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <i class="fab fa-whatsapp text-green-600 text-xl" aria-hidden="true"></i>
+                    <i class="fab fa-whatsapp text-green-500 text-xl" aria-hidden="true"></i>
                 </div>
                 <h2 class="font-semibold text-gray-800 mb-2">WhatsApp</h2>
                 <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $businessPhone) }}" 
@@ -87,7 +87,7 @@
                         <div>
                             <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Your Name *</label>
                             <input type="text" id="name" name="name" value="{{ old('name') }}" required
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500"
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500"
                                    autocomplete="name">
                             @error('name')
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -96,7 +96,7 @@
                         <div>
                             <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
                             <input type="email" id="email" name="email" value="{{ old('email') }}" required
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500"
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500"
                                    autocomplete="email">
                             @error('email')
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -108,13 +108,13 @@
                         <div>
                             <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                             <input type="tel" id="phone" name="phone" value="{{ old('phone') }}"
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500"
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500"
                                    autocomplete="tel">
                         </div>
                         <div>
                             <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
                             <input type="text" id="subject" name="subject" value="{{ old('subject') }}" required
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
                             @error('subject')
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                             @enderror
@@ -124,13 +124,13 @@
                     <div class="mb-4">
                         <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Message *</label>
                         <textarea id="message" name="message" rows="5" required
-                                  class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">{{ old('message') }}</textarea>
+                                  class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">{{ old('message') }}</textarea>
                         @error('message')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold">
+                    <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-semibold transition">
                         <i class="fas fa-paper-plane mr-2" aria-hidden="true"></i> Send Message
                     </button>
                 </form>
@@ -153,7 +153,7 @@
                 </div>
                 <div>
                     <h3 class="font-semibold text-gray-800">How can I track my order?</h3>
-                    <p class="text-gray-600 mt-1">You can track your order using our <a href="{{ route('tracking.index') }}" class="text-green-600 hover:underline">order tracking page</a>. Simply enter your order number to see the current status.</p>
+                    <p class="text-gray-600 mt-1">You can track your order using our <a href="{{ route('tracking.index') }}" class="text-orange-600 hover:underline">order tracking page</a>. Simply enter your order number to see the current status.</p>
                 </div>
             </div>
         </div>

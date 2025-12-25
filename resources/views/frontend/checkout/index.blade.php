@@ -14,13 +14,13 @@
                 <!-- Customer Details -->
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h2 class="text-lg font-semibold mb-4">
-                        <i class="fas fa-user text-green-600 mr-2"></i>Customer Details
+                        <i class="fas fa-user text-orange-500 mr-2"></i>Customer Details
                     </h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
                             <input type="text" name="customer_name" value="{{ old('customer_name', $user?->name) }}" required
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
                             @error('customer_name')
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                             @enderror
@@ -44,7 +44,7 @@
                 <!-- Shipping Address -->
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h2 class="text-lg font-semibold mb-4">
-                        <i class="fas fa-map-marker-alt text-green-600 mr-2"></i>Shipping Address
+                        <i class="fas fa-map-marker-alt text-orange-500 mr-2"></i>Shipping Address
                     </h2>
                     <div class="space-y-4">
                         <div>
@@ -78,19 +78,19 @@
                 <!-- Order Type -->
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h2 class="text-lg font-semibold mb-4">
-                        <i class="fas fa-box text-green-600 mr-2"></i>Order Type
+                        <i class="fas fa-box text-orange-500 mr-2"></i>Order Type
                     </h2>
                     <div class="flex flex-wrap gap-4">
                         <label class="flex items-center cursor-pointer">
-                            <input type="radio" name="order_type" value="retail" checked class="text-green-600 focus:ring-green-500">
+                            <input type="radio" name="order_type" value="retail" checked class="text-orange-500 focus:ring-orange-500">
                             <span class="ml-2">Retail Order</span>
                         </label>
                         <label class="flex items-center cursor-pointer">
-                            <input type="radio" name="order_type" value="bulk" class="text-green-600 focus:ring-green-500">
+                            <input type="radio" name="order_type" value="bulk" class="text-orange-500 focus:ring-orange-500">
                             <span class="ml-2">Bulk Order</span>
                         </label>
                         <label class="flex items-center cursor-pointer">
-                            <input type="radio" name="order_type" value="return_gift" class="text-green-600 focus:ring-green-500">
+                            <input type="radio" name="order_type" value="return_gift" class="text-orange-500 focus:ring-orange-500">
                             <span class="ml-2">Return Gift Order</span>
                         </label>
                     </div>
@@ -108,33 +108,33 @@
                     @endphp
                     <div class="bg-white rounded-lg shadow-md p-6" x-data="{ useWallet: false, walletAmount: {{ $maxWalletUsable }} }">
                         <h2 class="text-lg font-semibold mb-4">
-                            <i class="fas fa-wallet text-green-600 mr-2"></i>Pay with Wallet
+                            <i class="fas fa-wallet text-orange-500 mr-2"></i>Pay with Wallet
                         </h2>
-                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+                        <div class="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-4">
                             <div class="flex items-center justify-between mb-3">
                                 <div>
                                     <p class="text-sm text-gray-600">Available Balance</p>
-                                    <p class="text-2xl font-bold text-green-600">₹{{ number_format($walletBalance, 2) }}</p>
+                                    <p class="text-2xl font-bold text-orange-500">₹{{ number_format($walletBalance, 2) }}</p>
                                 </div>
                                 <label class="flex items-center cursor-pointer">
                                     <input type="checkbox" name="use_wallet" value="1" x-model="useWallet"
-                                           class="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                                           class="w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-500">
                                     <span class="ml-2 font-medium text-gray-700">Use Wallet</span>
                                 </label>
                             </div>
                             
                             <div x-show="useWallet" x-collapse>
-                                <div class="pt-3 border-t border-green-200">
+                                <div class="pt-3 border-t border-orange-200">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Amount to use from wallet</label>
                                     <div class="flex items-center gap-3">
                                         <div class="relative flex-1">
                                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
                                             <input type="number" name="wallet_amount" x-model="walletAmount" 
                                                    min="0" max="{{ $maxWalletUsable }}" step="0.01"
-                                                   class="w-full pl-8 border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                                   class="w-full pl-8 border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
                                         </div>
                                         <button type="button" @click="walletAmount = {{ $maxWalletUsable }}"
-                                                class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg text-sm font-medium">
+                                                class="bg-orange-100 hover:bg-orange-200 text-orange-700 px-3 py-2 rounded-lg text-sm font-medium">
                                             Use Max
                                         </button>
                                     </div>
@@ -142,7 +142,7 @@
                                         <i class="fas fa-info-circle mr-1"></i>
                                         Maximum usable: ₹{{ number_format($maxWalletUsable, 2) }}
                                         @if($walletBalance >= $orderTotal)
-                                            <span class="text-green-600">(Full order can be paid with wallet!)</span>
+                                            <span class="text-orange-500">(Full order can be paid with wallet!)</span>
                                         @endif
                                     </p>
                                 </div>
@@ -154,18 +154,18 @@
                 <!-- Payment Method -->
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h2 class="text-lg font-semibold mb-4">
-                        <i class="fas fa-credit-card text-green-600 mr-2"></i>Payment Method
+                        <i class="fas fa-credit-card text-orange-500 mr-2"></i>Payment Method
                     </h2>
                     <div class="space-y-3">
                         @forelse($paymentMethods as $index => $method)
-                            <label class="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors payment-option {{ $index === 0 ? 'border-green-500 bg-green-50' : 'border-gray-200' }}"
+                            <label class="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors payment-option {{ $index === 0 ? 'border-orange-500 bg-orange-50' : 'border-gray-200' }}"
                                    data-payment="{{ $method->code }}">
                                 <input type="radio" name="payment_method" value="{{ $method->code }}" 
                                        {{ $index === 0 ? 'checked' : '' }}
-                                       class="mt-1 text-green-600 focus:ring-green-500">
+                                       class="mt-1 text-orange-500 focus:ring-orange-500">
                                 <div class="ml-3 flex-1">
                                     <div class="flex items-center">
-                                        <i class="fas {{ $method->icon ?? 'fa-credit-card' }} text-lg mr-2 {{ $method->is_online ? 'text-blue-600' : 'text-green-600' }}"></i>
+                                        <i class="fas {{ $method->icon ?? 'fa-credit-card' }} text-lg mr-2 {{ $method->is_online ? 'text-blue-600' : 'text-orange-500' }}"></i>
                                         <span class="font-medium text-gray-800">{{ $method->display_name }}</span>
                                         @if($method->is_online)
                                             <span class="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">Online</span>
@@ -278,7 +278,7 @@
                                 @if($method->instructions)
                                     <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                                         <p class="text-sm text-gray-700">
-                                            <i class="fas fa-info-circle mr-1 text-green-600"></i>{{ $method->instructions }}
+                                            <i class="fas fa-info-circle mr-1 text-orange-500"></i>{{ $method->instructions }}
                                         </p>
                                     </div>
                                 @endif
@@ -290,10 +290,10 @@
                 <!-- Notes -->
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h2 class="text-lg font-semibold mb-4">
-                        <i class="fas fa-sticky-note text-green-600 mr-2"></i>Order Notes (Optional)
+                        <i class="fas fa-sticky-note text-orange-500 mr-2"></i>Order Notes (Optional)
                     </h2>
                     <textarea name="customer_notes" rows="3" placeholder="Any special instructions for your order..."
-                              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">{{ old('customer_notes') }}</textarea>
+                              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">{{ old('customer_notes') }}</textarea>
                 </div>
             </div>
 
@@ -301,7 +301,7 @@
             <div class="lg:col-span-1">
                 <div class="bg-white rounded-lg shadow-md p-6 sticky top-24">
                     <h2 class="text-lg font-semibold mb-4">
-                        <i class="fas fa-shopping-bag text-green-600 mr-2"></i>Order Summary
+                        <i class="fas fa-shopping-bag text-orange-500 mr-2"></i>Order Summary
                     </h2>
                     
                     <!-- Items -->
@@ -316,7 +316,7 @@
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm font-medium truncate">{{ $item->product->name }}</p>
                                     @if($item->variant)
-                                        <p class="text-xs text-green-600">{{ $item->variant->name }}</p>
+                                        <p class="text-xs text-orange-500">{{ $item->variant->name }}</p>
                                     @endif
                                     <p class="text-xs text-gray-500">Qty: {{ $item->quantity }}</p>
                                 </div>
@@ -342,12 +342,12 @@
                     <!-- First-Time Customer Discount -->
                     @if(isset($firstTimeDiscount) && $firstTimeDiscount['eligible'])
                         <div class="border-t mt-4 pt-4">
-                            <div class="bg-gradient-to-r from-green-50 to-yellow-50 border border-green-200 p-3 rounded-lg">
+                            <div class="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 p-3 rounded-lg">
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="text-lg">🎉</span>
-                                    <span class="font-semibold text-green-700">First-Time Customer Offer!</span>
+                                    <span class="font-semibold text-orange-700">First-Time Customer Offer!</span>
                                 </div>
-                                <p class="text-sm text-green-600">You get {{ $firstTimeDiscount['discount_percentage'] }}% OFF on this order</p>
+                                <p class="text-sm text-orange-600">You get {{ $firstTimeDiscount['discount_percentage'] }}% OFF on this order</p>
                                 <p class="text-xs text-gray-500 mt-1">Only {{ $firstTimeDiscount['remaining_slots'] }} slots remaining!</p>
                             </div>
                         </div>
@@ -365,10 +365,10 @@
                     <!-- Coupon -->
                     <div class="border-t mt-4 pt-4">
                         @if(session('coupon'))
-                            <div class="flex justify-between items-center bg-green-50 p-3 rounded-lg mb-3">
+                            <div class="flex justify-between items-center bg-orange-50 p-3 rounded-lg mb-3">
                                 <div>
-                                    <span class="text-green-600 font-medium">{{ session('coupon')->code }}</span>
-                                    <p class="text-xs text-green-600">{{ session('coupon')->name }}</p>
+                                    <span class="text-orange-500 font-medium">{{ session('coupon')->code }}</span>
+                                    <p class="text-xs text-orange-500">{{ session('coupon')->name }}</p>
                                 </div>
                                 <form action="{{ route('checkout.remove-coupon') }}" method="POST">
                                     @csrf
@@ -379,7 +379,7 @@
                             <form action="{{ route('checkout.apply-coupon') }}" method="POST" class="flex gap-2 mb-3">
                                 @csrf
                                 <input type="text" name="coupon_code" placeholder="Coupon Code"
-                                       class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-green-500 focus:border-green-500">
+                                       class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-orange-500 focus:border-orange-500">
                                 <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg text-sm">
                                     Apply
                                 </button>
@@ -400,13 +400,13 @@
                             </div>
                         @endif
                         @if(session('coupon'))
-                            <div class="flex justify-between text-green-600">
+                            <div class="flex justify-between text-orange-500">
                                 <span>Coupon Discount</span>
                                 <span>-₹{{ number_format(session('coupon')->calculateDiscount($cart->subtotal), 2) }}</span>
                             </div>
                         @endif
                         @if(isset($firstTimeDiscount) && $firstTimeDiscount['eligible'] && $firstTimeDiscount['discount_amount'] > 0)
-                            <div class="flex justify-between text-green-600">
+                            <div class="flex justify-between text-orange-500">
                                 <span>🎉 First-Time Discount ({{ $firstTimeDiscount['discount_percentage'] }}%)</span>
                                 <span>-₹{{ number_format($firstTimeDiscount['discount_amount'], 2) }}</span>
                             </div>
@@ -418,7 +418,7 @@
                         <div class="flex justify-between">
                             <span class="text-gray-600">Shipping</span>
                             @if($shippingCharge == 0)
-                                <span class="text-green-600">FREE</span>
+                                <span class="text-orange-500">FREE</span>
                             @else
                                 <span>₹{{ number_format($shippingCharge, 2) }}</span>
                             @endif
@@ -434,16 +434,16 @@
                         @endphp
                         <div class="flex justify-between text-lg font-bold">
                             <span>Total</span>
-                            <span class="text-green-600">₹{{ number_format($total, 2) }}</span>
+                            <span class="text-orange-500">₹{{ number_format($total, 2) }}</span>
                         </div>
                         @if($totalDiscount > 0)
-                            <p class="text-xs text-green-600 text-right mt-1">
+                            <p class="text-xs text-orange-500 text-right mt-1">
                                 You save ₹{{ number_format($totalDiscount, 2) }} on this order!
                             </p>
                         @endif
                     </div>
 
-                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold mt-6 transition-colors">
+                    <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-semibold mt-6 transition-colors">
                         <i class="fas fa-lock mr-2"></i>Place Order
                     </button>
                     
@@ -464,13 +464,13 @@ document.querySelectorAll('.payment-option').forEach(option => {
     option.addEventListener('click', function() {
         // Remove highlight from all
         document.querySelectorAll('.payment-option').forEach(opt => {
-            opt.classList.remove('border-green-500', 'bg-green-50');
+            opt.classList.remove('border-orange-500', 'bg-orange-50');
             opt.classList.add('border-gray-200');
         });
         
         // Highlight selected
         this.classList.remove('border-gray-200');
-        this.classList.add('border-green-500', 'bg-green-50');
+        this.classList.add('border-orange-500', 'bg-orange-50');
         
         // Hide all payment details
         document.querySelectorAll('.payment-details').forEach(detail => {

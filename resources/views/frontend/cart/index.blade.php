@@ -16,7 +16,7 @@
         $ftcMaxDiscount = $ftcService::getMaxDiscountAmount();
     @endphp
     @if($ftcEnabled && $ftcRemaining > 0)
-        <div class="mb-6 bg-gradient-to-r from-green-500 to-yellow-500 rounded-lg p-4 text-white shadow-lg">
+        <div class="mb-6 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-lg p-4 text-white shadow-lg">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <div class="flex items-center gap-3">
                     <span class="text-3xl">🎁</span>
@@ -34,7 +34,7 @@
                     </div>
                 </div>
                 <div class="text-center">
-                    <span class="bg-white text-green-600 font-bold px-4 py-2 rounded-full text-sm">
+                    <span class="bg-white text-orange-600 font-bold px-4 py-2 rounded-full text-sm">
                         Only {{ $ftcRemaining }} slots left!
                     </span>
                     @if(!auth()->check())
@@ -106,10 +106,10 @@
                                         <div class="flex items-center gap-4">
                                             <div class="text-sm">
                                                 <span class="text-gray-500 line-through">₹{{ number_format($combo->calculated_price, 2) }}</span>
-                                                <span class="text-lg font-bold text-green-600 ml-2">₹{{ number_format($combo->final_price, 2) }}</span>
+                                                <span class="text-lg font-bold text-orange-500 ml-2">₹{{ number_format($combo->final_price, 2) }}</span>
                                             </div>
                                             @if($combo->discount_amount > 0)
-                                                <span class="bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded-full">
+                                                <span class="bg-orange-100 text-orange-700 text-xs font-medium px-2 py-1 rounded-full">
                                                     Save ₹{{ number_format($combo->discount_amount, 0) }}
                                                 </span>
                                             @endif
@@ -168,11 +168,11 @@
                                                     @endif
                                                 </div>
                                                 <div class="ml-4">
-                                                    <a href="{{ route('products.show', $item->product->slug) }}" class="font-medium text-gray-800 hover:text-green-600">
+                                                    <a href="{{ route('products.show', $item->product->slug) }}" class="font-medium text-gray-800 hover:text-orange-500">
                                                         {{ $item->product->name }}
                                                     </a>
                                                     @if($item->variant)
-                                                        <p class="text-sm text-green-600 font-medium">{{ $item->variant->name }}</p>
+                                                        <p class="text-sm text-orange-500 font-medium">{{ $item->variant->name }}</p>
                                                     @endif
                                                     <p class="text-sm text-gray-500">₹{{ number_format($item->unit_price, 2) }}</p>
                                                 </div>
@@ -222,7 +222,7 @@
 
                 <div class="flex flex-wrap justify-between gap-4">
                     <div class="flex gap-4">
-                        <a href="{{ route('products.index') }}" class="text-green-600 hover:text-green-700">
+                        <a href="{{ route('products.index') }}" class="text-orange-500 hover:text-orange-600">
                             <i class="fas fa-arrow-left mr-2"></i> Continue Shopping
                         </a>
                         <a href="{{ route('combo.index') }}" class="text-purple-600 hover:text-purple-700">
@@ -276,7 +276,7 @@
                         <div class="flex justify-between">
                             <span class="text-gray-600">Shipping</span>
                             @if($cart->subtotal >= 500)
-                                <span class="text-green-600 font-medium">FREE</span>
+                                <span class="text-orange-500 font-medium">FREE</span>
                             @else
                                 <span class="font-medium">₹50.00</span>
                             @endif
@@ -300,7 +300,7 @@
                                 $meetsMinOrder = $ftcMinOrder <= 0 || $cart->subtotal >= $ftcMinOrder;
                             @endphp
                             @if(auth()->check() && $isFirstTime && $meetsMinOrder)
-                                <div class="bg-green-50 border border-green-200 text-green-700 text-sm p-3 rounded-lg">
+                                <div class="bg-orange-50 border border-orange-200 text-orange-700 text-sm p-3 rounded-lg">
                                     <div class="flex items-center gap-2">
                                         <span class="text-lg">🎉</span>
                                         <div>
@@ -335,7 +335,7 @@
                         <div class="border-t pt-3">
                             <div class="flex justify-between text-lg font-bold">
                                 <span>Total</span>
-                                <span class="text-green-600">
+                                <span class="text-orange-500">
                                     ₹{{ number_format($cart->subtotal + $cart->gst_amount + ($cart->subtotal >= 500 ? 0 : 50), 2) }}
                                 </span>
                             </div>
@@ -347,14 +347,14 @@
                         <form action="{{ route('checkout.apply-coupon') }}" method="POST" class="flex gap-2">
                             @csrf
                             <input type="text" name="coupon_code" placeholder="Coupon code" 
-                                   class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                   class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
                             <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
                                 Apply
                             </button>
                         </form>
                     </div>
 
-                    <a href="{{ route('checkout.index') }}" class="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-3 rounded-lg mt-6 font-semibold">
+                    <a href="{{ route('checkout.index') }}" class="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center py-3 rounded-lg mt-6 font-semibold transition">
                         Proceed to Checkout
                     </a>
                 </div>
@@ -368,7 +368,7 @@
             <h2 class="text-xl font-semibold text-gray-800 mb-2">Your cart is empty</h2>
             <p class="text-gray-600 mb-6">Looks like you haven't added anything to your cart yet.</p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{{ route('products.index') }}" class="inline-block bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold">
+                <a href="{{ route('products.index') }}" class="inline-block bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold transition">
                     <i class="fas fa-shopping-bag mr-2"></i> Start Shopping
                 </a>
                 <a href="{{ route('combo.index') }}" class="inline-block bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-semibold">

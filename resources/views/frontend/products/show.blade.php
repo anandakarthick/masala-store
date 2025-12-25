@@ -174,21 +174,21 @@
     <nav class="mb-4" aria-label="Breadcrumb">
         <ol class="flex items-center space-x-2 text-sm text-gray-500" itemscope itemtype="https://schema.org/BreadcrumbList">
             <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-                <a href="{{ route('home') }}" class="hover:text-green-600" itemprop="item">
+                <a href="{{ route('home') }}" class="hover:text-orange-500" itemprop="item">
                     <span itemprop="name">Home</span>
                 </a>
                 <meta itemprop="position" content="1">
             </li>
             <li><i class="fas fa-chevron-right text-xs" aria-hidden="true"></i></li>
             <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-                <a href="{{ route('products.index') }}" class="hover:text-green-600" itemprop="item">
+                <a href="{{ route('products.index') }}" class="hover:text-orange-500" itemprop="item">
                     <span itemprop="name">Products</span>
                 </a>
                 <meta itemprop="position" content="2">
             </li>
             <li><i class="fas fa-chevron-right text-xs" aria-hidden="true"></i></li>
             <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-                <a href="{{ route('category.show', $product->category->slug) }}" class="hover:text-green-600" itemprop="item">
+                <a href="{{ route('category.show', $product->category->slug) }}" class="hover:text-orange-500" itemprop="item">
                     <span itemprop="name">{{ $product->category->name }}</span>
                 </a>
                 <meta itemprop="position" content="3">
@@ -233,7 +233,7 @@
                     <div class="flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Product images">
                         @foreach($product->images as $index => $image)
                             <button @click="activeImage = {{ $index }}"
-                                    :class="activeImage === {{ $index }} ? 'ring-2 ring-green-600' : 'ring-1 ring-gray-200'"
+                                    :class="activeImage === {{ $index }} ? 'ring-2 ring-orange-500' : 'ring-1 ring-gray-200'"
                                     class="flex-shrink-0 w-14 h-14 rounded overflow-hidden"
                                     role="tab"
                                     aria-label="View image {{ $index + 1 }}"
@@ -266,12 +266,12 @@
                 'productId' => $product->id,
             ]) }})">
                 @if($product->is_combo)
-                    <span class="inline-flex items-center bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full mb-2">
+                    <span class="inline-flex items-center bg-orange-100 text-orange-600 text-xs font-semibold px-2 py-0.5 rounded-full mb-2">
                         <i class="fas fa-gift mr-1" aria-hidden="true"></i> Combo Pack
                     </span>
                 @endif
                 
-                <span class="text-xs text-green-600 font-medium">{{ $product->category->name }}</span>
+                <span class="text-xs text-orange-500 font-medium">{{ $product->category->name }}</span>
                 <h1 class="text-xl md:text-2xl font-bold text-gray-800 mt-1" itemprop="name">{{ $product->name }}</h1>
                 
                 <!-- SKU -->
@@ -291,13 +291,13 @@
                     
                     <template x-if="currentDiscountPrice">
                         <div class="flex items-center gap-2">
-                            <span class="text-2xl font-bold text-green-600">₹<span x-text="currentDiscountPrice.toFixed(2)"></span></span>
+                            <span class="text-2xl font-bold text-orange-500">₹<span x-text="currentDiscountPrice.toFixed(2)"></span></span>
                             <span class="text-lg text-gray-400 line-through">₹<span x-text="currentPrice.toFixed(2)"></span></span>
                             <span class="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded" x-text="'Save ' + discountPercent + '%'"></span>
                         </div>
                     </template>
                     <template x-if="!currentDiscountPrice">
-                        <span class="text-2xl font-bold text-green-600">₹<span x-text="currentPrice.toFixed(2)"></span></span>
+                        <span class="text-2xl font-bold text-orange-500">₹<span x-text="currentPrice.toFixed(2)"></span></span>
                     </template>
                     
                     @if($product->gst_percentage > 0)
@@ -307,18 +307,18 @@
 
                 <!-- Combo Contents -->
                 @if($product->is_combo && $product->comboItems->count() > 0)
-                    <div class="mt-4 bg-green-50 border border-green-200 rounded-lg p-3">
-                        <h2 class="font-semibold text-green-800 flex items-center text-sm mb-2">
+                    <div class="mt-4 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                        <h2 class="font-semibold text-orange-700 flex items-center text-sm mb-2">
                             <i class="fas fa-box-open mr-2" aria-hidden="true"></i> What's Inside This Pack
                         </h2>
                         <ul class="space-y-1.5">
                             @foreach($product->comboItems as $item)
                                 <li class="flex items-start text-sm">
-                                    <i class="fas fa-check text-green-600 mt-0.5 mr-2 text-xs" aria-hidden="true"></i>
+                                    <i class="fas fa-check text-orange-500 mt-0.5 mr-2 text-xs" aria-hidden="true"></i>
                                     <div>
                                         <span class="text-gray-800">{{ $item->item_name }}</span>
                                         @if($item->item_quantity)
-                                            <span class="text-green-600 font-medium ml-1">({{ $item->item_quantity }})</span>
+                                            <span class="text-orange-500 font-medium ml-1">({{ $item->item_quantity }})</span>
                                         @endif
                                     </div>
                                 </li>
@@ -336,8 +336,8 @@
                                 <button type="button"
                                         @click="selectVariant({{ $variant->id }})"
                                         :class="selectedVariantId === {{ $variant->id }} 
-                                            ? 'border-green-600 bg-green-50 text-green-600' 
-                                            : 'border-gray-300 hover:border-green-400'"
+                                            ? 'border-orange-500 bg-orange-50 text-orange-500' 
+                                            : 'border-gray-300 hover:border-orange-400'"
                                         class="px-3 py-1.5 border-2 rounded-lg text-sm font-medium transition {{ $variant->isOutOfStock() ? 'opacity-50 cursor-not-allowed' : '' }}"
                                         {{ $variant->isOutOfStock() ? 'disabled' : '' }}
                                         role="radio"
@@ -366,7 +366,7 @@
                         </span>
                     </template>
                     <template x-if="currentStock > 10">
-                        <span class="inline-flex items-center bg-green-100 text-green-600 px-2 py-1 rounded-full text-xs">
+                        <span class="inline-flex items-center bg-orange-100 text-orange-500 px-2 py-1 rounded-full text-xs">
                             <i class="fas fa-check-circle mr-1" aria-hidden="true"></i> In Stock
                         </span>
                     </template>
@@ -394,8 +394,8 @@
                         <button type="button" 
                                 @click="addToCartWithVariant()"
                                 :disabled="hasVariants && !selectedVariantId"
-                                :class="(hasVariants && !selectedVariantId) ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'"
-                                class="flex-1 text-white py-2.5 px-4 rounded-lg font-semibold text-sm">
+                                :class="(hasVariants && !selectedVariantId) ? 'bg-gray-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'"
+                                class="flex-1 text-white py-2.5 px-4 rounded-lg font-semibold text-sm transition">
                             <i class="fas fa-cart-plus mr-2" aria-hidden="true"></i> 
                             <span x-text="hasVariants && !selectedVariantId ? 'Select a Size' : 'Add to Cart'"></span>
                         </button>
@@ -405,19 +405,19 @@
                 <!-- Features -->
                 <div class="grid grid-cols-2 gap-3 mt-6 pt-4 border-t">
                     <div class="flex items-center gap-2 text-xs text-gray-600">
-                        <i class="fas fa-shipping-fast text-green-600" aria-hidden="true"></i>
+                        <i class="fas fa-shipping-fast text-orange-500" aria-hidden="true"></i>
                         <span>Free Shipping over ₹500</span>
                     </div>
                     <div class="flex items-center gap-2 text-xs text-gray-600">
-                        <i class="fas fa-check-circle text-green-600" aria-hidden="true"></i>
+                        <i class="fas fa-check-circle text-orange-500" aria-hidden="true"></i>
                         <span>100% Pure & Natural</span>
                     </div>
                     <div class="flex items-center gap-2 text-xs text-gray-600">
-                        <i class="fas fa-lock text-green-600" aria-hidden="true"></i>
+                        <i class="fas fa-lock text-orange-500" aria-hidden="true"></i>
                         <span>Secure Payment</span>
                     </div>
                     <div class="flex items-center gap-2 text-xs text-gray-600">
-                        <i class="fas fa-leaf text-green-600" aria-hidden="true"></i>
+                        <i class="fas fa-leaf text-orange-500" aria-hidden="true"></i>
                         <span>Chemical-Free</span>
                     </div>
                 </div>
@@ -584,7 +584,7 @@
                                             @endfor
                                         </div>
                                         @if($review->is_verified_purchase)
-                                            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                            <span class="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">
                                                 <i class="fas fa-check-circle mr-1"></i>Verified Purchase
                                             </span>
                                         @endif
@@ -688,7 +688,7 @@ function showCopyToast(message, type) {
     type = type || 'success';
     var toast = document.createElement('div');
     toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg text-white text-sm font-medium z-50 transition-opacity duration-300 ' + 
-                      (type === 'success' ? 'bg-green-600' : 'bg-red-600');
+                      (type === 'success' ? 'bg-orange-500' : 'bg-red-600');
     toast.textContent = message;
     document.body.appendChild(toast);
     setTimeout(function() {

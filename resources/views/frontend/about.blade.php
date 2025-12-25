@@ -15,7 +15,7 @@
     <nav class="mb-6" aria-label="Breadcrumb">
         <ol class="flex items-center space-x-2 text-sm text-gray-500" itemscope itemtype="https://schema.org/BreadcrumbList">
             <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-                <a href="{{ route('home') }}" class="hover:text-green-600" itemprop="item">
+                <a href="{{ route('home') }}" class="hover:text-orange-600" itemprop="item">
                     <span itemprop="name">Home</span>
                 </a>
                 <meta itemprop="position" content="1">
@@ -48,18 +48,18 @@
         </section>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <section class="bg-green-50 rounded-lg p-6" aria-labelledby="our-mission">
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <i class="fas fa-bullseye text-green-600 text-xl" aria-hidden="true"></i>
+            <section class="bg-orange-50 rounded-lg p-6" aria-labelledby="our-mission">
+                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-bullseye text-orange-500 text-xl" aria-hidden="true"></i>
                 </div>
                 <h3 id="our-mission" class="text-xl font-bold text-gray-800 mb-2">Our Mission</h3>
                 <p class="text-gray-600">
                     To deliver the finest quality homemade products that enrich everyday life, while maintaining the highest standards of purity, authenticity, and natural goodness.
                 </p>
             </section>
-            <section class="bg-green-50 rounded-lg p-6" aria-labelledby="our-vision">
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <i class="fas fa-eye text-green-600 text-xl" aria-hidden="true"></i>
+            <section class="bg-orange-50 rounded-lg p-6" aria-labelledby="our-vision">
+                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-eye text-orange-500 text-xl" aria-hidden="true"></i>
                 </div>
                 <h3 id="our-vision" class="text-xl font-bold text-gray-800 mb-2">Our Vision</h3>
                 <p class="text-gray-600">
@@ -72,8 +72,8 @@
             <h2 id="why-choose-us" class="text-2xl font-bold text-gray-800 mb-6">Why Choose {{ $businessName }}?</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="flex items-start">
-                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                        <i class="fas fa-leaf text-green-600" aria-hidden="true"></i>
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                        <i class="fas fa-leaf text-orange-500" aria-hidden="true"></i>
                     </div>
                     <div>
                         <h4 class="font-semibold text-gray-800">100% Pure & Natural</h4>
@@ -81,8 +81,8 @@
                     </div>
                 </div>
                 <div class="flex items-start">
-                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                        <i class="fas fa-home text-green-600" aria-hidden="true"></i>
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                        <i class="fas fa-home text-orange-500" aria-hidden="true"></i>
                     </div>
                     <div>
                         <h4 class="font-semibold text-gray-800">Homemade Fresh</h4>
@@ -90,8 +90,8 @@
                     </div>
                 </div>
                 <div class="flex items-start">
-                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                        <i class="fas fa-shipping-fast text-green-600" aria-hidden="true"></i>
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                        <i class="fas fa-shipping-fast text-orange-500" aria-hidden="true"></i>
                     </div>
                     <div>
                         <h4 class="font-semibold text-gray-800">Free Delivery</h4>
@@ -99,8 +99,8 @@
                     </div>
                 </div>
                 <div class="flex items-start">
-                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                        <i class="fas fa-heart text-green-600" aria-hidden="true"></i>
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                        <i class="fas fa-heart text-orange-500" aria-hidden="true"></i>
                     </div>
                     <div>
                         <h4 class="font-semibold text-gray-800">Made with Love</h4>
@@ -108,8 +108,8 @@
                     </div>
                 </div>
                 <div class="flex items-start">
-                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                        <i class="fas fa-certificate text-green-600" aria-hidden="true"></i>
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                        <i class="fas fa-certificate text-orange-500" aria-hidden="true"></i>
                     </div>
                     <div>
                         <h4 class="font-semibold text-gray-800">Quality Assured</h4>
@@ -117,8 +117,8 @@
                     </div>
                 </div>
                 <div class="flex items-start">
-                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                        <i class="fas fa-headset text-green-600" aria-hidden="true"></i>
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                        <i class="fas fa-headset text-orange-500" aria-hidden="true"></i>
                     </div>
                     <div>
                         <h4 class="font-semibold text-gray-800">Customer Support</h4>
@@ -138,7 +138,7 @@
                 <li><strong>Ayurvedic & Wellness:</strong> Hair Growth Oil, Knee Pain Relief Oil, and other herbal remedies</li>
             </ul>
             <div class="mt-6">
-                <a href="{{ route('products.index') }}" class="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold text-sm">
+                <a href="{{ route('products.index') }}" class="inline-block bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold text-sm transition">
                     <i class="fas fa-shopping-bag mr-2" aria-hidden="true"></i> Browse Our Products
                 </a>
             </div>
