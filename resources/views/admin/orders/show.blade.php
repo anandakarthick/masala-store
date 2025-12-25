@@ -101,6 +101,59 @@
             @endif
         </div>
 
+        <!-- Delivery Attachments Display -->
+        @if($order->hasDeliveryAttachments() || $order->delivery_notes)
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold mb-4">
+                <i class="fas fa-paperclip text-orange-600 mr-2"></i>Delivery Attachments
+            </h3>
+            
+            @if($order->delivery_notes)
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <h4 class="font-medium text-blue-800 mb-2">📝 Delivery Notes</h4>
+                <p class="text-blue-700">{{ $order->delivery_notes }}</p>
+            </div>
+            @endif
+            
+            @if($order->hasDeliveryAttachments())
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                @foreach($order->delivery_attachments as $index => $attachment)
+                    @php
+                        $extension = pathinfo($attachment, PATHINFO_EXTENSION);
+                        $isImage = in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                        $isPdf = strtolower($extension) === 'pdf';
+                    @endphp
+                    <div class="border rounded-lg p-2 text-center">
+                        @if($isImage)
+                            <a href="{{ asset('storage/' . $attachment) }}" target="_blank">
+                                <img src="{{ asset('storage/' . $attachment) }}" 
+                                     alt="Attachment {{ $index + 1 }}" 
+                                     class="w-full h-24 object-cover rounded mb-2">
+                            </a>
+                        @elseif($isPdf)
+                            <a href="{{ asset('storage/' . $attachment) }}" target="_blank" class="block">
+                                <div class="w-full h-24 bg-red-100 rounded mb-2 flex items-center justify-center">
+                                    <i class="fas fa-file-pdf text-red-600 text-3xl"></i>
+                                </div>
+                            </a>
+                        @else
+                            <a href="{{ asset('storage/' . $attachment) }}" target="_blank" class="block">
+                                <div class="w-full h-24 bg-gray-100 rounded mb-2 flex items-center justify-center">
+                                    <i class="fas fa-file text-gray-600 text-3xl"></i>
+                                </div>
+                            </a>
+                        @endif
+                        <a href="{{ asset('storage/' . $attachment) }}" target="_blank" 
+                           class="text-xs text-blue-600 hover:underline">
+                            View File {{ $index + 1 }}
+                        </a>
+                    </div>
+                @endforeach
+            </div>
+            @endif
+        </div>
+        @endif
+
         <!-- Customer Reviews -->
         @if($order->reviews->count() > 0)
         <div class="bg-white rounded-lg shadow-md p-6">
@@ -263,20 +316,81 @@
             </form>
         </div>
 
-        <!-- Delivery -->
+        <!-- Delivery with Attachments -->
         <div class="bg-white rounded-lg shadow-md p-6">
-            <h3 class="text-lg font-semibold mb-4">Delivery</h3>
-            <form action="{{ route('admin.orders.update-delivery', $order) }}" method="POST">
+            <h3 class="text-lg font-semibold mb-4">
+                <i class="fas fa-truck text-orange-600 mr-2"></i>Delivery Details
+            </h3>
+            <form action="{{ route('admin.orders.update-delivery', $order) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="space-y-3">
-                    <input type="text" name="delivery_partner" placeholder="Delivery Partner" value="{{ $order->delivery_partner }}"
-                           class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
-                    <input type="text" name="tracking_number" placeholder="Tracking Number" value="{{ $order->tracking_number }}"
-                           class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
-                    <input type="date" name="expected_delivery_date" value="{{ $order->expected_delivery_date?->format('Y-m-d') }}"
-                           class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
-                    <button type="submit" class="w-full bg-gray-800 text-white py-2 rounded-lg">
-                        Update Delivery
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Partner</label>
+                        <input type="text" name="delivery_partner" placeholder="e.g. Delhivery, BlueDart" 
+                               value="{{ $order->delivery_partner }}"
+                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tracking Number</label>
+                        <input type="text" name="tracking_number" placeholder="AWB / Tracking Number" 
+                               value="{{ $order->tracking_number }}"
+                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Expected Delivery Date</label>
+                        <input type="date" name="expected_delivery_date" 
+                               value="{{ $order->expected_delivery_date?->format('Y-m-d') }}"
+                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Notes</label>
+                        <textarea name="delivery_notes" rows="2" 
+                                  placeholder="Any notes for delivery..."
+                                  class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">{{ $order->delivery_notes }}</textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            <i class="fas fa-paperclip mr-1"></i>Attachments (Optional)
+                        </label>
+                        <p class="text-xs text-gray-500 mb-2">Upload images or PDFs (shipping label, proof of dispatch, etc.)</p>
+                        <input type="file" name="attachments[]" multiple 
+                               accept="image/*,.pdf"
+                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500 text-sm">
+                        <p class="text-xs text-gray-400 mt-1">Max 5 files. Supported: JPG, PNG, PDF</p>
+                    </div>
+                    
+                    @if($order->hasDeliveryAttachments())
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-sm font-medium text-gray-700 mb-2">Current Attachments ({{ count($order->delivery_attachments) }})</p>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach($order->delivery_attachments as $index => $attachment)
+                                <a href="{{ asset('storage/' . $attachment) }}" target="_blank" 
+                                   class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-200">
+                                    📎 File {{ $index + 1 }}
+                                </a>
+                            @endforeach
+                        </div>
+                        <label class="flex items-center mt-2 text-sm text-red-600">
+                            <input type="checkbox" name="remove_attachments" value="1" class="mr-2">
+                            Remove existing attachments
+                        </label>
+                    </div>
+                    @endif
+                    
+                    <div class="flex items-center pt-2">
+                        <input type="checkbox" name="send_notification" value="1" id="send_notification" checked
+                               class="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500">
+                        <label for="send_notification" class="ml-2 text-sm text-gray-700">
+                            Send notification to customer
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-lg font-medium">
+                        <i class="fas fa-save mr-2"></i>Update Delivery
                     </button>
                 </div>
             </form>
@@ -284,12 +398,17 @@
 
         <!-- Actions -->
         <div class="bg-white rounded-lg shadow-md p-6">
-            <a href="{{ route('admin.orders.invoice', $order) }}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-center mb-2">
-                <i class="fas fa-file-pdf mr-2"></i> Download Invoice
-            </a>
-            <a href="{{ route('admin.orders.index') }}" class="block w-full bg-gray-200 text-gray-700 py-2 rounded-lg text-center">
-                Back to Orders
-            </a>
+            <h3 class="text-lg font-semibold mb-4">Actions</h3>
+            <div class="space-y-2">
+                <a href="{{ route('admin.orders.invoice', $order) }}" 
+                   class="block w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-center">
+                    <i class="fas fa-file-pdf mr-2"></i>Download Invoice
+                </a>
+                <a href="{{ route('admin.orders.index') }}" 
+                   class="block w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg text-center">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Orders
+                </a>
+            </div>
         </div>
     </div>
 </div>

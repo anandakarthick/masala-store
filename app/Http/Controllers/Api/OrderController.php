@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendOrderCancellationNotification;
 use App\Jobs\SendOrderEmails;
 use App\Models\Cart;
 use App\Models\Coupon;
@@ -12,6 +13,8 @@ use App\Models\Setting;
 use App\Models\StockMovement;
 use App\Models\UserAddress;
 use App\Services\FirstTimeCustomerService;
+use App\Services\InvoiceService;
+use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -502,6 +505,146 @@ class OrderController extends Controller
     }
 
     /**
+     * Cancel order (customer)
+     */
+    public function cancelOrder(Request $request, $orderNumber)
+    {
+        $validated = $request->validate([
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        $order = Order::where('user_id', $request->user()->id)
+            ->where('order_number', $orderNumber)
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found.',
+            ], 404);
+        }
+
+        if (!$order->canBeCancelledByCustomer()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This order cannot be cancelled. Only pending orders can be cancelled.',
+            ], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Restore stock
+            foreach ($order->items as $item) {
+                if ($item->variant_id) {
+                    ProductVariant::find($item->variant_id)->increment('stock_quantity', $item->quantity);
+                } else {
+                    StockMovement::recordMovement(
+                        $item->product,
+                        'in',
+                        $item->quantity,
+                        "Order #{$order->order_number} cancelled by customer",
+                        'Stock restored due to order cancellation'
+                    );
+                }
+            }
+
+            // Refund wallet amount if used
+            $walletRefunded = 0;
+            if ($order->wallet_amount_used > 0) {
+                $order->user->addToWallet(
+                    $order->wallet_amount_used,
+                    'refund',
+                    "Refund for cancelled Order #{$order->order_number}",
+                    $order->id
+                );
+                $walletRefunded = $order->wallet_amount_used;
+            }
+
+            // Update order status
+            $order->update([
+                'status' => 'cancelled',
+                'cancelled_at' => now(),
+                'cancelled_by' => 'customer',
+                'cancellation_reason' => $validated['reason'] ?? null,
+            ]);
+
+            DB::commit();
+
+            // Send cancellation notification
+            SendOrderCancellationNotification::dispatch(
+                $order->fresh(),
+                'customer',
+                $validated['reason'] ?? null
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order cancelled successfully.',
+                'data' => [
+                    'order_number' => $order->order_number,
+                    'wallet_refunded' => (float) $walletRefunded,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Order cancellation error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel order. Please try again.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Download invoice
+     */
+    public function downloadInvoice(Request $request, $orderNumber, InvoiceService $invoiceService)
+    {
+        $order = Order::where('user_id', $request->user()->id)
+            ->where('order_number', $orderNumber)
+            ->with('items.product')
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found.',
+            ], 404);
+        }
+
+        return $invoiceService->downloadInvoice($order);
+    }
+
+    /**
+     * Get invoice URL (for mobile app to open in browser)
+     */
+    public function getInvoiceUrl(Request $request, $orderNumber)
+    {
+        $order = Order::where('user_id', $request->user()->id)
+            ->where('order_number', $orderNumber)
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found.',
+            ], 404);
+        }
+
+        // Generate a temporary signed URL for invoice download
+        $url = url("/api/orders/{$orderNumber}/invoice");
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'invoice_url' => $url,
+            ],
+        ]);
+    }
+
+    /**
      * Format order for response
      */
     private function formatOrder(Order $order, bool $detailed = false): array
@@ -534,6 +677,11 @@ class OrderController extends Controller
             $data['delivered_at'] = $order->delivered_at?->format('d M Y');
             $data['wallet_amount_used'] = (float) $order->wallet_amount_used;
             $data['gst_amount'] = (float) $order->gst_amount;
+            $data['can_cancel'] = $order->canBeCancelledByCustomer();
+            $data['delivery_notes'] = $order->delivery_notes;
+            $data['delivery_attachments'] = $order->getDeliveryAttachmentUrls();
+            $data['cancelled_at'] = $order->cancelled_at?->format('d M Y, h:i A');
+            $data['cancellation_reason'] = $order->cancellation_reason;
 
             $data['items'] = $order->items->map(fn($item) => [
                 'id' => $item->id,

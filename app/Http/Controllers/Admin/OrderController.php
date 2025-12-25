@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendDeliveryUpdateNotification;
+use App\Jobs\SendOrderCancellationNotification;
 use App\Jobs\SendOrderEmails;
 use App\Jobs\SendOrderStatusEmail;
 use App\Jobs\SendReviewRequestEmail;
@@ -15,6 +17,7 @@ use App\Services\InvoiceService;
 use App\Services\ReferralService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
@@ -218,6 +221,24 @@ class OrderController extends Controller
                     );
                 }
             }
+            
+            // Refund wallet amount if used
+            if ($order->wallet_amount_used > 0 && $order->user_id) {
+                $order->user->addToWallet(
+                    $order->wallet_amount_used,
+                    'refund',
+                    "Refund for cancelled Order #{$order->order_number}",
+                    $order->id
+                );
+            }
+            
+            $order->update([
+                'cancelled_at' => now(),
+                'cancelled_by' => 'admin',
+            ]);
+            
+            // Send cancellation notification
+            SendOrderCancellationNotification::dispatch($order->fresh(), 'admin', null);
         }
 
         if ($newStatus === 'delivered') {
@@ -228,17 +249,13 @@ class OrderController extends Controller
             
             // Send review request email when order is delivered
             if ($order->customer_email && !$order->hasReviewBeenRequested()) {
-                // Delay the review request email by 1 hour to give customer time to receive the order
                 SendReviewRequestEmail::dispatch($order->fresh()->load('items.product'))
                     ->delay(now()->addHour());
             }
         }
 
         // Send status update email and push notification in background
-        if ($oldStatus !== $newStatus && $order->customer_email) {
-            SendOrderStatusEmail::dispatch($order->fresh()->load('items.product'), $oldStatus, $newStatus);
-        } else if ($oldStatus !== $newStatus && $order->user_id) {
-            // If no email but has user_id, still send push notification
+        if ($oldStatus !== $newStatus && $newStatus !== 'cancelled') {
             SendOrderStatusEmail::dispatch($order->fresh()->load('items.product'), $oldStatus, $newStatus);
         }
 
@@ -260,14 +277,47 @@ class OrderController extends Controller
     public function updateDelivery(Request $request, Order $order)
     {
         $validated = $request->validate([
-            'delivery_partner' => 'nullable|string',
-            'tracking_number' => 'nullable|string',
+            'delivery_partner' => 'nullable|string|max:255',
+            'tracking_number' => 'nullable|string|max:255',
             'expected_delivery_date' => 'nullable|date',
+            'delivery_notes' => 'nullable|string|max:1000',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,gif,pdf|max:5120',
+            'remove_attachments' => 'nullable|boolean',
+            'send_notification' => 'nullable|boolean',
         ]);
+
+        // Handle attachment removal
+        if ($request->boolean('remove_attachments') && $order->delivery_attachments) {
+            foreach ($order->delivery_attachments as $attachment) {
+                Storage::disk('public')->delete($attachment);
+            }
+            $validated['delivery_attachments'] = [];
+        }
+
+        // Handle new attachments
+        if ($request->hasFile('attachments')) {
+            $attachments = $order->delivery_attachments ?? [];
+            
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('delivery-attachments/' . $order->id, 'public');
+                $attachments[] = $path;
+            }
+            
+            $validated['delivery_attachments'] = $attachments;
+        }
+
+        // Remove non-model fields
+        unset($validated['attachments'], $validated['remove_attachments'], $validated['send_notification']);
 
         $order->update($validated);
 
-        return back()->with('success', 'Delivery information updated.');
+        // Send notification if requested
+        if ($request->boolean('send_notification')) {
+            SendDeliveryUpdateNotification::dispatch($order->fresh());
+        }
+
+        return back()->with('success', 'Delivery information updated.' . ($request->boolean('send_notification') ? ' Notification sent to customer.' : ''));
     }
 
     public function generateInvoice(Order $order, InvoiceService $invoiceService)
@@ -297,44 +347,27 @@ class OrderController extends Controller
     protected function processReferralRewardOnDelivery(Order $order): void
     {
         try {
-            // Check if referral program is enabled
             if (!ReferralService::isEnabled()) {
-                Log::info('Referral program is disabled, skipping reward processing', [
-                    'order_id' => $order->id
-                ]);
                 return;
             }
 
-            // Check if order has a user who was referred
             $customer = $order->user;
             if (!$customer || !$customer->wasReferred()) {
-                Log::info('Order user was not referred, skipping reward', [
-                    'order_id' => $order->id,
-                    'user_id' => $customer?->id
-                ]);
                 return;
             }
 
-            // Process the referral reward
             $result = ReferralService::processOrderReferralReward($order);
 
             if ($result) {
                 Log::info('Referral reward processed successfully on delivery', [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
-                    'referred_user_id' => $customer->id,
-                    'referrer_id' => $customer->referred_by
-                ]);
-            } else {
-                Log::info('Referral reward not processed (conditions not met)', [
-                    'order_id' => $order->id
                 ]);
             }
         } catch (\Exception $e) {
-            // Log error but don't break the order status update
             Log::error('Failed to process referral reward on delivery', [
                 'order_id' => $order->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }

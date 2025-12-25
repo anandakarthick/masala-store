@@ -38,8 +38,13 @@ class Order extends Model
         'status',
         'delivery_partner',
         'tracking_number',
+        'delivery_attachments',
+        'delivery_notes',
         'expected_delivery_date',
         'delivered_at',
+        'cancelled_at',
+        'cancelled_by',
+        'cancellation_reason',
         'customer_notes',
         'admin_notes',
         'is_seen_by_admin',
@@ -60,10 +65,12 @@ class Order extends Model
         'total_amount' => 'decimal:2',
         'expected_delivery_date' => 'date',
         'delivered_at' => 'date',
+        'cancelled_at' => 'datetime',
         'invoice_generated_at' => 'datetime',
         'seen_at' => 'datetime',
         'is_seen_by_admin' => 'boolean',
         'review_requested_at' => 'datetime',
+        'delivery_attachments' => 'array',
     ];
 
     protected static function boot()
@@ -200,6 +207,14 @@ class Order extends Model
         return in_array($this->status, ['pending', 'confirmed']);
     }
 
+    /**
+     * Check if customer can cancel this order
+     */
+    public function canBeCancelledByCustomer(): bool
+    {
+        return $this->status === 'pending';
+    }
+
     public function generateInvoiceNumber(): string
     {
         $year = now()->format('Y');
@@ -266,5 +281,27 @@ class Order extends Model
     public function hasReviewBeenRequested(): bool
     {
         return $this->review_requested_at !== null;
+    }
+
+    /**
+     * Get delivery attachment URLs
+     */
+    public function getDeliveryAttachmentUrls(): array
+    {
+        if (empty($this->delivery_attachments)) {
+            return [];
+        }
+
+        return array_map(function ($path) {
+            return asset('storage/' . $path);
+        }, $this->delivery_attachments);
+    }
+
+    /**
+     * Check if order has delivery attachments
+     */
+    public function hasDeliveryAttachments(): bool
+    {
+        return !empty($this->delivery_attachments);
     }
 }
