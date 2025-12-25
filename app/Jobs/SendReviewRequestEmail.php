@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Mail\ReviewRequestMail;
 use App\Models\Order;
+use App\Models\UserNotification;
+use App\Services\FCMService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,21 +33,14 @@ class SendReviewRequestEmail implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(FCMService $fcmService): void
     {
         try {
-            // Only send if order is delivered and has a user with email
+            // Only send if order is delivered
             if ($this->order->status !== 'delivered') {
-                Log::info('Review request email skipped - order not delivered', [
+                Log::info('Review request skipped - order not delivered', [
                     'order_id' => $this->order->id,
                     'status' => $this->order->status
-                ]);
-                return;
-            }
-
-            if (!$this->order->customer_email) {
-                Log::info('Review request email skipped - no customer email', [
-                    'order_id' => $this->order->id
                 ]);
                 return;
             }
@@ -55,23 +50,58 @@ class SendReviewRequestEmail implements ShouldQueue
                 $this->order->generateReviewToken();
             }
 
-            // Send the review request email
-            Mail::to($this->order->customer_email)
-                ->send(new ReviewRequestMail($this->order));
+            // Send email notification
+            if ($this->order->customer_email) {
+                Mail::to($this->order->customer_email)
+                    ->send(new ReviewRequestMail($this->order));
+
+                Log::info('Review request email sent successfully', [
+                    'order_id' => $this->order->id,
+                    'email' => $this->order->customer_email,
+                ]);
+            }
+
+            // Send push notification
+            if ($this->order->user_id) {
+                $title = 'How was your order? ⭐';
+                $body = "We'd love to hear your feedback on order #{$this->order->order_number}. Leave a review!";
+
+                $fcmService->sendCustomNotification(
+                    $this->order->user_id,
+                    $title,
+                    $body,
+                    [
+                        'type' => 'review_request',
+                        'order_number' => $this->order->order_number,
+                        'order_id' => (string) $this->order->id,
+                    ]
+                );
+
+                // Save in-app notification
+                UserNotification::create([
+                    'user_id' => $this->order->user_id,
+                    'type' => 'review_request',
+                    'title' => $title,
+                    'message' => $body,
+                    'data' => [
+                        'order_id' => $this->order->id,
+                        'order_number' => $this->order->order_number,
+                    ],
+                ]);
+
+                Log::info('Review request push notification sent', [
+                    'order_id' => $this->order->id,
+                    'user_id' => $this->order->user_id,
+                ]);
+            }
 
             // Update order to mark review as requested
             $this->order->update([
                 'review_requested_at' => now()
             ]);
 
-            Log::info('Review request email sent successfully', [
-                'order_id' => $this->order->id,
-                'email' => $this->order->customer_email,
-                'order_number' => $this->order->order_number
-            ]);
-
         } catch (\Exception $e) {
-            Log::error('Failed to send review request email', [
+            Log::error('Failed to send review request email/notification', [
                 'order_id' => $this->order->id,
                 'error' => $e->getMessage()
             ]);
@@ -84,7 +114,7 @@ class SendReviewRequestEmail implements ShouldQueue
      */
     public function failed(\Throwable $exception): void
     {
-        Log::error('Review request email job failed permanently', [
+        Log::error('Review request email/notification job failed permanently', [
             'order_id' => $this->order->id,
             'error' => $exception->getMessage()
         ]);

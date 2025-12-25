@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendOrderEmails;
 use App\Jobs\SendOrderStatusEmail;
-use App\Jobs\SendPushNotification;
 use App\Jobs\SendReviewRequestEmail;
 use App\Models\DeliveryPartner;
 use App\Models\Order;
@@ -235,17 +234,12 @@ class OrderController extends Controller
             }
         }
 
-        // Send status update email in background
+        // Send status update email and push notification in background
         if ($oldStatus !== $newStatus && $order->customer_email) {
             SendOrderStatusEmail::dispatch($order->fresh()->load('items.product'), $oldStatus, $newStatus);
-        }
-
-        // Send push notification for status update
-        if ($oldStatus !== $newStatus && $order->user_id) {
-            SendPushNotification::dispatch('order_status', $order->user_id, [
-                'order_number' => $order->order_number,
-                'status' => $newStatus,
-            ]);
+        } else if ($oldStatus !== $newStatus && $order->user_id) {
+            // If no email but has user_id, still send push notification
+            SendOrderStatusEmail::dispatch($order->fresh()->load('items.product'), $oldStatus, $newStatus);
         }
 
         return back()->with('success', 'Order status updated.');

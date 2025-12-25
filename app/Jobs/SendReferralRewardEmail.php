@@ -5,6 +5,8 @@ namespace App\Jobs;
 use App\Mail\ReferralRewardMail;
 use App\Models\Order;
 use App\Models\User;
+use App\Models\UserNotification;
+use App\Services\FCMService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -27,9 +29,10 @@ class SendReferralRewardEmail implements ShouldQueue
         public float $rewardAmount
     ) {}
 
-    public function handle(): void
+    public function handle(FCMService $fcmService): void
     {
         try {
+            // Send email notification
             if ($this->referrer->email) {
                 Mail::to($this->referrer->email)
                     ->send(new ReferralRewardMail(
@@ -47,8 +50,44 @@ class SendReferralRewardEmail implements ShouldQueue
                     'reward_amount' => $this->rewardAmount,
                 ]);
             }
+
+            // Send push notification
+            $title = 'Referral Reward Earned! 🎉';
+            $body = "You earned ₹" . number_format($this->rewardAmount, 2) . 
+                    " for referring {$this->referredUser->name}!";
+
+            $fcmService->sendCustomNotification(
+                $this->referrer->id,
+                $title,
+                $body,
+                [
+                    'type' => 'referral_reward',
+                    'reward_amount' => (string) $this->rewardAmount,
+                    'referred_user' => $this->referredUser->name,
+                ]
+            );
+
+            // Save in-app notification
+            UserNotification::create([
+                'user_id' => $this->referrer->id,
+                'type' => 'referral_reward',
+                'title' => $title,
+                'message' => $body,
+                'data' => [
+                    'reward_amount' => $this->rewardAmount,
+                    'referred_user_id' => $this->referredUser->id,
+                    'referred_user_name' => $this->referredUser->name,
+                    'order_id' => $this->order->id,
+                ],
+            ]);
+
+            Log::info('Referral reward push notification sent', [
+                'referrer_id' => $this->referrer->id,
+                'reward_amount' => $this->rewardAmount,
+            ]);
+
         } catch (\Exception $e) {
-            Log::error('Failed to send referral reward email', [
+            Log::error('Failed to send referral reward email/notification', [
                 'referrer_id' => $this->referrer->id,
                 'error' => $e->getMessage(),
             ]);
@@ -58,7 +97,7 @@ class SendReferralRewardEmail implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        Log::error('Referral reward email job failed permanently', [
+        Log::error('Referral reward email/notification job failed permanently', [
             'referrer_id' => $this->referrer->id,
             'order_id' => $this->order->id,
             'error' => $exception->getMessage(),

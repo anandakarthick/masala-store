@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\SendOrderEmails;
-use App\Jobs\SendPushNotification;
 use App\Models\Cart;
 use App\Models\Coupon;
 use App\Models\Order;
@@ -375,19 +374,14 @@ class OrderController extends Controller
 
             DB::commit();
 
-            // For COD or full wallet payment
+            // For COD or full wallet payment, send emails and push notifications
             if ($paymentMethod->isCod() || $walletAmountUsed >= $totalAmount) {
                 if ($walletAmountUsed >= $totalAmount) {
                     $order->update(['payment_status' => 'paid']);
                 }
+                // This job now handles both email and push notification
                 SendOrderEmails::dispatch($order->fresh()->load('items.product'));
             }
-
-            // Send push notification for order placed
-            SendPushNotification::dispatch('order_placed', $user->id, [
-                'order_number' => $order->order_number,
-                'total' => $totalAmount,
-            ]);
 
             return response()->json([
                 'success' => true,

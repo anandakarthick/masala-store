@@ -221,6 +221,14 @@ class User extends Authenticatable
     }
 
     /**
+     * User notification preferences
+     */
+    public function notificationPreference(): HasOne
+    {
+        return $this->hasOne(UserNotificationPreference::class);
+    }
+
+    /**
      * User who referred this user
      */
     public function referrer(): BelongsTo

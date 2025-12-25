@@ -6,6 +6,8 @@ use App\Mail\OrderConfirmationMail;
 use App\Mail\AdminNewOrderMail;
 use App\Models\Order;
 use App\Models\Setting;
+use App\Models\UserNotification;
+use App\Services\FCMService;
 use App\Services\InvoiceService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,7 +30,7 @@ class SendOrderEmails implements ShouldQueue
         $this->order = $order;
     }
 
-    public function handle(InvoiceService $invoiceService): void
+    public function handle(InvoiceService $invoiceService, FCMService $fcmService): void
     {
         try {
             // Generate invoice PDF
@@ -57,16 +59,40 @@ class SendOrderEmails implements ShouldQueue
                 ]);
             }
 
+            // Send push notification to customer
+            if ($this->order->user_id) {
+                $fcmService->sendOrderPlacedNotification(
+                    $this->order->user_id,
+                    $this->order->order_number,
+                    $this->order->total_amount
+                );
+                
+                // Save in-app notification
+                UserNotification::create([
+                    'user_id' => $this->order->user_id,
+                    'type' => 'order_placed',
+                    'title' => 'Order Placed Successfully! 🎉',
+                    'message' => "Your order #{$this->order->order_number} has been placed. Total: ₹" . number_format($this->order->total_amount, 2),
+                    'data' => [
+                        'order_id' => $this->order->id,
+                        'order_number' => $this->order->order_number,
+                        'total' => $this->order->total_amount,
+                    ],
+                ]);
+                
+                Log::info('Order placed push notification sent', [
+                    'order_id' => $this->order->id,
+                    'user_id' => $this->order->user_id
+                ]);
+            }
+
             // Clean up temp PDF file after sending
             if ($pdfPath && file_exists($pdfPath)) {
                 unlink($pdfPath);
             }
 
-            // Note: Referral rewards are now processed when order is delivered,
-            // not when order is placed. See OrderController::processReferralRewardOnDelivery()
-
         } catch (\Exception $e) {
-            Log::error('Failed to send order emails', [
+            Log::error('Failed to send order emails/notifications', [
                 'order_id' => $this->order->id,
                 'error' => $e->getMessage()
             ]);
@@ -76,7 +102,7 @@ class SendOrderEmails implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        Log::error('Order email job failed permanently', [
+        Log::error('Order email/notification job failed permanently', [
             'order_id' => $this->order->id,
             'error' => $exception->getMessage()
         ]);
