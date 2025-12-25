@@ -663,7 +663,14 @@ class OrderController extends Controller
         $token = $request->query('token');
         $expires = $request->query('expires');
 
+        \Log::info('Invoice download request', [
+            'order_number' => $orderNumber,
+            'token' => $token ? substr($token, 0, 20) . '...' : null,
+            'expires' => $expires,
+        ]);
+
         if (!$token || !$expires) {
+            \Log::error('Invoice download: Missing token or expires');
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid request.',
@@ -672,6 +679,7 @@ class OrderController extends Controller
 
         // Check if token has expired
         if (now()->timestamp > (int) $expires) {
+            \Log::error('Invoice download: Token expired', ['expires' => $expires, 'now' => now()->timestamp]);
             return response()->json([
                 'success' => false,
                 'message' => 'Link has expired. Please try again.',
@@ -681,11 +689,14 @@ class OrderController extends Controller
         // Verify token from cache
         $tokenData = Cache::get('invoice_token_' . $token);
         if (!$tokenData) {
+            \Log::error('Invoice download: Token not found in cache');
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid or expired token.',
             ], 400);
         }
+
+        \Log::info('Invoice download: Token validated', $tokenData);
 
         $order = Order::where('order_number', $orderNumber)
             ->where('id', $tokenData['order_id'])
@@ -693,16 +704,28 @@ class OrderController extends Controller
             ->first();
 
         if (!$order) {
+            \Log::error('Invoice download: Order not found', ['order_number' => $orderNumber, 'order_id' => $tokenData['order_id']]);
             return response()->json([
                 'success' => false,
                 'message' => 'Order not found.',
             ], 404);
         }
 
-        // Delete token after use (one-time use)
-        Cache::forget('invoice_token_' . $token);
+        \Log::info('Invoice download: Generating PDF for order ' . $order->order_number);
 
-        return $invoiceService->downloadInvoice($order);
+        try {
+            // Delete token after successful validation (allow multiple downloads for 5 minutes)
+            // We keep the token for a bit to allow retries
+            Cache::put('invoice_token_' . $token, $tokenData, 300); // Extend for 5 more minutes
+            
+            return $invoiceService->downloadInvoice($order);
+        } catch (\Exception $e) {
+            \Log::error('Invoice download: PDF generation failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate invoice. Please try again.',
+            ], 500);
+        }
     }
 
     /**
