@@ -91,19 +91,45 @@ class OrderController extends Controller
         // Check first-time customer discount
         $firstTimeDiscount = FirstTimeCustomerService::isEligible($user->id, $subtotal);
 
-        // Get payment methods
+        // Get payment methods with full details
         $paymentMethods = PaymentMethod::active()
             ->get()
             ->filter(fn($pm) => $pm->isAvailableForAmount($subtotal + $shippingCharge))
-            ->map(fn($pm) => [
-                'id' => $pm->id,
-                'name' => $pm->name,
-                'code' => $pm->code,
-                'description' => $pm->description,
-                'icon' => $pm->icon,
-                'extra_charge_type' => $pm->extra_charge_type,
-                'extra_charge_value' => (float) $pm->extra_charge_value,
-            ])
+            ->map(function($pm) {
+                $data = [
+                    'id' => $pm->id,
+                    'name' => $pm->name,
+                    'code' => $pm->code,
+                    'display_name' => $pm->display_name ?? $pm->name,
+                    'description' => $pm->description,
+                    'icon' => $pm->icon,
+                    'instructions' => $pm->instructions,
+                    'is_online' => $pm->is_online,
+                    'extra_charge' => (float) $pm->extra_charge,
+                    'extra_charge_type' => $pm->extra_charge_type,
+                ];
+
+                // Add UPI details if payment method is UPI
+                if ($pm->code === 'upi') {
+                    $data['upi_id'] = $pm->getSetting('upi_id');
+                    $data['upi_name'] = $pm->getSetting('upi_name');
+                    $qrCode = $pm->getSetting('qr_code');
+                    $data['qr_code_url'] = $qrCode ? asset('storage/' . $qrCode) : null;
+                }
+
+                // Add bank details if payment method is bank_transfer
+                if ($pm->code === 'bank_transfer') {
+                    $data['bank_details'] = [
+                        'account_name' => $pm->getSetting('account_name'),
+                        'account_number' => $pm->getSetting('account_number'),
+                        'bank_name' => $pm->getSetting('bank_name'),
+                        'ifsc_code' => $pm->getSetting('ifsc_code'),
+                        'branch' => $pm->getSetting('branch'),
+                    ];
+                }
+
+                return $data;
+            })
             ->values();
 
         // Get saved addresses
