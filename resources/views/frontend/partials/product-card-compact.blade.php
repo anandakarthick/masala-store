@@ -34,7 +34,7 @@
     
     <!-- Product Info - Compact -->
     <div class="p-2">
-        <h3 class="font-medium text-gray-800 text-xs leading-tight group-hover:text-green-600 transition line-clamp-2 min-h-[2rem]">
+        <h3 class="font-medium text-gray-800 text-xs leading-tight group-hover:text-orange-600 transition line-clamp-2 min-h-[2rem]">
             <a href="{{ route('products.show', $product->slug) }}">{{ $product->name }}</a>
         </h3>
         
@@ -44,12 +44,12 @@
             <div class="flex items-center gap-1 flex-wrap">
                 <template x-if="currentDiscountPrice">
                     <div class="flex items-center gap-1">
-                        <span class="text-sm font-bold text-green-600">₹<span x-text="currentDiscountPrice.toFixed(0)"></span></span>
+                        <span class="text-sm font-bold text-orange-500">₹<span x-text="currentDiscountPrice.toFixed(0)"></span></span>
                         <span class="text-[10px] text-gray-400 line-through">₹<span x-text="currentPrice.toFixed(0)"></span></span>
                     </div>
                 </template>
                 <template x-if="!currentDiscountPrice">
-                    <span class="text-sm font-bold text-green-600">₹<span x-text="currentPrice.toFixed(0)"></span></span>
+                    <span class="text-sm font-bold text-orange-500">₹<span x-text="currentPrice.toFixed(0)"></span></span>
                 </template>
             </div>
             
@@ -58,7 +58,7 @@
                     <!-- Variant Selector - Compact -->
                     <select x-model="selectedVariantId" 
                             @change="onVariantChange()"
-                            class="mt-1.5 w-full text-[10px] border border-gray-300 rounded px-1.5 py-1 focus:ring-green-500 focus:border-green-500 bg-white">
+                            class="mt-1.5 w-full text-[10px] border border-gray-300 rounded px-1.5 py-1 focus:ring-orange-500 focus:border-orange-500 bg-white">
                         @foreach($product->activeVariants as $variant)
                             <option value="{{ $variant->id }}" 
                                     {{ $variant->isOutOfStock() ? 'disabled' : '' }}>
@@ -72,7 +72,7 @@
                     <button type="button" 
                             x-show="currentStock > 0"
                             @click="addToCartWithVariant()"
-                            class="mt-1.5 w-full flex items-center justify-center gap-1 bg-green-600 hover:bg-green-700 text-white py-1.5 rounded text-[11px] font-medium transition"
+                            class="mt-1.5 w-full flex items-center justify-center gap-1 bg-orange-500 hover:bg-orange-600 text-white py-1.5 rounded text-[11px] font-medium transition"
                             aria-label="Add to cart">
                         <i class="fas fa-cart-plus" aria-hidden="true"></i> Add
                     </button>
@@ -85,7 +85,7 @@
                 @else
                     <button type="button" 
                             @click="addToCartSimple()"
-                            class="mt-2 w-full flex items-center justify-center gap-1 bg-green-600 hover:bg-green-700 text-white py-1.5 rounded text-[11px] font-medium transition"
+                            class="mt-2 w-full flex items-center justify-center gap-1 bg-orange-500 hover:bg-orange-600 text-white py-1.5 rounded text-[11px] font-medium transition"
                             aria-label="Add {{ $product->name }} to cart">
                         <i class="fas fa-cart-plus" aria-hidden="true"></i> Add
                     </button>

@@ -25,7 +25,7 @@
         /* Header */
         .header {
             width: 100%;
-            border-bottom: 3px solid #166534;
+            border-bottom: 3px solid #F97316;
             padding-bottom: 10px;
             margin-bottom: 12px;
         }
@@ -55,7 +55,7 @@
         .invoice-title {
             font-size: 26px;
             font-weight: bold;
-            color: #166534;
+            color: #F97316;
             text-transform: uppercase;
         }
         .invoice-meta {
@@ -87,12 +87,12 @@
         .info-box-title {
             font-size: 10px;
             font-weight: bold;
-            color: #166534;
+            color: #F97316;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 6px;
             padding-bottom: 4px;
-            border-bottom: 2px solid #166534;
+            border-bottom: 2px solid #F97316;
         }
         .info-content {
             font-size: 11px;
@@ -105,8 +105,8 @@
         
         /* Payment Badge */
         .badge-paid {
-            background-color: #d1fae5;
-            color: #166534;
+            background-color: #FED7AA;
+            color: #C2410C;
             padding: 2px 8px;
             border-radius: 10px;
             font-size: 9px;
@@ -135,7 +135,7 @@
             margin-bottom: 10px;
         }
         .items-table th {
-            background-color: #166534;
+            background-color: #F97316;
             color: #fff;
             padding: 8px 6px;
             text-align: left;
@@ -170,7 +170,7 @@
         }
         .item-variant {
             font-size: 10px;
-            color: #166534;
+            color: #F97316;
         }
         .item-sku {
             font-size: 9px;
@@ -217,7 +217,7 @@
             color: #000;
         }
         .totals-table .grand-total td {
-            background-color: #166534;
+            background-color: #F97316;
             color: #fff;
             font-size: 14px;
             font-weight: bold;
@@ -275,9 +275,9 @@
             text-align: center;
             margin-top: 20px;
             padding: 10px;
-            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            background: linear-gradient(135deg, #FFF7ED 0%, #FED7AA 100%);
             font-size: 12px;
-            color: #166534;
+            color: #C2410C;
             font-weight: bold;
         }
     </style>
@@ -428,7 +428,7 @@
                         @if($order->discount_amount > 0)
                         <tr>
                             <td class="label">Discount:</td>
-                            <td class="value" style="color: #166534;">-₹{{ number_format($order->discount_amount, 2) }}</td>
+                            <td class="value" style="color: #F97316;">-₹{{ number_format($order->discount_amount, 2) }}</td>
                         </tr>
                         @endif
                         <tr class="grand-total">

@@ -54,21 +54,6 @@ Route::prefix('v1')->group(function () {
     // Invoice download with token (public - no auth needed)
     Route::get('/orders/{orderNumber}/invoice-download', [OrderController::class, 'downloadInvoicePublic']);
     
-    // Test simple PDF download (for debugging)
-    Route::get('/test-pdf/{orderNumber}', function($orderNumber) {
-        $order = \App\Models\Order::where('order_number', $orderNumber)->with('items.product')->first();
-        if (!$order) {
-            return response()->json(['error' => 'Order not found'], 404);
-        }
-        
-        try {
-            $invoiceService = app(\App\Services\InvoiceService::class);
-            return $invoiceService->downloadInvoice($order);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    });
-    
     // FCM Token for Guest Users (Public - no auth required)
     Route::post('/notifications/register-device', [NotificationController::class, 'registerDevice']);
     

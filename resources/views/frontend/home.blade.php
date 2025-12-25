@@ -177,7 +177,7 @@
         border-radius: 2px;
     }
     .product-grid::-webkit-scrollbar-thumb {
-        background: #16a34a;
+        background: #F97316;
         border-radius: 2px;
     }
 </style>
@@ -261,7 +261,7 @@
             <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2" role="tablist">
                 @foreach($banners as $index => $banner)
                     <button @click="goTo({{ $index }})" 
-                            :class="current === {{ $index }} ? 'bg-green-600 w-8' : 'bg-white/70 w-3'"
+                            :class="current === {{ $index }} ? 'bg-orange-500 w-8' : 'bg-white/70 w-3'"
                             class="h-3 rounded-full transition-all duration-300 shadow"
                             role="tab"
                             aria-label="Slide {{ $index + 1 }}"
@@ -271,12 +271,12 @@
         @endif
     </section>
 @else
-    <section class="bg-gradient-to-r from-green-600 to-green-800 text-white" style="aspect-ratio: 1920/600;" aria-label="Welcome banner">
+    <section class="bg-gradient-to-r from-orange-500 to-orange-600 text-white" style="aspect-ratio: 1920/600;" aria-label="Welcome banner">
         <div class="container mx-auto px-4 h-full flex items-center justify-center">
             <div class="text-center">
                 <h1 class="text-3xl md:text-5xl font-bold mb-4">Welcome to {{ $companyName }}</h1>
                 <p class="text-lg md:text-xl mb-6">{{ $tagline }}</p>
-                <a href="{{ route('products.index') }}" class="bg-white text-green-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold text-base inline-block">
+                <a href="{{ route('products.index') }}" class="bg-white text-orange-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold text-base inline-block">
                     Shop Now
                 </a>
             </div>
@@ -342,7 +342,7 @@
                     
                     <!-- Category Info -->
                     <div class="absolute bottom-0 left-0 right-0 p-2 text-white text-center">
-                        <h3 class="font-semibold text-xs md:text-sm leading-tight group-hover:text-green-300 transition-colors line-clamp-1">
+                        <h3 class="font-semibold text-xs md:text-sm leading-tight group-hover:text-orange-300 transition-colors line-clamp-1">
                             {{ $category->name }}
                         </h3>
                         <p class="text-[10px] text-gray-300 mt-0.5">
@@ -361,7 +361,7 @@
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center mb-4">
                 <h2 id="featured-heading" class="text-lg md:text-xl font-bold">Featured Products</h2>
-                <a href="{{ route('products.index') }}?featured=1" class="text-green-600 hover:text-green-700 font-medium text-xs">
+                <a href="{{ route('products.index') }}?featured=1" class="text-orange-600 hover:text-orange-700 font-medium text-xs">
                     View All <i class="fas fa-arrow-right ml-1" aria-hidden="true"></i>
                 </a>
             </div>
@@ -376,14 +376,14 @@
 @endif
 
 <!-- USP Banner - Compact -->
-<section class="py-5 bg-gradient-to-r from-green-600 to-green-800 text-white" aria-label="Special offer">
+<section class="py-5 bg-gradient-to-r from-orange-500 to-orange-600 text-white" aria-label="Special offer">
     <div class="container mx-auto px-4">
         <div class="flex flex-col md:flex-row items-center justify-between gap-3">
             <div class="text-center md:text-left">
                 <h2 class="text-base md:text-lg font-bold mb-0.5">Free Shipping on Orders Above ₹500</h2>
-                <p class="text-green-100 text-xs">100% Pure & Natural | Homemade with Love | Chemical-Free</p>
+                <p class="text-orange-100 text-xs">100% Pure & Natural | Homemade with Love | Chemical-Free</p>
             </div>
-            <a href="{{ route('products.index') }}" class="bg-white text-green-600 hover:bg-gray-100 px-5 py-1.5 rounded-lg font-semibold text-sm inline-block">
+            <a href="{{ route('products.index') }}" class="bg-white text-orange-600 hover:bg-gray-100 px-5 py-1.5 rounded-lg font-semibold text-sm inline-block">
                 Shop Now
             </a>
         </div>
@@ -396,7 +396,7 @@
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center mb-4">
                 <h2 id="new-arrivals-heading" class="text-lg md:text-xl font-bold">New Arrivals</h2>
-                <a href="{{ route('products.index') }}?sort=latest" class="text-green-600 hover:text-green-700 font-medium text-xs">
+                <a href="{{ route('products.index') }}?sort=latest" class="text-orange-600 hover:text-orange-700 font-medium text-xs">
                     View All <i class="fas fa-arrow-right ml-1" aria-hidden="true"></i>
                 </a>
             </div>
@@ -416,29 +416,29 @@
         <h2 id="why-choose-heading" class="text-lg md:text-xl font-bold text-center mb-5">Why Choose {{ $companyName }}</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
             <article class="text-center bg-white p-3 rounded-lg shadow-sm">
-                <div class="w-10 h-10 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-check-circle text-lg text-green-600" aria-hidden="true"></i>
+                <div class="w-10 h-10 mx-auto mb-2 bg-orange-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check-circle text-lg text-orange-500" aria-hidden="true"></i>
                 </div>
                 <h3 class="font-semibold text-xs mb-0.5">100% Pure & Natural</h3>
                 <p class="text-gray-600 text-[10px]">No chemicals or preservatives</p>
             </article>
             <article class="text-center bg-white p-3 rounded-lg shadow-sm">
-                <div class="w-10 h-10 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-home text-lg text-green-600" aria-hidden="true"></i>
+                <div class="w-10 h-10 mx-auto mb-2 bg-orange-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-home text-lg text-orange-500" aria-hidden="true"></i>
                 </div>
                 <h3 class="font-semibold text-xs mb-0.5">Homemade Fresh</h3>
                 <p class="text-gray-600 text-[10px]">Freshly ground in small batches</p>
             </article>
             <article class="text-center bg-white p-3 rounded-lg shadow-sm">
-                <div class="w-10 h-10 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-shipping-fast text-lg text-green-600" aria-hidden="true"></i>
+                <div class="w-10 h-10 mx-auto mb-2 bg-orange-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-shipping-fast text-lg text-orange-500" aria-hidden="true"></i>
                 </div>
                 <h3 class="font-semibold text-xs mb-0.5">Fast Delivery</h3>
                 <p class="text-gray-600 text-[10px]">Free shipping above ₹500</p>
             </article>
             <article class="text-center bg-white p-3 rounded-lg shadow-sm">
-                <div class="w-10 h-10 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-hand-holding-heart text-lg text-green-600" aria-hidden="true"></i>
+                <div class="w-10 h-10 mx-auto mb-2 bg-orange-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-hand-holding-heart text-lg text-orange-500" aria-hidden="true"></i>
                 </div>
                 <h3 class="font-semibold text-xs mb-0.5">Made with Love</h3>
                 <p class="text-gray-600 text-[10px]">Traditional family recipes</p>

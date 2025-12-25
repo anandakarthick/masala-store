@@ -28,13 +28,19 @@
         $marqueeEnabled = \App\Models\Setting::get('marquee_enabled', '1');
         $marqueeText = \App\Models\Setting::get('marquee_text', '🎉 Free Shipping on Orders Above ₹500 | 100% Pure & Natural Products | Order Now! 🌿');
         $marqueeSpeed = \App\Models\Setting::get('marquee_speed', '30'); // seconds for one complete scroll
-        $marqueeBgColor = \App\Models\Setting::get('marquee_bg_color', '#15803d'); // green-700
+        $marqueeBgColor = \App\Models\Setting::get('marquee_bg_color', '#ea580c'); // orange-600
         
         // Social Media Links
         $socialLinks = \App\Models\SocialMediaLink::active()->get();
         
         // Footer Pages
         $footerPages = \App\Models\Page::active()->footer()->get();
+        
+        // Theme Colors - Orange Theme matching mobile app
+        $primaryColor = '#F97316'; // orange-500
+        $primaryDark = '#EA580C'; // orange-600
+        $primaryDarker = '#C2410C'; // orange-700
+        $primaryLight = '#FED7AA'; // orange-200
     @endphp
     
     <title>@yield('title', 'Home') - {{ $businessName }}</title>
@@ -65,7 +71,7 @@
     
     <meta name="geo.region" content="IN-TN">
     <meta name="geo.placename" content="Chennai">
-    <meta name="theme-color" content="#16a34a">
+    <meta name="theme-color" content="#F97316">
     
     @php
         $faviconUrl = \App\Models\Setting::favicon();
@@ -92,6 +98,28 @@
     <!-- TODO: Replace Tailwind CDN with compiled CSS in production for better performance -->
     <!-- Run: npm run build and use @vite(['resources/css/app.css', 'resources/js/app.js']) -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#FFF7ED',
+                            100: '#FFEDD5',
+                            200: '#FED7AA',
+                            300: '#FDBA74',
+                            400: '#FB923C',
+                            500: '#F97316',
+                            600: '#EA580C',
+                            700: '#C2410C',
+                            800: '#9A3412',
+                            900: '#7C2D12',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
     
@@ -206,19 +234,25 @@
                 padding-top: 76px;
             }
         }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #F97316; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #EA580C; }
     </style>
     
     @stack('styles')
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col" x-data="cartManager()" x-init="init()">
     <div x-show="toast.show" x-cloak
-         :class="toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'"
+         :class="toast.type === 'success' ? 'bg-orange-500' : 'bg-red-500'"
          class="fixed top-36 right-4 z-50 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
         <span x-text="toast.message"></span>
     </div>
 
     <!-- Fixed Top Bar Container -->
-    <div class="fixed top-0 left-0 right-0 z-50 bg-green-700">
+    <div class="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-orange-600 to-orange-500">
         <!-- Top Bar with Contact, Marquee & Social -->
         <div class="text-white text-xs sm:text-sm py-1.5">
             <div class="container mx-auto px-2 sm:px-4">
@@ -228,7 +262,7 @@
                         @if($whatsappEnabled == '1' && $whatsappNumber)
                             <a href="https://wa.me/91{{ $whatsappNumber }}?text={{ urlencode($whatsappMessage) }}" 
                                target="_blank" rel="noopener"
-                               class="flex items-center gap-1 bg-green-600 hover:bg-green-500 px-2 py-0.5 rounded-full text-xs">
+                               class="flex items-center gap-1 bg-green-500 hover:bg-green-600 px-2 py-0.5 rounded-full text-xs transition">
                                 <i class="fab fa-whatsapp"></i>
                                 <span class="hidden sm:inline">Order on WhatsApp</span>
                             </a>
@@ -236,10 +270,10 @@
                         
                         <!-- Social Media Links -->
                         @if($socialLinks->count() > 0)
-                            <div class="hidden lg:flex items-center gap-2 border-l border-green-600 pl-2">
+                            <div class="hidden lg:flex items-center gap-2 border-l border-orange-400 pl-2">
                                 @foreach($socialLinks->take(4) as $social)
                                     <a href="{{ $social->url }}" target="_blank" rel="noopener" 
-                                       class="hover:text-green-200 transition" title="{{ $social->name }}">
+                                       class="hover:text-orange-200 transition" title="{{ $social->name }}">
                                         <i class="{{ $social->icon }}"></i>
                                     </a>
                                 @endforeach
@@ -261,18 +295,18 @@
                     
                     <!-- Right: Phone, Track, Account -->
                     <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                        <a href="tel:{{ $businessPhone }}" class="flex items-center hover:text-green-200">
+                        <a href="tel:{{ $businessPhone }}" class="flex items-center hover:text-orange-200">
                             <i class="fas fa-phone text-xs mr-1"></i>
                             <span class="hidden sm:inline">{{ $businessPhone }}</span>
                         </a>
-                        <a href="{{ route('tracking.index') }}" class="hover:text-green-200 flex items-center border-l border-green-600 pl-2">
+                        <a href="{{ route('tracking.index') }}" class="hover:text-orange-200 flex items-center border-l border-orange-400 pl-2">
                             <i class="fas fa-truck text-xs"></i>
                             <span class="hidden md:inline ml-1">Track</span>
                         </a>
                         @auth
-                            <a href="{{ route('account.dashboard') }}" class="hover:text-green-200 border-l border-green-600 pl-2">Account</a>
+                            <a href="{{ route('account.dashboard') }}" class="hover:text-orange-200 border-l border-orange-400 pl-2">Account</a>
                         @else
-                            <a href="{{ route('login') }}" class="hover:text-green-200 border-l border-green-600 pl-2">Login</a>
+                            <a href="{{ route('login') }}" class="hover:text-orange-200 border-l border-orange-400 pl-2">Login</a>
                         @endauth
                     </div>
                 </div>
@@ -288,7 +322,7 @@
                     @if(\App\Models\Setting::logo())
                         <img src="{{ \App\Models\Setting::logo() }}" alt="{{ $businessName }}" class="h-8 sm:h-10">
                     @else
-                        <span class="text-sm sm:text-lg font-bold text-green-700 flex items-center">
+                        <span class="text-sm sm:text-lg font-bold text-orange-500 flex items-center">
                             <i class="fas fa-leaf mr-1"></i>
                             <span class="hidden md:inline">{{ $businessName }}</span>
                             <span class="md:hidden">SV Masala</span>
@@ -299,22 +333,22 @@
                 <form action="{{ route('products.search') }}" method="GET" class="hidden lg:flex flex-1 max-w-md mx-4">
                     <div class="relative w-full">
                         <input type="text" name="q" placeholder="Search masala, spices, oils..." 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                value="{{ request('q') }}">
-                        <button type="submit" class="absolute right-0 top-0 h-full px-4 text-gray-500 hover:text-green-600">
+                        <button type="submit" class="absolute right-0 top-0 h-full px-4 text-gray-500 hover:text-orange-600">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
                 </form>
 
                 <div class="flex items-center gap-1 sm:gap-2">
-                    <a href="{{ route('products.search') }}" class="lg:hidden text-gray-700 hover:text-green-600 p-2">
+                    <a href="{{ route('products.search') }}" class="lg:hidden text-gray-700 hover:text-orange-600 p-2">
                         <i class="fas fa-search text-lg"></i>
                     </a>
-                    <a href="{{ route('cart.index') }}" class="relative text-gray-700 hover:text-green-600 p-2">
+                    <a href="{{ route('cart.index') }}" class="relative text-gray-700 hover:text-orange-600 p-2">
                         <i class="fas fa-shopping-cart text-lg sm:text-xl"></i>
                         <span x-show="cartCount > 0" x-text="cartCount"
-                              class="absolute top-0 right-0 bg-green-600 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-medium"></span>
+                              class="absolute top-0 right-0 bg-orange-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-medium"></span>
                     </a>
                     <button @click="mobileMenuOpen = !mobileMenuOpen" class="lg:hidden text-gray-700 p-2">
                         <i class="fas fa-bars text-xl"></i>
@@ -328,10 +362,10 @@
             
             <nav class="hidden lg:block border-t">
                 <ul class="flex items-center justify-center space-x-5 py-2 text-sm">
-                    <li><a href="{{ route('home') }}" class="text-gray-700 hover:text-green-600 font-medium">Home</a></li>
-                    <li><a href="{{ route('products.index') }}" class="text-gray-700 hover:text-green-600 font-medium">All Products</a></li>
+                    <li><a href="{{ route('home') }}" class="text-gray-700 hover:text-orange-600 font-medium transition">Home</a></li>
+                    <li><a href="{{ route('products.index') }}" class="text-gray-700 hover:text-orange-600 font-medium transition">All Products</a></li>
                     @foreach($navCategories as $category)
-                        <li><a href="{{ route('category.show', $category->slug) }}" class="text-gray-700 hover:text-green-600 font-medium">{{ $category->name }}</a></li>
+                        <li><a href="{{ route('category.show', $category->slug) }}" class="text-gray-700 hover:text-orange-600 font-medium transition">{{ $category->name }}</a></li>
                     @endforeach
                     <li>
                         <a href="{{ route('products.offers') }}" class="inline-flex items-center gap-1 bg-gradient-to-r from-red-500 to-orange-500 text-white px-3 py-1 rounded-full font-medium hover:from-red-600 hover:to-orange-600 transition-all text-xs">
@@ -343,23 +377,23 @@
                             <i class="fas fa-box-open"></i> Build Combo
                         </a>
                     </li>
-                    <li><a href="{{ route('about') }}" class="text-gray-700 hover:text-green-600 font-medium">About</a></li>
-                    <li><a href="{{ route('contact') }}" class="text-gray-700 hover:text-green-600 font-medium">Contact</a></li>
+                    <li><a href="{{ route('about') }}" class="text-gray-700 hover:text-orange-600 font-medium transition">About</a></li>
+                    <li><a href="{{ route('contact') }}" class="text-gray-700 hover:text-orange-600 font-medium transition">Contact</a></li>
                 </ul>
             </nav>
 
             <div x-show="mobileMenuOpen" x-cloak class="lg:hidden border-t py-3">
                 <form action="{{ route('products.search') }}" method="GET" class="mb-4">
                     <div class="relative">
-                        <input type="text" name="q" placeholder="Search products..." class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <input type="text" name="q" placeholder="Search products..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
                         <button type="submit" class="absolute right-0 top-0 h-full px-4 text-gray-500">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
                 </form>
                 <ul class="space-y-1">
-                    <li><a href="{{ route('home') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50"><i class="fas fa-home w-5 mr-2"></i>Home</a></li>
-                    <li><a href="{{ route('products.index') }}" class="block py-2 px-3 rounded text-green-600 bg-green-50 font-medium"><i class="fas fa-th-large w-5 mr-2"></i>All Products</a></li>
+                    <li><a href="{{ route('home') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-orange-50"><i class="fas fa-home w-5 mr-2"></i>Home</a></li>
+                    <li><a href="{{ route('products.index') }}" class="block py-2 px-3 rounded text-orange-600 bg-orange-50 font-medium"><i class="fas fa-th-large w-5 mr-2"></i>All Products</a></li>
                     <li>
                         <a href="{{ route('products.offers') }}" class="block py-2 px-3 rounded bg-gradient-to-r from-red-500 to-orange-500 text-white font-medium">
                             <i class="fas fa-fire w-5 mr-2 animate-pulse"></i>🔥 Special Offers
@@ -371,11 +405,11 @@
                         </a>
                     </li>
                     @foreach($navCategories as $category)
-                        <li><a href="{{ route('category.show', $category->slug) }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50"><i class="fas fa-tag w-5 mr-2"></i>{{ $category->name }}</a></li>
+                        <li><a href="{{ route('category.show', $category->slug) }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-orange-50"><i class="fas fa-tag w-5 mr-2"></i>{{ $category->name }}</a></li>
                     @endforeach
-                    <li class="border-t pt-2 mt-2"><a href="{{ route('about') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50"><i class="fas fa-info-circle w-5 mr-2"></i>About</a></li>
-                    <li><a href="{{ route('contact') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50"><i class="fas fa-envelope w-5 mr-2"></i>Contact</a></li>
-                    <li class="border-t pt-2 mt-2"><a href="{{ route('tracking.index') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50"><i class="fas fa-truck w-5 mr-2"></i>Track Order</a></li>
+                    <li class="border-t pt-2 mt-2"><a href="{{ route('about') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-orange-50"><i class="fas fa-info-circle w-5 mr-2"></i>About</a></li>
+                    <li><a href="{{ route('contact') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-orange-50"><i class="fas fa-envelope w-5 mr-2"></i>Contact</a></li>
+                    <li class="border-t pt-2 mt-2"><a href="{{ route('tracking.index') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-orange-50"><i class="fas fa-truck w-5 mr-2"></i>Track Order</a></li>
                     @if($whatsappEnabled == '1' && $whatsappNumber)
                         <li>
                             <a href="https://wa.me/91{{ $whatsappNumber }}?text={{ urlencode($whatsappMessage) }}" 
@@ -386,7 +420,7 @@
                         </li>
                     @endif
                     @auth
-                        <li><a href="{{ route('account.dashboard') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50"><i class="fas fa-user w-5 mr-2"></i>My Account</a></li>
+                        <li><a href="{{ route('account.dashboard') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-orange-50"><i class="fas fa-user w-5 mr-2"></i>My Account</a></li>
                         <li>
                             <form action="{{ route('logout') }}" method="POST">
                                 @csrf
@@ -394,8 +428,8 @@
                             </form>
                         </li>
                     @else
-                        <li><a href="{{ route('login') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50"><i class="fas fa-sign-in-alt w-5 mr-2"></i>Login</a></li>
-                        <li><a href="{{ route('register') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-green-50"><i class="fas fa-user-plus w-5 mr-2"></i>Register</a></li>
+                        <li><a href="{{ route('login') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-orange-50"><i class="fas fa-sign-in-alt w-5 mr-2"></i>Login</a></li>
+                        <li><a href="{{ route('register') }}" class="block py-2 px-3 rounded text-gray-700 hover:bg-orange-50"><i class="fas fa-user-plus w-5 mr-2"></i>Register</a></li>
                     @endauth
                 </ul>
             </div>
@@ -411,7 +445,7 @@
         $showFirstTimeBanner = $firstTimeOfferMessage && (!auth()->check() || \App\Services\FirstTimeCustomerService::isFirstTimeCustomer());
     @endphp
     @if($showFirstTimeBanner)
-        <div class="bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 text-white py-2.5 shadow-md relative" x-data="{ showBanner: true }" x-show="showBanner" x-cloak>
+        <div class="bg-gradient-to-r from-orange-400 via-orange-500 to-red-500 text-white py-2.5 shadow-md relative" x-data="{ showBanner: true }" x-show="showBanner" x-cloak>
             <div class="container mx-auto px-4 pr-10">
                 <div class="flex items-center justify-center gap-2 flex-wrap">
                     <span class="text-xl">🎁</span>
@@ -427,14 +461,14 @@
                     @endif
                 </div>
             </div>
-            <button @click="showBanner = false" class="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-yellow-200" title="Close">
+            <button @click="showBanner = false" class="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-orange-200" title="Close">
                 <i class="fas fa-times"></i>
             </button>
         </div>
     @endif
 
     @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 container mx-auto mt-4 rounded">
+        <div class="bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 container mx-auto mt-4 rounded">
             {{ session('success') }}
         </div>
     @endif
@@ -455,7 +489,7 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <!-- Company Info -->
                 <div>
-                    <h3 class="text-white text-lg font-bold mb-4"><i class="fas fa-leaf text-green-500"></i> {{ $businessName }}</h3>
+                    <h3 class="text-white text-lg font-bold mb-4"><i class="fas fa-leaf text-orange-500"></i> {{ $businessName }}</h3>
                     <p class="text-sm mb-4">{{ $businessTagline }}</p>
                     
                     <!-- Social Media Links -->
@@ -477,11 +511,11 @@
                 <div>
                     <h4 class="text-white font-semibold mb-4">Quick Links</h4>
                     <ul class="space-y-2 text-sm">
-                        <li><a href="{{ route('home') }}" class="hover:text-green-400">Home</a></li>
-                        <li><a href="{{ route('products.index') }}" class="hover:text-green-400">All Products</a></li>
-                        <li><a href="{{ route('products.offers') }}" class="hover:text-green-400 flex items-center gap-1"><i class="fas fa-fire text-orange-400"></i> Offers</a></li>
-                        <li><a href="{{ route('about') }}" class="hover:text-green-400">About Us</a></li>
-                        <li><a href="{{ route('contact') }}" class="hover:text-green-400">Contact</a></li>
+                        <li><a href="{{ route('home') }}" class="hover:text-orange-400 transition">Home</a></li>
+                        <li><a href="{{ route('products.index') }}" class="hover:text-orange-400 transition">All Products</a></li>
+                        <li><a href="{{ route('products.offers') }}" class="hover:text-orange-400 transition flex items-center gap-1"><i class="fas fa-fire text-orange-400"></i> Offers</a></li>
+                        <li><a href="{{ route('about') }}" class="hover:text-orange-400 transition">About Us</a></li>
+                        <li><a href="{{ route('contact') }}" class="hover:text-orange-400 transition">Contact</a></li>
                     </ul>
                 </div>
                 
@@ -490,7 +524,7 @@
                     <h4 class="text-white font-semibold mb-4">Categories</h4>
                     <ul class="space-y-2 text-sm">
                         @foreach(\App\Models\Category::whereNull('parent_id')->where('is_active', true)->orderBy('sort_order')->get() as $cat)
-                            <li><a href="{{ route('category.show', $cat->slug) }}" class="hover:text-green-400">{{ $cat->name }}</a></li>
+                            <li><a href="{{ route('category.show', $cat->slug) }}" class="hover:text-orange-400 transition">{{ $cat->name }}</a></li>
                         @endforeach
                     </ul>
                 </div>
@@ -499,13 +533,13 @@
                 <div>
                     <h4 class="text-white font-semibold mb-4">Contact Us</h4>
                     <ul class="space-y-2 text-sm">
-                        <li><i class="fas fa-map-marker-alt mr-2 text-green-500"></i>{{ $businessAddress }}</li>
-                        <li><a href="tel:{{ $businessPhone }}" class="hover:text-green-400"><i class="fas fa-phone mr-2 text-green-500"></i>{{ $businessPhone }}</a></li>
-                        <li><a href="mailto:{{ $businessEmail }}" class="hover:text-green-400"><i class="fas fa-envelope mr-2 text-green-500"></i>{{ $businessEmail }}</a></li>
+                        <li><i class="fas fa-map-marker-alt mr-2 text-orange-500"></i>{{ $businessAddress }}</li>
+                        <li><a href="tel:{{ $businessPhone }}" class="hover:text-orange-400 transition"><i class="fas fa-phone mr-2 text-orange-500"></i>{{ $businessPhone }}</a></li>
+                        <li><a href="mailto:{{ $businessEmail }}" class="hover:text-orange-400 transition"><i class="fas fa-envelope mr-2 text-orange-500"></i>{{ $businessEmail }}</a></li>
                         @if($whatsappEnabled == '1' && $whatsappNumber)
                             <li>
                                 <a href="https://wa.me/91{{ $whatsappNumber }}?text={{ urlencode($whatsappMessage) }}" 
-                                   target="_blank" rel="noopener" class="hover:text-green-400">
+                                   target="_blank" rel="noopener" class="hover:text-orange-400 transition">
                                     <i class="fab fa-whatsapp mr-2 text-green-500"></i>WhatsApp Order
                                 </a>
                             </li>
@@ -525,7 +559,7 @@
                     @if($footerPages->count() > 0)
                         <div class="flex items-center gap-4">
                             @foreach($footerPages as $page)
-                                <a href="{{ route('page.show', $page->slug) }}" class="hover:text-green-400">{{ $page->title }}</a>
+                                <a href="{{ route('page.show', $page->slug) }}" class="hover:text-orange-400 transition">{{ $page->title }}</a>
                                 @if(!$loop->last)
                                     <span class="text-gray-600">|</span>
                                 @endif
@@ -539,7 +573,7 @@
 
     <!-- Floating Cart Button - Always visible -->
     <a href="{{ route('cart.index') }}" 
-       class="fixed bottom-24 right-6 z-50 w-14 h-14 bg-green-600 hover:bg-green-700 text-white rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110"
+       class="fixed bottom-24 right-6 z-50 w-14 h-14 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110"
        title="View Cart">
         <i class="fas fa-shopping-cart text-xl"></i>
         <span x-show="cartCount > 0" x-text="cartCount"
