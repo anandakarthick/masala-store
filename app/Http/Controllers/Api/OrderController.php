@@ -404,14 +404,14 @@ class OrderController extends Controller
 
             DB::commit();
 
-            // For COD or full wallet payment, send emails and push notifications
-            if ($paymentMethod->isCod() || $walletAmountUsed >= $totalAmount) {
-                if ($walletAmountUsed >= $totalAmount) {
-                    $order->update(['payment_status' => 'paid']);
-                }
-                // This job now handles both email and push notification
-                SendOrderEmails::dispatch($order->fresh()->load('items.product'));
+            // Update payment status for full wallet payment
+            if ($walletAmountUsed >= $totalAmount) {
+                $order->update(['payment_status' => 'paid']);
             }
+
+            // Send order confirmation email and push notification for ALL orders
+            // This includes COD, UPI, Bank Transfer, and all other payment methods
+            SendOrderEmails::dispatch($order->fresh()->load('items.product'));
 
             return response()->json([
                 'success' => true,
@@ -599,6 +599,91 @@ class OrderController extends Controller
     }
 
     /**
+     * Confirm payment for UPI/Bank Transfer orders
+     * Called by user after completing payment in external app
+     */
+    public function confirmPayment(Request $request, $orderNumber)
+    {
+        $validated = $request->validate([
+            'transaction_id' => 'nullable|string|max:100',
+            'payment_app' => 'nullable|string|max:50', // gpay, phonepe, paytm, etc.
+        ]);
+
+        $order = Order::where('user_id', $request->user()->id)
+            ->where('order_number', $orderNumber)
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found.',
+            ], 404);
+        }
+
+        // Check if payment is already confirmed
+        if ($order->payment_status === 'paid') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment already confirmed.',
+                'data' => [
+                    'order_number' => $order->order_number,
+                    'payment_status' => 'paid',
+                ],
+            ]);
+        }
+
+        // Only allow confirmation for pending UPI/Bank Transfer orders
+        if (!in_array($order->payment_method, ['upi', 'bank_transfer'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment confirmation not required for this payment method.',
+            ], 400);
+        }
+
+        // Check if order is still in a valid state for payment confirmation
+        if ($order->status === 'cancelled') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot confirm payment for a cancelled order.',
+            ], 400);
+        }
+
+        try {
+            // Update payment status
+            $order->update([
+                'payment_status' => 'paid',
+                'transaction_id' => $validated['transaction_id'] ?? null,
+                'payment_confirmed_at' => now(),
+                'payment_confirmed_via' => $validated['payment_app'] ?? 'app',
+            ]);
+
+            \Log::info('Payment confirmed by user', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'user_id' => $request->user()->id,
+                'transaction_id' => $validated['transaction_id'] ?? null,
+                'payment_app' => $validated['payment_app'] ?? null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment confirmed successfully! Thank you for your order.',
+                'data' => [
+                    'order_number' => $order->order_number,
+                    'payment_status' => 'paid',
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Payment confirmation error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to confirm payment. Please try again.',
+            ], 500);
+        }
+    }
+
+    /**
      * Download invoice
      */
     public function downloadInvoice(Request $request, $orderNumber, InvoiceService $invoiceService)
@@ -777,6 +862,44 @@ class OrderController extends Controller
                 'total_price' => (float) $item->total_price,
                 'image' => $item->product?->primary_image_url,
             ]);
+
+            // Include payment method details for pending payments (UPI/Bank Transfer)
+            if ($order->payment_status === 'pending' && 
+                $order->status !== 'cancelled' &&
+                in_array($order->payment_method, ['upi', 'bank_transfer'])) {
+                
+                $paymentMethod = PaymentMethod::where('code', $order->payment_method)->active()->first();
+                
+                if ($paymentMethod) {
+                    $paymentDetails = [
+                        'code' => $paymentMethod->code,
+                        'name' => $paymentMethod->name,
+                        'display_name' => $paymentMethod->display_name ?? $paymentMethod->name,
+                        'instructions' => $paymentMethod->instructions,
+                    ];
+
+                    // Add UPI details
+                    if ($paymentMethod->code === 'upi') {
+                        $paymentDetails['upi_id'] = $paymentMethod->getSetting('upi_id');
+                        $paymentDetails['upi_name'] = $paymentMethod->getSetting('upi_name');
+                        $qrCode = $paymentMethod->getSetting('qr_code');
+                        $paymentDetails['qr_code_url'] = $qrCode ? asset('storage/' . $qrCode) : null;
+                    }
+
+                    // Add bank transfer details
+                    if ($paymentMethod->code === 'bank_transfer') {
+                        $paymentDetails['bank_details'] = [
+                            'account_name' => $paymentMethod->getSetting('account_name'),
+                            'account_number' => $paymentMethod->getSetting('account_number'),
+                            'bank_name' => $paymentMethod->getSetting('bank_name'),
+                            'ifsc_code' => $paymentMethod->getSetting('ifsc_code'),
+                            'branch' => $paymentMethod->getSetting('branch'),
+                        ];
+                    }
+
+                    $data['payment_method_details'] = $paymentDetails;
+                }
+            }
         }
 
         return $data;

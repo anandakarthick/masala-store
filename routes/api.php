@@ -94,6 +94,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/orders', [OrderController::class, 'myOrders']);
         Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
         Route::post('/orders/{orderNumber}/cancel', [OrderController::class, 'cancelOrder']);
+        Route::post('/orders/{orderNumber}/confirm-payment', [OrderController::class, 'confirmPayment']);
         Route::get('/orders/{orderNumber}/invoice', [OrderController::class, 'downloadInvoice']);
         Route::get('/orders/{orderNumber}/invoice-url', [OrderController::class, 'getInvoiceUrl']);
         
