@@ -117,6 +117,8 @@ class OrderController extends Controller
                 if ($pm->code === 'upi') {
                     $data['upi_id'] = $pm->getSetting('upi_id');
                     $data['upi_name'] = $pm->getSetting('upi_name');
+                    $data['merchant_code'] = $pm->getSetting('merchant_code', '0000');
+                    $data['transaction_url'] = $pm->getSetting('transaction_url');
                     $qrCode = $pm->getSetting('qr_code');
                     $data['qr_code_url'] = $qrCode ? asset('storage/' . $qrCode) : null;
                 }
@@ -882,6 +884,8 @@ class OrderController extends Controller
                     if ($paymentMethod->code === 'upi') {
                         $paymentDetails['upi_id'] = $paymentMethod->getSetting('upi_id');
                         $paymentDetails['upi_name'] = $paymentMethod->getSetting('upi_name');
+                        $paymentDetails['merchant_code'] = $paymentMethod->getSetting('merchant_code', '0000');
+                        $paymentDetails['transaction_url'] = $paymentMethod->getSetting('transaction_url');
                         $qrCode = $paymentMethod->getSetting('qr_code');
                         $paymentDetails['qr_code_url'] = $qrCode ? asset('storage/' . $qrCode) : null;
                     }

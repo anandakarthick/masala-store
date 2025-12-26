@@ -164,20 +164,58 @@
                         <i class="fas fa-mobile-alt mr-2 text-purple-600"></i>UPI Configuration
                     </h3>
                     
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
+                        <p class="text-sm text-purple-700">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Configure your UPI details for receiving payments. For business accounts, you can get a merchant VPA from your bank or payment provider.
+                        </p>
+                    </div>
+                    
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">UPI ID</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">UPI ID (VPA) *</label>
                             <input type="text" name="upi_id" 
                                    value="{{ old('upi_id', $paymentMethod->getSetting('upi_id')) }}" 
-                                   placeholder="yourname@upi"
+                                   placeholder="yourname@upi or merchant@bank"
                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
+                            <p class="text-xs text-gray-500 mt-1">Example: yourstore@okaxis, business@ybl</p>
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Payee Name</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Payee/Merchant Name *</label>
                             <input type="text" name="upi_name" 
                                    value="{{ old('upi_name', $paymentMethod->getSetting('upi_name')) }}" 
+                                   placeholder="Your Business Name"
+                                   maxlength="20"
                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
+                            <p class="text-xs text-gray-500 mt-1">Max 20 characters, alphanumeric only</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Merchant Configuration -->
+                    <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-store mr-1"></i> Merchant Configuration (Optional)
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Merchant Code (MCC)</label>
+                                <input type="text" name="merchant_code" 
+                                       value="{{ old('merchant_code', $paymentMethod->getSetting('merchant_code', '0000')) }}" 
+                                       placeholder="0000"
+                                       maxlength="4"
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
+                                <p class="text-xs text-gray-500 mt-1">4-digit code. Common: 5411 (Grocery), 5499 (Food Store), 0000 (Default)</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Transaction URL (Optional)</label>
+                                <input type="url" name="transaction_url" 
+                                       value="{{ old('transaction_url', $paymentMethod->getSetting('transaction_url')) }}" 
+                                       placeholder="https://yourstore.com/order/"
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
+                                <p class="text-xs text-gray-500 mt-1">URL for transaction reference (used by some UPI apps)</p>
+                            </div>
                         </div>
                     </div>
                     
@@ -223,6 +261,17 @@
                         @error('qr_code_image')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                         @enderror
+                    </div>
+                    
+                    <!-- UPI Deep Link Preview -->
+                    <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 class="text-sm font-semibold text-blue-700 mb-2">
+                            <i class="fas fa-link mr-1"></i> UPI Deep Link Format
+                        </h4>
+                        <code class="text-xs text-blue-600 break-all">
+                            upi://pay?pa={{ $paymentMethod->getSetting('upi_id') ?: 'your-upi@bank' }}&pn={{ $paymentMethod->getSetting('upi_name') ?: 'MerchantName' }}&mc={{ $paymentMethod->getSetting('merchant_code', '0000') }}&tr={ORDER_REF}&tn=Payment&am={AMOUNT}&cu=INR
+                        </code>
+                        <p class="text-xs text-blue-600 mt-2">This is the format used when customers pay via UPI apps.</p>
                     </div>
                 </div>
                 @endif

@@ -51,6 +51,8 @@ class PaymentMethodController extends Controller
             $settings = $paymentMethod->settings ?? [];
             $settings['upi_id'] = $request->input('upi_id');
             $settings['upi_name'] = $request->input('upi_name');
+            $settings['merchant_code'] = $request->input('merchant_code', '0000');
+            $settings['transaction_url'] = $request->input('transaction_url');
             
             // Handle QR code image upload
             if ($request->hasFile('qr_code_image')) {
