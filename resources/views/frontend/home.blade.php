@@ -1,14 +1,15 @@
 @extends('layouts.app')
 
 @php
-    $companyName = \App\Models\Setting::get('business_name', 'SV Masala & Herbal Products');
-    $tagline = \App\Models\Setting::get('business_tagline', 'Premium Masala, Oils & Herbal Products');
+    $companyName = \App\Models\Setting::get('business_name', 'SV Products');
+    $tagline = \App\Models\Setting::get('business_tagline', 'Premium Homemade Masala, Spices & Herbal Products');
     $siteUrl = config('app.url', url('/'));
 @endphp
 
-@section('title', 'Buy Homemade Masala, Spices & Herbal Products Online')
-@section('meta_description', $companyName . ' - Buy premium quality homemade masala powders, Indian spices, turmeric, coriander, garam masala, herbal oils & natural products online. 100% pure, chemical-free. Free delivery on orders above ₹500.')
-@section('meta_keywords', 'buy masala online, homemade spices, turmeric powder, coriander powder, cumin powder, garam masala, kashmiri chilli powder, cardamom powder, herbal products, ayurvedic oils, hair growth oil, natural products India, organic spices Chennai')
+@section('title', 'Buy Homemade Masala Powder Online | Pure Indian Spices')
+@section('meta_description', 'Buy premium homemade masala powder online at ' . $companyName . '. 100% pure & natural Indian spices - turmeric powder, coriander powder, garam masala, sambar powder, rasam powder. Chemical-free, traditional recipes. Free delivery above ₹500 across India.')
+@section('meta_keywords', 'homemade masala, homemade masala powder, buy masala online, Indian spices online, pure turmeric powder, haldi powder, coriander powder, dhania powder, garam masala, sambar powder, rasam powder, natural spices, chemical-free masala, organic spices, traditional masala, authentic Indian spices, buy spices online India, homemade spice mix, pure masala powder Chennai, ' . $companyName)
+@section('og_type', 'website')
 
 @push('scripts')
 <!-- Homepage ItemList Schema for Featured Products -->
@@ -447,16 +448,140 @@
     </div>
 </section>
 
-<!-- SEO Content Section -->
-<section class="py-6 bg-white" aria-labelledby="about-products-heading">
+<!-- SEO Content Section - Keyword Rich -->
+<section class="py-8 bg-white" aria-labelledby="about-products-heading">
     <div class="container mx-auto px-4">
-        <div class="max-w-3xl mx-auto text-center">
-            <h2 id="about-products-heading" class="text-lg md:text-xl font-bold mb-3">Premium Homemade Masala & Herbal Products</h2>
-            <div class="text-gray-600 text-xs leading-relaxed space-y-2">
-                <p>Welcome to <strong>{{ $companyName }}</strong>, your trusted destination for authentic homemade masala powders, Indian spices, and natural herbal products.</p>
-                <p>Our products are freshly ground in small batches to preserve their natural aroma, flavor, and health benefits. All products made using traditional recipes with no preservatives or chemicals.</p>
+        <div class="max-w-4xl mx-auto">
+            <h2 id="about-products-heading" class="text-xl md:text-2xl font-bold mb-4 text-center">Premium Homemade Masala Powder Online - 100% Pure & Natural</h2>
+            <div class="text-gray-600 text-sm leading-relaxed space-y-4">
+                <p class="text-center">
+                    Welcome to <strong>{{ $companyName }}</strong> - Your trusted destination for authentic <strong>homemade masala powder</strong> and pure <strong>Indian spices online</strong>. We bring you the finest quality traditional spices, freshly ground and packed to preserve their natural aroma and flavor.
+                </p>
+                
+                <div class="grid md:grid-cols-2 gap-6 mt-6">
+                    <div class="bg-orange-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-gray-800 mb-2"><i class="fas fa-mortar-pestle text-orange-500 mr-2"></i>Our Homemade Masala Range</h3>
+                        <p>Discover our extensive collection of <strong>homemade masala powders</strong> including <strong>turmeric powder (haldi)</strong>, <strong>coriander powder (dhania)</strong>, <strong>red chilli powder</strong>, <strong>garam masala</strong>, <strong>sambar powder</strong>, <strong>rasam powder</strong>, and many more traditional South Indian spices. Each product is made using time-tested family recipes.</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-gray-800 mb-2"><i class="fas fa-leaf text-green-500 mr-2"></i>Why Choose Our Spices?</h3>
+                        <p>All our <strong>Indian spices</strong> are <strong>100% pure and natural</strong>, with no added chemicals, preservatives, or artificial colors. We source premium quality raw materials and grind them fresh in small batches to ensure maximum freshness and potency of flavors.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg mt-4">
+                    <h3 class="font-semibold text-gray-800 mb-2 text-center"><i class="fas fa-shipping-fast text-orange-500 mr-2"></i>Buy Masala Online with Free Delivery</h3>
+                    <p class="text-center">
+                        Shopping for <strong>masala powder online</strong> has never been easier! Enjoy <strong>free delivery on orders above ₹500</strong> across India. Whether you're looking for <strong>authentic South Indian masala</strong>, <strong>traditional garam masala</strong>, or <strong>pure turmeric powder</strong>, we deliver the finest homemade spices right to your doorstep.
+                    </p>
+                </div>
+                
+                <div class="text-center mt-6">
+                    <h3 class="font-semibold text-gray-800 mb-3">Popular Products</h3>
+                    <div class="flex flex-wrap justify-center gap-2 text-xs">
+                        <a href="{{ route('products.search') }}?q=turmeric" class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full hover:bg-yellow-200">Turmeric Powder</a>
+                        <a href="{{ route('products.search') }}?q=coriander" class="bg-green-100 text-green-700 px-3 py-1 rounded-full hover:bg-green-200">Coriander Powder</a>
+                        <a href="{{ route('products.search') }}?q=chilli" class="bg-red-100 text-red-700 px-3 py-1 rounded-full hover:bg-red-200">Chilli Powder</a>
+                        <a href="{{ route('products.search') }}?q=garam+masala" class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full hover:bg-orange-200">Garam Masala</a>
+                        <a href="{{ route('products.search') }}?q=sambar" class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full hover:bg-amber-200">Sambar Powder</a>
+                        <a href="{{ route('products.search') }}?q=rasam" class="bg-rose-100 text-rose-700 px-3 py-1 rounded-full hover:bg-rose-200">Rasam Powder</a>
+                        <a href="{{ route('products.search') }}?q=cumin" class="bg-stone-100 text-stone-700 px-3 py-1 rounded-full hover:bg-stone-200">Cumin Powder</a>
+                        <a href="{{ route('products.search') }}?q=pepper" class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300">Black Pepper</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </section>
+
+<!-- FAQ Schema Section for SEO -->
+<section class="py-6 bg-gray-50" aria-labelledby="faq-heading">
+    <div class="container mx-auto px-4">
+        <div class="max-w-3xl mx-auto">
+            <h2 id="faq-heading" class="text-lg md:text-xl font-bold mb-4 text-center">Frequently Asked Questions</h2>
+            <div class="space-y-3" x-data="{ open: null }">
+                <div class="bg-white rounded-lg shadow-sm">
+                    <button @click="open = open === 1 ? null : 1" class="w-full px-4 py-3 text-left flex justify-between items-center">
+                        <span class="font-medium text-sm">What makes your homemade masala different from market brands?</span>
+                        <i class="fas" :class="open === 1 ? 'fa-minus' : 'fa-plus'" class="text-orange-500"></i>
+                    </button>
+                    <div x-show="open === 1" x-collapse class="px-4 pb-3 text-sm text-gray-600">
+                        Our homemade masala powders are freshly ground in small batches using premium quality raw materials. We use traditional stone-grinding methods and family recipes passed down through generations. No chemicals, preservatives, or artificial colors are added.
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm">
+                    <button @click="open = open === 2 ? null : 2" class="w-full px-4 py-3 text-left flex justify-between items-center">
+                        <span class="font-medium text-sm">Do you deliver masala powder across India?</span>
+                        <i class="fas" :class="open === 2 ? 'fa-minus' : 'fa-plus'" class="text-orange-500"></i>
+                    </button>
+                    <div x-show="open === 2" x-collapse class="px-4 pb-3 text-sm text-gray-600">
+                        Yes! We deliver our homemade masala and spices across India. Enjoy free delivery on orders above ₹500. Orders are typically delivered within 3-7 business days depending on your location.
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm">
+                    <button @click="open = open === 3 ? null : 3" class="w-full px-4 py-3 text-left flex justify-between items-center">
+                        <span class="font-medium text-sm">How long do your masala powders stay fresh?</span>
+                        <i class="fas" :class="open === 3 ? 'fa-minus' : 'fa-plus'" class="text-orange-500"></i>
+                    </button>
+                    <div x-show="open === 3" x-collapse class="px-4 pb-3 text-sm text-gray-600">
+                        Our masala powders stay fresh for 6-12 months when stored properly in airtight containers away from direct sunlight and moisture. The manufacturing and expiry dates are clearly mentioned on each package.
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm">
+                    <button @click="open = open === 4 ? null : 4" class="w-full px-4 py-3 text-left flex justify-between items-center">
+                        <span class="font-medium text-sm">Are your spices suitable for South Indian cooking?</span>
+                        <i class="fas" :class="open === 4 ? 'fa-minus' : 'fa-plus'" class="text-orange-500"></i>
+                    </button>
+                    <div x-show="open === 4" x-collapse class="px-4 pb-3 text-sm text-gray-600">
+                        Absolutely! We specialize in authentic South Indian masala powders including sambar powder, rasam powder, and traditional Tamil Nadu style spice mixes. Our recipes are perfect for preparing authentic South Indian dishes.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@push('scripts')
+<!-- FAQ Schema -->
+<script type="application/ld+json">
+{!! json_encode([
+    '@context' => 'https://schema.org',
+    '@type' => 'FAQPage',
+    'mainEntity' => [
+        [
+            '@type' => 'Question',
+            'name' => 'What makes your homemade masala different from market brands?',
+            'acceptedAnswer' => [
+                '@type' => 'Answer',
+                'text' => 'Our homemade masala powders are freshly ground in small batches using premium quality raw materials. We use traditional stone-grinding methods and family recipes passed down through generations. No chemicals, preservatives, or artificial colors are added.'
+            ]
+        ],
+        [
+            '@type' => 'Question',
+            'name' => 'Do you deliver masala powder across India?',
+            'acceptedAnswer' => [
+                '@type' => 'Answer',
+                'text' => 'Yes! We deliver our homemade masala and spices across India. Enjoy free delivery on orders above ₹500. Orders are typically delivered within 3-7 business days depending on your location.'
+            ]
+        ],
+        [
+            '@type' => 'Question',
+            'name' => 'How long do your masala powders stay fresh?',
+            'acceptedAnswer' => [
+                '@type' => 'Answer',
+                'text' => 'Our masala powders stay fresh for 6-12 months when stored properly in airtight containers away from direct sunlight and moisture. The manufacturing and expiry dates are clearly mentioned on each package.'
+            ]
+        ],
+        [
+            '@type' => 'Question',
+            'name' => 'Are your spices suitable for South Indian cooking?',
+            'acceptedAnswer' => [
+                '@type' => 'Answer',
+                'text' => 'Absolutely! We specialize in authentic South Indian masala powders including sambar powder, rasam powder, and traditional Tamil Nadu style spice mixes. Our recipes are perfect for preparing authentic South Indian dishes.'
+            ]
+        ]
+    ]
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+</script>
+@endpush
 @endsection

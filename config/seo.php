@@ -3,89 +3,72 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | SEO Configuration
+    | Site Verification Codes
     |--------------------------------------------------------------------------
-    |
-    | This file contains SEO-related configuration for the masala store.
-    | Update these values according to your business requirements.
-    |
     */
-
-    // Site verification codes (add your own)
     'verification' => [
         'google' => env('GOOGLE_SITE_VERIFICATION', ''),
         'bing' => env('BING_SITE_VERIFICATION', ''),
-        'yandex' => env('YANDEX_VERIFICATION', ''),
-        'pinterest' => env('PINTEREST_VERIFICATION', ''),
     ],
 
-    // Default meta values
+    /*
+    |--------------------------------------------------------------------------
+    | Default SEO Settings
+    |--------------------------------------------------------------------------
+    */
     'defaults' => [
-        'title_suffix' => ' - SV Masala & Herbal Products',
-        'description' => 'Buy premium quality homemade masala powders, Indian spices, and herbal products online. 100% pure, chemical-free. Free delivery on orders above ₹500.',
-        'keywords' => 'homemade masala, Indian spices, turmeric powder, coriander powder, garam masala, herbal products, ayurvedic oils',
-        'author' => 'SV Masala & Herbal Products',
-        'robots' => 'index, follow',
+        'title_suffix' => ' | SV Products - Homemade Masala & Spices',
+        'separator' => ' - ',
     ],
 
-    // Open Graph defaults
-    'og' => [
-        'type' => 'website',
-        'locale' => 'en_IN',
-        'site_name' => 'SV Masala & Herbal Products',
+    /*
+    |--------------------------------------------------------------------------
+    | Primary Keywords for Homepage
+    |--------------------------------------------------------------------------
+    */
+    'primary_keywords' => [
+        'homemade masala',
+        'homemade masala powder',
+        'buy masala online',
+        'Indian spices online',
+        'homemade spices',
+        'natural masala powder',
+        'pure masala powder',
+        'traditional masala',
+        'authentic Indian spices',
+        'chemical-free masala',
     ],
 
-    // Twitter Card defaults
-    'twitter' => [
-        'card' => 'summary_large_image',
-        'site' => '@svmasala', // Your Twitter handle
+    /*
+    |--------------------------------------------------------------------------
+    | Long-tail Keywords
+    |--------------------------------------------------------------------------
+    */
+    'longtail_keywords' => [
+        'buy homemade masala powder online India',
+        'homemade turmeric powder near me',
+        'pure coriander powder online',
+        'natural garam masala without preservatives',
+        'authentic sambar powder Chennai',
+        'homemade rasam powder Tamil Nadu',
+        'buy chilli powder online India',
+        'organic masala powder delivery',
+        'traditional South Indian masala',
+        'homemade spice mix online shopping',
     ],
 
-    // Geo targeting
-    'geo' => [
-        'region' => 'IN-TN',
-        'placename' => 'Chennai',
-        'position' => '13.0827;80.2707',
-        'icbm' => '13.0827, 80.2707',
-    ],
-
-    // Sitemap settings
-    'sitemap' => [
-        'max_images_per_url' => 1000,
-        'changefreq' => [
-            'home' => 'daily',
-            'products' => 'daily',
-            'categories' => 'daily',
-            'product' => 'weekly',
-            'pages' => 'monthly',
-        ],
-        'priority' => [
-            'home' => '1.0',
-            'products' => '0.9',
-            'categories' => '0.8',
-            'product' => '0.7',
-            'pages' => '0.5',
-        ],
-    ],
-
-    // Structured data
-    'structured_data' => [
-        'organization' => [
-            'type' => 'LocalBusiness',
-            'price_range' => '₹₹',
-            'currencies_accepted' => 'INR',
-            'payment_accepted' => 'Cash, UPI, Credit Card, Debit Card',
-            'opening_hours' => [
-                'days' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-                'opens' => '09:00',
-                'closes' => '21:00',
-            ],
-        ],
-    ],
-
-    // Pagination SEO
-    'pagination' => [
-        'noindex_paginated' => false, // Set true to noindex pages 2+
-        'use_rel_prev_next' => true,
+    /*
+    |--------------------------------------------------------------------------
+    | Product-specific Keywords
+    |--------------------------------------------------------------------------
+    */
+    'product_keywords' => [
+        'turmeric' => ['turmeric powder', 'haldi powder', 'manjal powder', 'pure turmeric', 'organic turmeric'],
+        'coriander' => ['coriander powder', 'dhania powder', 'kothamalli powder', 'pure coriander'],
+        'chilli' => ['chilli powder', 'red chilli powder', 'kashmiri chilli', 'milagai podi'],
+        'cumin' => ['cumin powder', 'jeera powder', 'seeragam powder', 'pure cumin'],
+        'garam_masala' => ['garam masala', 'garam masala powder', 'mixed spice powder'],
+        'sambar' => ['sambar powder', 'sambar podi', 'sambar masala', 'South Indian sambar'],
+        'rasam' => ['rasam powder', 'rasam podi', 'rasam masala'],
     ],
 ];

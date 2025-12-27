@@ -1,16 +1,29 @@
 @extends('layouts.app')
 
 @php
-    $businessName = \App\Models\Setting::get('business_name', 'SV Masala & Herbal Products');
-    $productTitle = $product->meta_title ?? $product->name . ' - Buy Online';
-    $productDescription = $product->meta_description ?? Str::limit(strip_tags($product->short_description ?? $product->description), 160);
+    $businessName = \App\Models\Setting::get('business_name', 'SV Products');
+    
+    // SEO-optimized title with keywords
+    $productTitle = $product->meta_title ?? 'Buy ' . $product->name . ' Online | Homemade ' . $product->category->name;
+    
+    // SEO-optimized description
+    $productDescription = $product->meta_description ?? 'Buy ' . $product->name . ' online at ' . $businessName . '. ' . Str::limit(strip_tags($product->short_description ?? $product->description ?? '100% pure, homemade, chemical-free. Free delivery above ₹500.'), 140);
+    
     $productImage = $product->primary_image_url ?? asset('images/no-image.jpg');
     $productUrl = route('products.show', $product->slug);
+    
+    // Price for meta
+    $productPrice = $product->effective_price;
+    if ($product->has_variants && $product->activeVariants->count() > 0) {
+        $productPrice = $product->activeVariants->min('effective_price');
+    }
 @endphp
 
 @section('title', $productTitle)
 @section('meta_description', $productDescription)
-@section('meta_keywords', $product->name . ', buy ' . $product->name . ' online, ' . $product->category->name . ', homemade ' . $product->name . ', ' . $businessName)
+@section('meta_keywords', $product->name . ', buy ' . $product->name . ' online, homemade ' . $product->name . ', ' . $product->category->name . ', homemade masala, Indian spices, ' . $businessName)
+@section('og_type', 'product')
+@section('canonical', $productUrl)
 
 @push('styles')
 <!-- Product Page Schema -->

@@ -1,44 +1,47 @@
-# robots.txt for SV Products
-# https://www.robotstxt.org/robotstxt.html
+# robots.txt for svproducts.store
+# Homemade Masala & Indian Spices Online Store
 
 User-agent: *
 Allow: /
 
-# Sitemap location
-Sitemap: https://svproducts.store/sitemap.xml
-
-# Disallow admin and private areas
-Disallow: /admin/
-Disallow: /admin/*
-Disallow: /api/
-Disallow: /_debugbar/
-Disallow: /telescope/
-
-# Disallow search result pages with parameters (to avoid duplicate content)
-Disallow: /*?sort=
-Disallow: /*?page=
-Disallow: /*?q=
-Disallow: /*?min_price=
-Disallow: /*?max_price=
-
-# Allow important CSS and JS for rendering
-Allow: /build/
-Allow: /*.css$
-Allow: /*.js$
-Allow: /*.jpg$
-Allow: /*.jpeg$
-Allow: /*.png$
-Allow: /*.webp$
-Allow: /*.gif$
-Allow: /storage/products/
-
-# Specific bot rules
+# Allow search engine crawlers
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 1
 
-User-agent: Googlebot-Image
-Allow: /storage/products/
+User-agent: Slurp
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /admin
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /cart/
+Disallow: /login
+Disallow: /register
+Disallow: /password/
+Disallow: /api/
+Disallow: /storage/
+Disallow: /*.json$
+Disallow: /*?*sort=
+Disallow: /*?*page=2
+Disallow: /*?*page=3
+Disallow: /*?*page=4
+Disallow: /*?*page=5
+
+# Allow important assets
+Allow: /css/
+Allow: /js/
 Allow: /images/
+Allow: /favicon.ico
+
+# Sitemap location
+Sitemap: https://www.svproducts.store/sitemap.xml
+
+# Host directive (for Yandex)
+Host: https://www.svproducts.store

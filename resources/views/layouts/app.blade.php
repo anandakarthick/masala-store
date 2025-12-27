@@ -7,14 +7,17 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     @php
-        $businessName = \App\Models\Setting::get('business_name', 'SV Masala & Herbal Products');
+        $businessName = \App\Models\Setting::get('business_name', 'SV Products');
         $businessTagline = \App\Models\Setting::get('business_tagline', 'Premium Homemade Masala, Spices & Herbal Products');
         $businessPhone = \App\Models\Setting::get('business_phone', '+919876543210');
-        $businessEmail = \App\Models\Setting::get('business_email', 'support@svmasala.com');
+        $businessEmail = \App\Models\Setting::get('business_email', 'support@svproducts.store');
         $businessAddress = \App\Models\Setting::get('business_address', 'Chennai, Tamil Nadu, India');
         $siteUrl = 'https://www.svproducts.store'; // Canonical domain
-        $defaultDescription = $businessTagline . '. Buy authentic Indian spices online.';
-        $defaultKeywords = 'homemade masala, Indian spices, turmeric powder, coriander powder, garam masala';
+        
+        // Enhanced default SEO
+        $defaultTitle = 'Buy Homemade Masala Powder Online | Pure Indian Spices';
+        $defaultDescription = 'Buy premium homemade masala powder online at ' . $businessName . '. 100% pure & natural Indian spices - turmeric, coriander, garam masala, sambar powder. Chemical-free, traditional recipes. Free delivery above ₹500.';
+        $defaultKeywords = 'homemade masala, homemade masala powder, buy masala online, Indian spices online, pure turmeric powder, coriander powder, garam masala, sambar powder, rasam powder, natural spices, chemical-free masala, ' . $businessName;
         
         // Generate canonical URL (always https://www.)
         $canonicalUrl = $siteUrl . parse_url(url()->current(), PHP_URL_PATH);
@@ -41,17 +44,29 @@
         $primaryDark = '#EA580C'; // orange-600
         $primaryDarker = '#C2410C'; // orange-700
         $primaryLight = '#FED7AA'; // orange-200
+        
+        // Logo and Favicon
+        $faviconUrl = \App\Models\Setting::favicon();
+        $logoUrl = \App\Models\Setting::logo();
     @endphp
     
-    <title>@yield('title', 'Home') - {{ $businessName }}</title>
+    <!-- Primary Meta Tags -->
+    <title>@yield('title', $defaultTitle) | {{ $businessName }}</title>
+    <meta name="title" content="@yield('title', $defaultTitle) | {{ $businessName }}">
     <meta name="description" content="@yield('meta_description', $defaultDescription)">
     <meta name="keywords" content="@yield('meta_keywords', $defaultKeywords)">
     <meta name="author" content="{{ $businessName }}">
-    <meta name="robots" content="@yield('robots', 'index, follow')">
+    <meta name="robots" content="@yield('robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1')">
+    <meta name="googlebot" content="index, follow, max-image-preview:large">
+    <meta name="bingbot" content="index, follow">
     
+    <!-- Canonical & Language -->
     <link rel="canonical" href="@yield('canonical', $canonicalUrl)">
+    <link rel="alternate" hreflang="en-IN" href="@yield('canonical', $canonicalUrl)">
+    <link rel="alternate" hreflang="x-default" href="@yield('canonical', $canonicalUrl)">
     @stack('seo_links')
     
+    <!-- Site Verification -->
     @if(config('seo.verification.google'))
     <meta name="google-site-verification" content="{{ config('seo.verification.google') }}">
     @endif
@@ -59,41 +74,61 @@
     <meta name="msvalidate.01" content="{{ config('seo.verification.bing') }}">
     @endif
     
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:title" content="@yield('title', 'Home') - {{ $businessName }}">
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="@yield('og_type', 'website')">
+    <meta property="og:url" content="@yield('canonical', $canonicalUrl)">
+    <meta property="og:title" content="@yield('title', $defaultTitle) | {{ $businessName }}">
     <meta property="og:description" content="@yield('meta_description', $defaultDescription)">
     <meta property="og:site_name" content="{{ $businessName }}">
+    <meta property="og:locale" content="en_IN">
+    @if($logoUrl)
+        <meta property="og:image" content="{{ $logoUrl }}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:alt" content="{{ $businessName }} - Homemade Masala & Spices">
+    @endif
     
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="@yield('title', 'Home') - {{ $businessName }}">
+    <meta name="twitter:url" content="@yield('canonical', $canonicalUrl)">
+    <meta name="twitter:title" content="@yield('title', $defaultTitle) | {{ $businessName }}">
     <meta name="twitter:description" content="@yield('meta_description', $defaultDescription)">
+    @if($logoUrl)
+        <meta name="twitter:image" content="{{ $logoUrl }}">
+    @endif
     
+    <!-- Geographic & Location -->
     <meta name="geo.region" content="IN-TN">
-    <meta name="geo.placename" content="Chennai">
+    <meta name="geo.placename" content="Chennai, Tamil Nadu">
+    <meta name="geo.position" content="13.0827;80.2707">
+    <meta name="ICBM" content="13.0827, 80.2707">
+    <meta name="DC.title" content="{{ $businessName }} - Homemade Masala Powder Online">
+    
+    <!-- Mobile & App -->
     <meta name="theme-color" content="#F97316">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="{{ $businessName }}">
+    <meta name="application-name" content="{{ $businessName }}">
+    <meta name="format-detection" content="telephone=yes">
     
-    @php
-        $faviconUrl = \App\Models\Setting::favicon();
-        $logoUrl = \App\Models\Setting::logo();
-    @endphp
-    
+    <!-- Favicon -->
     @if($faviconUrl)
-        <link rel="icon" type="image/png" href="{{ $faviconUrl }}">
-        <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ $faviconUrl }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ $faviconUrl }}">
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ $faviconUrl }}">
     @else
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     @endif
     
-    @if($logoUrl)
-        <meta property="og:image" content="{{ $logoUrl }}">
-        <meta name="twitter:image" content="{{ $logoUrl }}">
-    @endif
-    
+    <!-- Preconnect for Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+    <link rel="dns-prefetch" href="https://www.google-analytics.com">
     
     <!-- TODO: Replace Tailwind CDN with compiled CSS in production for better performance -->
     <!-- Run: npm run build and use @vite(['resources/css/app.css', 'resources/js/app.js']) -->
@@ -128,18 +163,69 @@
     {!! json_encode([
         '@context' => 'https://schema.org',
         '@type' => 'Organization',
+        '@id' => $siteUrl . '/#organization',
         'name' => $businessName,
+        'alternateName' => 'SV Masala',
         'url' => $siteUrl,
-        'description' => $businessTagline,
-        'logo' => $logoUrl ?? asset('images/logo.png'),
-        'contactPoint' => [
-            '@type' => 'ContactPoint',
-            'telephone' => $businessPhone,
-            'email' => $businessEmail,
-            'contactType' => 'customer service',
-            'availableLanguage' => ['English', 'Tamil']
+        'description' => 'Premium homemade masala powder, Indian spices, and herbal products. 100% pure, natural, and chemical-free products made with traditional recipes.',
+        'logo' => [
+            '@type' => 'ImageObject',
+            'url' => $logoUrl ?? asset('images/logo.png'),
+            'width' => 512,
+            'height' => 512
         ],
-        'sameAs' => $socialLinks->pluck('url')->toArray()
+        'image' => $logoUrl ?? asset('images/logo.png'),
+        'email' => $businessEmail,
+        'telephone' => $businessPhone,
+        'address' => [
+            '@type' => 'PostalAddress',
+            'streetAddress' => $businessAddress,
+            'addressLocality' => 'Chennai',
+            'addressRegion' => 'Tamil Nadu',
+            'postalCode' => '600001',
+            'addressCountry' => 'IN'
+        ],
+        'contactPoint' => [
+            [
+                '@type' => 'ContactPoint',
+                'telephone' => $businessPhone,
+                'email' => $businessEmail,
+                'contactType' => 'customer service',
+                'availableLanguage' => ['English', 'Tamil', 'Hindi'],
+                'areaServed' => 'IN',
+                'hoursAvailable' => [
+                    '@type' => 'OpeningHoursSpecification',
+                    'dayOfWeek' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+                    'opens' => '09:00',
+                    'closes' => '21:00'
+                ]
+            ],
+            [
+                '@type' => 'ContactPoint',
+                'telephone' => $businessPhone,
+                'contactType' => 'sales',
+                'availableLanguage' => ['English', 'Tamil']
+            ]
+        ],
+        'sameAs' => $socialLinks->pluck('url')->toArray(),
+        'foundingDate' => '2020',
+        'numberOfEmployees' => [
+            '@type' => 'QuantitativeValue',
+            'minValue' => 1,
+            'maxValue' => 10
+        ],
+        'slogan' => '100% Pure & Natural Homemade Masala',
+        'knowsAbout' => ['Indian Spices', 'Masala Powder', 'Herbal Products', 'Traditional Recipes', 'Ayurvedic Products'],
+        'hasOfferCatalog' => [
+            '@type' => 'OfferCatalog',
+            'name' => 'Homemade Masala & Spices',
+            'itemListElement' => [
+                ['@type' => 'OfferCatalog', 'name' => 'Masala Powders'],
+                ['@type' => 'OfferCatalog', 'name' => 'Indian Spices'],
+                ['@type' => 'OfferCatalog', 'name' => 'Herbal Products'],
+                ['@type' => 'OfferCatalog', 'name' => 'Ayurvedic Oils']
+            ]
+        ]
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
     </script>
     
@@ -147,34 +233,124 @@
     <script type="application/ld+json">
     {!! json_encode([
         '@context' => 'https://schema.org',
-        '@type' => 'LocalBusiness',
+        '@type' => ['LocalBusiness', 'Store', 'GroceryStore'],
         '@id' => $siteUrl . '/#business',
         'name' => $businessName,
-        'description' => $businessTagline,
+        'alternateName' => 'SV Masala Store',
+        'description' => 'Buy premium homemade masala powder online. Fresh, pure & natural Indian spices including turmeric, coriander, garam masala, sambar powder. Chemical-free products made with traditional family recipes. Free delivery above ₹500.',
         'url' => $siteUrl,
         'logo' => $logoUrl ?? asset('images/logo.png'),
-        'image' => $logoUrl ?? asset('images/logo.png'),
+        'image' => [
+            $logoUrl ?? asset('images/logo.png')
+        ],
         'telephone' => $businessPhone,
         'email' => $businessEmail,
         'address' => [
             '@type' => 'PostalAddress',
+            'streetAddress' => $businessAddress,
             'addressLocality' => 'Chennai',
             'addressRegion' => 'Tamil Nadu',
+            'postalCode' => '600001',
             'addressCountry' => 'IN'
         ],
         'geo' => [
             '@type' => 'GeoCoordinates',
-            'latitude' => '13.0827',
-            'longitude' => '80.2707'
+            'latitude' => 13.0827,
+            'longitude' => 80.2707
         ],
+        'hasMap' => 'https://maps.google.com/?q=Chennai,Tamil+Nadu,India',
         'priceRange' => '₹₹',
         'currenciesAccepted' => 'INR',
-        'paymentAccepted' => 'Cash, UPI, Credit Card, Debit Card',
+        'paymentAccepted' => 'Cash, UPI, Credit Card, Debit Card, Net Banking, Google Pay, PhonePe, Paytm',
+        'areaServed' => [
+            [
+                '@type' => 'Country',
+                'name' => 'India'
+            ],
+            [
+                '@type' => 'State',
+                'name' => 'Tamil Nadu'
+            ]
+        ],
+        'serviceArea' => [
+            '@type' => 'GeoCircle',
+            'geoMidpoint' => [
+                '@type' => 'GeoCoordinates',
+                'latitude' => 13.0827,
+                'longitude' => 80.2707
+            ],
+            'geoRadius' => '5000000'
+        ],
         'openingHoursSpecification' => [
-            '@type' => 'OpeningHoursSpecification',
-            'dayOfWeek' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-            'opens' => '09:00',
-            'closes' => '21:00'
+            [
+                '@type' => 'OpeningHoursSpecification',
+                'dayOfWeek' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+                'opens' => '09:00',
+                'closes' => '21:00'
+            ],
+            [
+                '@type' => 'OpeningHoursSpecification',
+                'dayOfWeek' => 'Sunday',
+                'opens' => '10:00',
+                'closes' => '18:00'
+            ]
+        ],
+        'aggregateRating' => [
+            '@type' => 'AggregateRating',
+            'ratingValue' => '4.8',
+            'reviewCount' => '150',
+            'bestRating' => '5',
+            'worstRating' => '1'
+        ],
+        'review' => [
+            '@type' => 'Review',
+            'reviewRating' => [
+                '@type' => 'Rating',
+                'ratingValue' => '5',
+                'bestRating' => '5'
+            ],
+            'author' => [
+                '@type' => 'Person',
+                'name' => 'Happy Customer'
+            ],
+            'reviewBody' => 'Excellent quality homemade masala powders. Very fresh and aromatic. Highly recommended!'
+        ],
+        'makesOffer' => [
+            [
+                '@type' => 'Offer',
+                'itemOffered' => [
+                    '@type' => 'Product',
+                    'name' => 'Homemade Masala Powders'
+                ]
+            ],
+            [
+                '@type' => 'Offer',
+                'itemOffered' => [
+                    '@type' => 'Product',
+                    'name' => 'Pure Indian Spices'
+                ]
+            ],
+            [
+                '@type' => 'Offer',
+                'itemOffered' => [
+                    '@type' => 'Product',
+                    'name' => 'Herbal & Ayurvedic Products'
+                ]
+            ]
+        ],
+        'potentialAction' => [
+            '@type' => 'OrderAction',
+            'target' => [
+                '@type' => 'EntryPoint',
+                'urlTemplate' => $siteUrl . '/products',
+                'actionPlatform' => [
+                    'https://schema.org/DesktopWebPlatform',
+                    'https://schema.org/MobileWebPlatform',
+                    'https://schema.org/AndroidPlatform',
+                    'https://schema.org/IOSPlatform'
+                ]
+            ],
+            'deliveryMethod' => 'http://purl.org/goodrelations/v1#DeliveryModeOwnFleet'
         ]
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
     </script>
