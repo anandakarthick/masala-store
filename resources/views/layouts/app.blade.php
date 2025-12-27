@@ -60,6 +60,11 @@
     <meta name="googlebot" content="index, follow, max-image-preview:large">
     <meta name="bingbot" content="index, follow">
     
+    <!-- Unique Site Identifier - Prevents duplicate detection -->
+    <meta name="identifier-url" content="https://www.svproducts.store">
+    <meta name="site-id" content="svproducts-store-masala-2024">
+    <meta name="copyright" content="© {{ date('Y') }} SV Products - svproducts.store">
+    
     <!-- Canonical & Language -->
     <link rel="canonical" href="@yield('canonical', $canonicalUrl)">
     <link rel="alternate" hreflang="en-IN" href="@yield('canonical', $canonicalUrl)">
@@ -360,13 +365,20 @@
     {!! json_encode([
         '@context' => 'https://schema.org',
         '@type' => 'WebSite',
+        '@id' => $siteUrl . '/#website',
         'name' => $businessName,
+        'alternateName' => 'SV Products Masala Store',
         'url' => $siteUrl,
+        'description' => 'Buy homemade masala powder online - 100% pure Indian spices',
+        'inLanguage' => 'en-IN',
+        'publisher' => [
+            '@id' => $siteUrl . '/#organization'
+        ],
         'potentialAction' => [
             '@type' => 'SearchAction',
             'target' => [
                 '@type' => 'EntryPoint',
-                'urlTemplate' => route('products.search') . '?q={search_term_string}'
+                'urlTemplate' => $siteUrl . '/products/search?q={search_term_string}'
             ],
             'query-input' => 'required name=search_term_string'
         ]
