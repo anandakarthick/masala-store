@@ -56,14 +56,31 @@
         'returnFees' => 'https://schema.org/FreeReturn'
     ];
     
-    // Build offers based on variants or single product
+    // Determine effective price for the product
+    $effectivePrice = $product->effective_price;
+    $hasMultiplePrices = false;
+    $lowPrice = $effectivePrice;
+    $highPrice = $effectivePrice;
+    $offerCount = 1;
+    
+    // Check for variants with different prices
     if ($product->has_variants && $product->activeVariants->count() > 0) {
+        $variantPrices = $product->activeVariants->pluck('effective_price');
+        $lowPrice = $variantPrices->min();
+        $highPrice = $variantPrices->max();
+        $offerCount = $product->activeVariants->count();
+        $hasMultiplePrices = ($lowPrice != $highPrice) || $offerCount > 1;
+    }
+    
+    // Build offers - Use AggregateOffer when there are variants or multiple prices
+    // Use simple Offer for single-price products
+    if ($hasMultiplePrices) {
         $offers = [
             '@type' => 'AggregateOffer',
             'priceCurrency' => 'INR',
-            'lowPrice' => number_format((float)$product->activeVariants->min('effective_price'), 2, '.', ''),
-            'highPrice' => number_format((float)$product->activeVariants->max('effective_price'), 2, '.', ''),
-            'offerCount' => $product->activeVariants->count(),
+            'lowPrice' => number_format((float)$lowPrice, 2, '.', ''),
+            'highPrice' => number_format((float)$highPrice, 2, '.', ''),
+            'offerCount' => $offerCount,
             'availability' => $product->isOutOfStock() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
             'priceValidUntil' => now()->addYear()->format('Y-m-d'),
             'url' => $productUrl,
@@ -77,10 +94,11 @@
             'hasMerchantReturnPolicy' => $returnPolicy
         ];
     } else {
+        // Single price product (no variants or single variant)
         $offers = [
             '@type' => 'Offer',
             'priceCurrency' => 'INR',
-            'price' => number_format((float)$product->effective_price, 2, '.', ''),
+            'price' => number_format((float)$effectivePrice, 2, '.', ''),
             'availability' => $product->isOutOfStock() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
             'priceValidUntil' => now()->addYear()->format('Y-m-d'),
             'url' => $productUrl,
@@ -278,9 +296,9 @@
                 <p class="text-xs text-gray-500 mt-1">SKU: <span x-text="selectedVariant ? selectedVariant.sku : '{{ $product->sku }}'"></span></p>
                 
                 <!-- Price -->
-                <div class="mt-3" itemprop="offers" itemscope itemtype="https://schema.org/AggregateOffer">
+                <div class="mt-3" itemprop="offers" itemscope itemtype="{{ ($product->has_variants && $product->activeVariants->count() > 1) ? 'https://schema.org/AggregateOffer' : 'https://schema.org/Offer' }}">
                     <meta itemprop="priceCurrency" content="INR">
-                    @if($product->has_variants && $product->activeVariants->count() > 0)
+                    @if($product->has_variants && $product->activeVariants->count() > 1)
                         <meta itemprop="lowPrice" content="{{ $product->activeVariants->min('effective_price') }}">
                         <meta itemprop="highPrice" content="{{ $product->activeVariants->max('effective_price') }}">
                         <meta itemprop="offerCount" content="{{ $product->activeVariants->count() }}">
