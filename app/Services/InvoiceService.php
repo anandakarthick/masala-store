@@ -48,21 +48,21 @@ class InvoiceService
     public function downloadInvoice(Order $order)
     {
         \Log::info('InvoiceService: Starting PDF generation for order ' . $order->order_number);
-
+        
         $order->load('items.product');
 
         // Get company details with logo as base64 for PDF
         $companyData = $this->getCompanyData();
-
+        
         \Log::info('InvoiceService: Company data loaded');
-        return view('pdf.invoice', compact('order', 'companyData'));
+
         $pdf = PDF::loadView('pdf.invoice', [
             'order' => $order,
             'company' => $companyData,
         ]);
 
         $pdf->setPaper('A4', 'portrait');
-
+        
         \Log::info('InvoiceService: PDF generated, sending download response');
 
         return $pdf->download('Invoice-' . ($order->invoice_number ?? $order->order_number) . '.pdf');
