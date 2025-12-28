@@ -38,7 +38,7 @@
             width: 55%;
             text-align: left;
             vertical-align: top;
-            padding-right: 15px;
+            padding-right: 20px;
         }
         .invoice-cell {
             width: 45%;
@@ -326,7 +326,7 @@
     <div class="header">
         <table class="header-table" cellpadding="0" cellspacing="0">
             <tr>
-                <td  class="logo-cell"></td>
+                {{-- <td  class="logo-cell"></td> --}}
                 <td class="logo-cell">
                     @if(!empty($company['logo']))
                         <img src="{{ $company['logo'] }}" alt="Logo" class="logo-img">
@@ -360,7 +360,7 @@
                         </div>
                     </div>
                 </td>
-                 <td  class="logo-cell"></td>
+                 {{-- <td  class="logo-cell"></td> --}}
             </tr>
         </table>
     </div>
