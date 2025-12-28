@@ -326,7 +326,7 @@
     <div class="header">
         <table class="header-table" cellpadding="0" cellspacing="0">
             <tr>
-                <td></td>
+                <td  class="logo-cell"></td>
                 <td class="logo-cell">
                     @if(!empty($company['logo']))
                         <img src="{{ $company['logo'] }}" alt="Logo" class="logo-img">
@@ -360,7 +360,7 @@
                         </div>
                     </div>
                 </td>
-                 <td></td>
+                 <td  class="logo-cell"></td>
             </tr>
         </table>
     </div>
