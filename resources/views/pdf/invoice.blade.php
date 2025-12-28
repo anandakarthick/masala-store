@@ -396,7 +396,9 @@
                     @endif
                     <div class="company-details">
                         @if ($company['address'])
-                            {!! nl2br(e(str_replace(',', ",\n", $company['address']))) !!}
+                            @foreach (explode(',', $company['address']) as $line)
+                                {{ trim($line) }}<br>
+                            @endforeach
                         @endif
                         @if ($company['phone'])
                             Phone: {{ $company['phone'] }}
