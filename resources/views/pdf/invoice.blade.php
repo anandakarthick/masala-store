@@ -580,9 +580,9 @@
     </div>
 
     <!-- ==================== THANK YOU ==================== -->
-    <div class="thank-you">
+    {{-- <div class="thank-you">
         Thank You for Your Business!
-    </div>
+    </div> --}}
 </body>
 
 </html>
