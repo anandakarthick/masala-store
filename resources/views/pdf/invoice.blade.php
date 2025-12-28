@@ -74,6 +74,7 @@
         }
         .info-table {
             width: 100%;
+            table-layout: fixed;
         }
         .info-table td {
             vertical-align: top;
@@ -83,6 +84,16 @@
             padding: 10px;
             background: #f8f9fa;
             border: 1px solid #e0e0e0;
+        }
+        .info-box:first-child {
+            border-right: none;
+        }
+        .info-box:nth-child(2) {
+            border-left: none;
+            border-right: none;
+        }
+        .info-box:last-child {
+            border-left: none;
         }
         .info-box-title {
             font-size: 10px;
@@ -105,6 +116,7 @@
         
         /* Payment Badge */
         .badge-paid {
+            display: inline-block;
             background-color: #FED7AA;
             color: #C2410C;
             padding: 2px 8px;
@@ -113,6 +125,7 @@
             font-weight: bold;
         }
         .badge-pending {
+            display: inline-block;
             background-color: #fef3c7;
             color: #92400e;
             padding: 2px 8px;
@@ -121,6 +134,7 @@
             font-weight: bold;
         }
         .badge-cod {
+            display: inline-block;
             background-color: #dbeafe;
             color: #1e40af;
             padding: 2px 8px;
@@ -133,6 +147,7 @@
         .items-table {
             width: 100%;
             margin-bottom: 10px;
+            table-layout: fixed;
         }
         .items-table th {
             background-color: #F97316;
@@ -154,6 +169,8 @@
             border-bottom: 1px solid #ddd;
             font-size: 11px;
             vertical-align: middle;
+            word-wrap: break-word;
+            overflow: hidden;
         }
         .items-table td.center {
             text-align: center;
@@ -167,15 +184,28 @@
         .item-name {
             font-weight: 600;
             color: #000;
+            display: block;
         }
         .item-variant {
             font-size: 10px;
             color: #F97316;
+            display: block;
+            margin-top: 2px;
         }
         .item-sku {
             font-size: 9px;
             color: #888;
+            display: block;
+            margin-top: 2px;
         }
+        
+        /* Column widths for items table */
+        .col-sno { width: 5%; }
+        .col-desc { width: 40%; }
+        .col-hsn { width: 12%; }
+        .col-qty { width: 10%; }
+        .col-rate { width: 15%; }
+        .col-amount { width: 18%; }
         
         /* Bottom Section */
         .bottom-section {
@@ -183,8 +213,9 @@
         }
         .bottom-table {
             width: 100%;
+            table-layout: fixed;
         }
-        .bottom-table td {
+        .bottom-table > tbody > tr > td {
             vertical-align: top;
         }
         .bottom-left {
@@ -199,6 +230,7 @@
         .totals-table {
             width: 100%;
             border: 1px solid #ddd;
+            table-layout: fixed;
         }
         .totals-table td {
             padding: 6px 10px;
@@ -223,6 +255,10 @@
             font-weight: bold;
             padding: 8px 10px;
             border: none;
+        }
+        .totals-table .grand-total td.label,
+        .totals-table .grand-total td.value {
+            color: #fff;
         }
         
         /* Amount Words */
@@ -279,6 +315,13 @@
             font-size: 12px;
             color: #C2410C;
             font-weight: bold;
+        }
+
+        /* Clear float helper */
+        .clearfix::after {
+            content: "";
+            display: table;
+            clear: both;
         }
     </style>
 </head>
@@ -353,14 +396,22 @@
 
     <!-- Items Table -->
     <table class="items-table" cellpadding="0" cellspacing="0">
+        <colgroup>
+            <col class="col-sno">
+            <col class="col-desc">
+            <col class="col-hsn">
+            <col class="col-qty">
+            <col class="col-rate">
+            <col class="col-amount">
+        </colgroup>
         <thead>
             <tr>
-                <th style="width: 5%;" class="center">#</th>
-                <th style="width: 40%;">Description</th>
-                <th style="width: 12%;">HSN</th>
-                <th style="width: 10%;" class="center">Qty</th>
-                <th style="width: 15%;" class="right">Rate (₹)</th>
-                <th style="width: 18%;" class="right">Amount (₹)</th>
+                <th class="center">#</th>
+                <th>Description</th>
+                <th>HSN</th>
+                <th class="center">Qty</th>
+                <th class="right">Rate (₹)</th>
+                <th class="right">Amount (₹)</th>
             </tr>
         </thead>
         <tbody>
@@ -370,10 +421,10 @@
                 <td>
                     <span class="item-name">{{ $item->product_name }}</span>
                     @if($item->variant_name)
-                        <br><span class="item-variant">{{ $item->variant_name }}</span>
+                        <span class="item-variant">{{ $item->variant_name }}</span>
                     @endif
                     @if($item->product_sku)
-                        <br><span class="item-sku">SKU: {{ $item->product_sku }}</span>
+                        <span class="item-sku">SKU: {{ $item->product_sku }}</span>
                     @endif
                 </td>
                 <td>{{ $item->product->hsn_code ?? '-' }}</td>
@@ -409,7 +460,7 @@
                     <table class="totals-table" cellpadding="0" cellspacing="0">
                         <tr>
                             <td class="label">Subtotal:</td>
-                            <td class="value"> {{ number_format($order->subtotal, 2) }}</td>
+                            <td class="value">₹{{ number_format($order->subtotal, 2) }}</td>
                         </tr>
                         @if($order->gst_amount > 0)
                         <tr>
@@ -428,7 +479,7 @@
                         @if($order->discount_amount > 0)
                         <tr>
                             <td class="label">Discount:</td>
-                            <td class="value" style="color: #F97316;">-₹{{ number_format($order->discount_amount, 2) }}</td>
+                            <td class="value" style="color: #C2410C;">-₹{{ number_format($order->discount_amount, 2) }}</td>
                         </tr>
                         @endif
                         <tr class="grand-total">
@@ -436,9 +487,6 @@
                             <td class="value">₹{{ number_format($order->total_amount, 2) }}</td>
                         </tr>
                     </table>
-                    
-                    <!-- Signature -->
-                    
                 </td>
             </tr>
         </table>
