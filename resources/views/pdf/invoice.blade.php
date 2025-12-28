@@ -326,6 +326,7 @@
     <div class="header">
         <table class="header-table" cellpadding="0" cellspacing="0">
             <tr>
+                <td></td>
                 <td class="logo-cell">
                     @if(!empty($company['logo']))
                         <img src="{{ $company['logo'] }}" alt="Logo" class="logo-img">
@@ -347,6 +348,7 @@
                         @endif
                     </div>
                 </td>
+                
                 <td class="invoice-cell">
                     <div class="invoice-title">TAX INVOICE</div>
                     <div class="invoice-meta">
@@ -358,6 +360,7 @@
                         </div>
                     </div>
                 </td>
+                 <td></td>
             </tr>
         </table>
     </div>
@@ -470,23 +473,23 @@
                     <table class="totals-table" cellpadding="0" cellspacing="0">
                         <tr>
                             <td class="label">Subtotal:</td>
-                            <td class="value">&#8377;{{ number_format($order->subtotal, 2) }}</td>
+                            <td class="value">{{ number_format($order->subtotal, 2) }}</td>
                         </tr>
                         @if($order->gst_amount > 0)
                         <tr>
                             <td class="label">CGST:</td>
-                            <td class="value">&#8377;{{ number_format($order->gst_amount / 2, 2) }}</td>
+                            <td class="value">{{ number_format($order->gst_amount / 2, 2) }}</td>
                         </tr>
                         <tr>
                             <td class="label">SGST:</td>
-                            <td class="value">&#8377;{{ number_format($order->gst_amount / 2, 2) }}</td>
+                            <td class="value">{{ number_format($order->gst_amount / 2, 2) }}</td>
                         </tr>
                         @endif
                         <tr>
                             <td class="label">Shipping Charges:</td>
                             <td class="value">
                                 @if($order->shipping_charge > 0)
-                                    &#8377;{{ number_format($order->shipping_charge, 2) }}
+                                    {{ number_format($order->shipping_charge, 2) }}
                                 @else
                                     FREE
                                 @endif
