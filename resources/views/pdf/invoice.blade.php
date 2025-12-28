@@ -38,7 +38,7 @@
             width: 55%;
             text-align: left;
             vertical-align: top;
-            padding-right: 20px;
+            padding-right: 50px;
         }
         .invoice-cell {
             width: 45%;
