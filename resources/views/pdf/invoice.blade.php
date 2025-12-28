@@ -502,9 +502,7 @@
                             @if ($item->variant_name)
                                 <div class="item-variant">{{ $item->variant_name }}</div>
                             @endif
-                            @if ($item->product_sku)
-                                <div class="item-sku">SKU: {{ $item->product_sku }}</div>
-                            @endif
+                           
                         </td>
                         <td class="text-center">{{ $item->product->hsn_code ?? '-' }}</td>
                         <td class="text-center">{{ $item->quantity }}</td>
