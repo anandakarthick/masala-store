@@ -470,14 +470,14 @@
                         </tr>
                         <tr>
                             <td class="label">SGST:</td>
-                            <td class="value"><span class="rupee">&#8377;</span>{{ number_format($order->gst_amount / 2, 2) }}</td>
+                            <td class="value"><span class="rupee">₹</span>{{ number_format($order->gst_amount / 2, 2) }}</td>
                         </tr>
                         @endif
                         <tr>
                             <td class="label">Shipping Charges:</td>
                             <td class="value">
                                 @if($order->shipping_charge > 0)
-                                    <span class="rupee">&#8377;</span>{{ number_format($order->shipping_charge, 2) }}
+                                    <span class="rupee">₹</span>{{ number_format($order->shipping_charge, 2) }}
                                 @else
                                     FREE
                                 @endif
