@@ -35,16 +35,16 @@
             table-layout: fixed;
         }
         .logo-cell {
-            width: 55%;
+            width: 65%;
             text-align: left;
             vertical-align: top;
-            padding-right: 50px;
+            padding-right: 20;
         }
         .invoice-cell {
-            width: 45%;
+            width: 35%;
             text-align: right;
             vertical-align: top;
-            padding-left: 15px;
+            padding-right: 20px; 
         }
         .logo-img {
             max-height: 60px;
