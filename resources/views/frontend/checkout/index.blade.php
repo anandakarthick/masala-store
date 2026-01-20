@@ -55,21 +55,21 @@
                         <!-- Address Search with Autocomplete -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Search Address *
-                                <span class="text-gray-400 font-normal text-xs ml-1">(Start typing to search)</span>
+                                Search Address
+                                <span class="text-gray-400 font-normal text-xs ml-1">(Type or paste to search)</span>
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <i class="fas fa-search text-gray-400"></i>
                                 </div>
                                 <input type="text" id="address_search" 
-                                       placeholder="Search for your address..."
+                                       placeholder="Search by building name, area, or full address..."
                                        autocomplete="off"
                                        class="w-full pl-10 border border-gray-300 rounded-lg px-4 py-3 focus:ring-orange-500 focus:border-orange-500">
                             </div>
                             <p class="text-xs text-gray-500 mt-1">
                                 <i class="fas fa-info-circle mr-1"></i>
-                                Type your address and select from suggestions to auto-fill the form
+                                Type building name (e.g., "Suriya Sri Flats") or address, then select from dropdown
                             </p>
                         </div>
 
@@ -488,21 +488,49 @@
 
 <script>
 let autocomplete;
+let placesService;
 
 function initAutocomplete() {
     const addressInput = document.getElementById('address_search');
     
     if (!addressInput) return;
     
-    // Initialize Google Places Autocomplete
+    // Initialize Google Places Autocomplete - removed 'types' restriction to allow all place types
+    // This allows searching for establishments (like "Suriya Sri Flats"), addresses, and regions
     autocomplete = new google.maps.places.Autocomplete(addressInput, {
         componentRestrictions: { country: 'IN' }, // Restrict to India
-        fields: ['address_components', 'geometry', 'formatted_address'],
-        types: ['address']
+        fields: ['address_components', 'geometry', 'formatted_address', 'name', 'place_id']
+        // No 'types' restriction - allows all types including establishments, addresses, etc.
     });
     
     // Listen for place selection
     autocomplete.addListener('place_changed', fillInAddress);
+    
+    // Handle paste event - trigger search after paste
+    addressInput.addEventListener('paste', function(e) {
+        // Wait for paste to complete, then trigger autocomplete
+        setTimeout(() => {
+            // Trigger input event to activate autocomplete
+            const inputEvent = new Event('input', { bubbles: true });
+            addressInput.dispatchEvent(inputEvent);
+            
+            // Also trigger a focus to show dropdown
+            addressInput.focus();
+            
+            // Simulate keydown to trigger Google's autocomplete
+            const keyEvent = new KeyboardEvent('keydown', {
+                key: 'ArrowDown',
+                keyCode: 40,
+                bubbles: true
+            });
+            addressInput.dispatchEvent(keyEvent);
+        }, 100);
+    });
+    
+    // Show loading indicator while typing
+    addressInput.addEventListener('input', function() {
+        document.getElementById('location_selected').classList.add('hidden');
+    });
 }
 
 function fillInAddress() {
@@ -510,6 +538,8 @@ function fillInAddress() {
     
     if (!place.geometry) {
         console.log("No geometry found for the selected place");
+        // Try to show an error message
+        alert('Please select an address from the dropdown suggestions.');
         return;
     }
     
@@ -536,54 +566,60 @@ function fillInAddress() {
     let postalCode = '';
     let premise = '';
     let neighborhood = '';
+    let placeName = place.name || ''; // For establishments like "Suriya Sri Flats"
     
-    for (const component of place.address_components) {
-        const type = component.types[0];
-        
-        switch (type) {
-            case 'street_number':
-                streetNumber = component.long_name;
-                break;
-            case 'route':
-                route = component.long_name;
-                break;
-            case 'premise':
-                premise = component.long_name;
-                break;
-            case 'neighborhood':
-                neighborhood = component.long_name;
-                break;
-            case 'sublocality_level_3':
-            case 'sublocality_level_2':
-            case 'sublocality_level_1':
-            case 'sublocality':
-                if (!sublocality) sublocality = component.long_name;
-                break;
-            case 'locality':
-                locality = component.long_name;
-                break;
-            case 'administrative_area_level_2':
-                adminArea2 = component.long_name;
-                break;
-            case 'administrative_area_level_1':
-                adminArea1 = component.long_name;
-                break;
-            case 'postal_code':
-                postalCode = component.long_name;
-                break;
+    if (place.address_components) {
+        for (const component of place.address_components) {
+            const type = component.types[0];
+            
+            switch (type) {
+                case 'street_number':
+                    streetNumber = component.long_name;
+                    break;
+                case 'route':
+                    route = component.long_name;
+                    break;
+                case 'premise':
+                    premise = component.long_name;
+                    break;
+                case 'neighborhood':
+                    neighborhood = component.long_name;
+                    break;
+                case 'sublocality_level_3':
+                case 'sublocality_level_2':
+                case 'sublocality_level_1':
+                case 'sublocality':
+                    if (!sublocality) sublocality = component.long_name;
+                    break;
+                case 'locality':
+                    locality = component.long_name;
+                    break;
+                case 'administrative_area_level_2':
+                    adminArea2 = component.long_name;
+                    break;
+                case 'administrative_area_level_1':
+                    adminArea1 = component.long_name;
+                    break;
+                case 'postal_code':
+                    postalCode = component.long_name;
+                    break;
+            }
         }
     }
     
-    // Build full address
+    // Build full address - include place name for establishments
     let fullAddress = [];
-    if (premise) fullAddress.push(premise);
+    if (placeName && placeName !== locality && placeName !== sublocality) {
+        fullAddress.push(placeName); // Add establishment name (e.g., "Suriya Sri Flats")
+    }
+    if (premise && premise !== placeName) fullAddress.push(premise);
     if (streetNumber) fullAddress.push(streetNumber);
     if (route) fullAddress.push(route);
-    if (neighborhood) fullAddress.push(neighborhood);
-    if (sublocality) fullAddress.push(sublocality);
+    if (neighborhood && neighborhood !== placeName) fullAddress.push(neighborhood);
+    if (sublocality && sublocality !== placeName) fullAddress.push(sublocality);
     
     // Set field values
-    document.getElementById('shipping_address').value = fullAddress.join(', ') || place.formatted_address;
+    document.getElementById('shipping_address').value = fullAddress.length > 0 ? fullAddress.join(', ') : place.formatted_address;
     document.getElementById('shipping_city').value = locality || adminArea2 || '';
     document.getElementById('shipping_state').value = adminArea1 || '';
     document.getElementById('shipping_pincode').value = postalCode || '';
@@ -591,10 +627,10 @@ function fillInAddress() {
     // Show location selected indicator
     document.getElementById('location_selected').classList.remove('hidden');
     
-    // Clear search input and show formatted address
+    // Show formatted address in search input
     document.getElementById('address_search').value = place.formatted_address;
     
-    console.log('Location:', { lat, lng, address: place.formatted_address });
+    console.log('Location:', { lat, lng, address: place.formatted_address, name: placeName });
 }
 
 // Payment method selection styling and show/hide details
