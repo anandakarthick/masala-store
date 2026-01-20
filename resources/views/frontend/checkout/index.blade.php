@@ -8,6 +8,11 @@
 
     <form action="{{ route('checkout.process') }}" method="POST" id="checkoutForm">
         @csrf
+        {{-- Hidden fields for lat/long and order type --}}
+        <input type="hidden" name="shipping_latitude" id="shipping_latitude" value="{{ old('shipping_latitude') }}">
+        <input type="hidden" name="shipping_longitude" id="shipping_longitude" value="{{ old('shipping_longitude') }}">
+        <input type="hidden" name="order_type" value="retail">
+        
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Checkout Form -->
             <div class="lg:col-span-2 space-y-6">
@@ -28,7 +33,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
                             <input type="tel" name="customer_phone" value="{{ old('customer_phone', $user?->phone) }}" required
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
                             @error('customer_phone')
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                             @enderror
@@ -36,63 +41,88 @@
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                             <input type="email" name="customer_email" value="{{ old('customer_email', $user?->email) }}"
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
                         </div>
                     </div>
                 </div>
 
-                <!-- Shipping Address -->
+                <!-- Shipping Address with Google Maps Autocomplete -->
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h2 class="text-lg font-semibold mb-4">
                         <i class="fas fa-map-marker-alt text-orange-500 mr-2"></i>Shipping Address
                     </h2>
                     <div class="space-y-4">
+                        <!-- Address Search with Autocomplete -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Address *</label>
-                            <textarea name="shipping_address" rows="2" required
-                                      class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">{{ old('shipping_address', $user?->address) }}</textarea>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Search Address *
+                                <span class="text-gray-400 font-normal text-xs ml-1">(Start typing to search)</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-search text-gray-400"></i>
+                                </div>
+                                <input type="text" id="address_search" 
+                                       placeholder="Search for your address..."
+                                       autocomplete="off"
+                                       class="w-full pl-10 border border-gray-300 rounded-lg px-4 py-3 focus:ring-orange-500 focus:border-orange-500">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Type your address and select from suggestions to auto-fill the form
+                            </p>
+                        </div>
+
+                        <!-- Full Address -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Complete Address *</label>
+                            <textarea name="shipping_address" id="shipping_address" rows="2" required
+                                      placeholder="House/Flat No., Building, Street, Area, Landmark"
+                                      class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">{{ old('shipping_address', $user?->address) }}</textarea>
                             @error('shipping_address')
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                             @enderror
                         </div>
+
+                        <!-- City, State, Pincode -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">City *</label>
-                                <input type="text" name="shipping_city" value="{{ old('shipping_city', $user?->city) }}" required
-                                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                <input type="text" name="shipping_city" id="shipping_city" 
+                                       value="{{ old('shipping_city', $user?->city) }}" required
+                                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
+                                @error('shipping_city')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">State *</label>
-                                <input type="text" name="shipping_state" value="{{ old('shipping_state', $user?->state) }}" required
-                                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                <input type="text" name="shipping_state" id="shipping_state" 
+                                       value="{{ old('shipping_state', $user?->state) }}" required
+                                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
+                                @error('shipping_state')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Pincode *</label>
-                                <input type="text" name="shipping_pincode" value="{{ old('shipping_pincode', $user?->pincode) }}" required
-                                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-green-500 focus:border-green-500">
+                                <input type="text" name="shipping_pincode" id="shipping_pincode" 
+                                       value="{{ old('shipping_pincode', $user?->pincode) }}" required
+                                       pattern="[0-9]{6}" maxlength="6"
+                                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-orange-500 focus:border-orange-500">
+                                @error('shipping_pincode')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Order Type -->
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-lg font-semibold mb-4">
-                        <i class="fas fa-box text-orange-500 mr-2"></i>Order Type
-                    </h2>
-                    <div class="flex flex-wrap gap-4">
-                        <label class="flex items-center cursor-pointer">
-                            <input type="radio" name="order_type" value="retail" checked class="text-orange-500 focus:ring-orange-500">
-                            <span class="ml-2">Retail Order</span>
-                        </label>
-                        <label class="flex items-center cursor-pointer">
-                            <input type="radio" name="order_type" value="bulk" class="text-orange-500 focus:ring-orange-500">
-                            <span class="ml-2">Bulk Order</span>
-                        </label>
-                        <label class="flex items-center cursor-pointer">
-                            <input type="radio" name="order_type" value="return_gift" class="text-orange-500 focus:ring-orange-500">
-                            <span class="ml-2">Return Gift Order</span>
-                        </label>
+                        <!-- Location Selected Indicator -->
+                        <div id="location_selected" class="hidden bg-green-50 border border-green-200 rounded-lg p-3">
+                            <div class="flex items-center text-green-700">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                <span class="text-sm font-medium">Location detected successfully!</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -204,10 +234,7 @@
                             @if($method->code === 'upi')
                                 <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
                                     <div class="flex flex-col md:flex-row items-center gap-4">
-                                        {{-- QR Code --}}
-                                        @php
-                                            $qrCode = $method->getSetting('qr_code');
-                                        @endphp
+                                        @php $qrCode = $method->getSetting('qr_code'); @endphp
                                         @if($qrCode)
                                             <div class="flex-shrink-0">
                                                 <div class="p-3 bg-white rounded-lg border-2 border-purple-300 shadow-sm">
@@ -218,7 +245,6 @@
                                                 </p>
                                             </div>
                                         @endif
-                                        
                                         <div class="flex-1 text-center md:text-left">
                                             @if($method->getSetting('upi_id'))
                                                 <p class="text-sm text-gray-600 mb-1">UPI ID:</p>
@@ -324,7 +350,6 @@
                             </div>
                         @endforeach
                         
-                        {{-- Custom Combos --}}
                         @foreach($cart->customCombos as $combo)
                             <div class="flex items-center gap-3 bg-purple-50 p-2 rounded-lg">
                                 <div class="w-12 h-12 bg-purple-100 rounded flex-shrink-0 flex items-center justify-center">
@@ -418,7 +443,7 @@
                         <div class="flex justify-between">
                             <span class="text-gray-600">Shipping</span>
                             @if($shippingCharge == 0)
-                                <span class="text-orange-500">FREE</span>
+                                <span class="text-green-600 font-medium">FREE</span>
                             @else
                                 <span>₹{{ number_format($shippingCharge, 2) }}</span>
                             @endif
@@ -458,7 +483,120 @@
 @endsection
 
 @push('scripts')
+<!-- Google Maps Places API -->
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}&libraries=places&callback=initAutocomplete" async defer></script>
+
 <script>
+let autocomplete;
+
+function initAutocomplete() {
+    const addressInput = document.getElementById('address_search');
+    
+    if (!addressInput) return;
+    
+    // Initialize Google Places Autocomplete
+    autocomplete = new google.maps.places.Autocomplete(addressInput, {
+        componentRestrictions: { country: 'IN' }, // Restrict to India
+        fields: ['address_components', 'geometry', 'formatted_address'],
+        types: ['address']
+    });
+    
+    // Listen for place selection
+    autocomplete.addListener('place_changed', fillInAddress);
+}
+
+function fillInAddress() {
+    const place = autocomplete.getPlace();
+    
+    if (!place.geometry) {
+        console.log("No geometry found for the selected place");
+        return;
+    }
+    
+    // Clear existing values
+    document.getElementById('shipping_address').value = '';
+    document.getElementById('shipping_city').value = '';
+    document.getElementById('shipping_state').value = '';
+    document.getElementById('shipping_pincode').value = '';
+    
+    // Get latitude and longitude
+    const lat = place.geometry.location.lat();
+    const lng = place.geometry.location.lng();
+    
+    document.getElementById('shipping_latitude').value = lat;
+    document.getElementById('shipping_longitude').value = lng;
+    
+    // Parse address components
+    let streetNumber = '';
+    let route = '';
+    let sublocality = '';
+    let locality = '';
+    let adminArea1 = '';
+    let adminArea2 = '';
+    let postalCode = '';
+    let premise = '';
+    let neighborhood = '';
+    
+    for (const component of place.address_components) {
+        const type = component.types[0];
+        
+        switch (type) {
+            case 'street_number':
+                streetNumber = component.long_name;
+                break;
+            case 'route':
+                route = component.long_name;
+                break;
+            case 'premise':
+                premise = component.long_name;
+                break;
+            case 'neighborhood':
+                neighborhood = component.long_name;
+                break;
+            case 'sublocality_level_3':
+            case 'sublocality_level_2':
+            case 'sublocality_level_1':
+            case 'sublocality':
+                if (!sublocality) sublocality = component.long_name;
+                break;
+            case 'locality':
+                locality = component.long_name;
+                break;
+            case 'administrative_area_level_2':
+                adminArea2 = component.long_name;
+                break;
+            case 'administrative_area_level_1':
+                adminArea1 = component.long_name;
+                break;
+            case 'postal_code':
+                postalCode = component.long_name;
+                break;
+        }
+    }
+    
+    // Build full address
+    let fullAddress = [];
+    if (premise) fullAddress.push(premise);
+    if (streetNumber) fullAddress.push(streetNumber);
+    if (route) fullAddress.push(route);
+    if (neighborhood) fullAddress.push(neighborhood);
+    if (sublocality) fullAddress.push(sublocality);
+    
+    // Set field values
+    document.getElementById('shipping_address').value = fullAddress.join(', ') || place.formatted_address;
+    document.getElementById('shipping_city').value = locality || adminArea2 || '';
+    document.getElementById('shipping_state').value = adminArea1 || '';
+    document.getElementById('shipping_pincode').value = postalCode || '';
+    
+    // Show location selected indicator
+    document.getElementById('location_selected').classList.remove('hidden');
+    
+    // Clear search input and show formatted address
+    document.getElementById('address_search').value = place.formatted_address;
+    
+    console.log('Location:', { lat, lng, address: place.formatted_address });
+}
+
 // Payment method selection styling and show/hide details
 document.querySelectorAll('.payment-option').forEach(option => {
     option.addEventListener('click', function() {

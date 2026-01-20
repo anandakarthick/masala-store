@@ -117,11 +117,11 @@ class Setting extends Model
 
     public static function freeShippingAmount(): float
     {
-        return (float) self::get('free_shipping_amount', 500);
+        return (float) self::get('free_shipping_amount', 0);
     }
 
     public static function defaultShippingCharge(): float
     {
-        return (float) self::get('default_shipping_charge', 50);
+        return (float) self::get('default_shipping_charge', 0);
     }
 }

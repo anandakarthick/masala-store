@@ -3,6 +3,11 @@
 @section('title', 'Shopping Cart')
 
 @section('content')
+@php
+    $freeShippingAmount = \App\Models\Setting::get('free_shipping_amount', 0);
+    $defaultShippingCharge = \App\Models\Setting::get('default_shipping_charge', 0);
+    $shippingCharge = ($freeShippingAmount > 0 && $cart->subtotal >= $freeShippingAmount) ? 0 : $defaultShippingCharge;
+@endphp
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-2xl font-bold mb-6">Shopping Cart</h1>
 
@@ -275,17 +280,17 @@
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Shipping</span>
-                            @if($cart->subtotal >= 500)
-                                <span class="text-orange-500 font-medium">FREE</span>
+                            @if($shippingCharge <= 0)
+                                <span class="text-green-600 font-medium">FREE</span>
                             @else
-                                <span class="font-medium">₹50.00</span>
+                                <span class="font-medium">₹{{ number_format($shippingCharge, 2) }}</span>
                             @endif
                         </div>
                         
-                        @if($cart->subtotal < 500)
+                        @if($freeShippingAmount > 0 && $shippingCharge > 0)
                             <div class="bg-orange-50 text-orange-700 text-sm p-3 rounded-lg">
                                 <i class="fas fa-info-circle mr-1"></i>
-                                Add ₹{{ number_format(500 - $cart->subtotal, 2) }} more for FREE shipping!
+                                Add ₹{{ number_format($freeShippingAmount - $cart->subtotal, 2) }} more for FREE shipping!
                             </div>
                         @endif
 
@@ -336,7 +341,7 @@
                             <div class="flex justify-between text-lg font-bold">
                                 <span>Total</span>
                                 <span class="text-orange-500">
-                                    ₹{{ number_format($cart->subtotal + $cart->gst_amount + ($cart->subtotal >= 500 ? 0 : 50), 2) }}
+                                    ₹{{ number_format($cart->subtotal + $cart->gst_amount + $shippingCharge, 2) }}
                                 </span>
                             </div>
                         </div>

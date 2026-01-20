@@ -83,17 +83,21 @@ class CheckoutController extends Controller
             'shipping_city' => 'required|string',
             'shipping_state' => 'required|string',
             'shipping_pincode' => 'required|string|max:10',
+            'shipping_latitude' => 'nullable|numeric',
+            'shipping_longitude' => 'nullable|numeric',
             'billing_same' => 'boolean',
             'billing_address' => 'nullable|required_if:billing_same,false|string',
             'billing_city' => 'nullable|required_if:billing_same,false|string',
             'billing_state' => 'nullable|required_if:billing_same,false|string',
             'billing_pincode' => 'nullable|required_if:billing_same,false|string|max:10',
-            'order_type' => 'nullable|in:retail,bulk,return_gift',
             'payment_method' => 'required|string',
             'customer_notes' => 'nullable|string',
             'use_wallet' => 'nullable|boolean',
             'wallet_amount' => 'nullable|numeric|min:0',
         ]);
+
+        // Always set order_type to retail
+        $validated['order_type'] = 'retail';
 
         // Validate payment method
         $paymentMethod = PaymentMethod::where('code', $validated['payment_method'])->active()->first();
@@ -194,11 +198,13 @@ class CheckoutController extends Controller
                 'shipping_city' => $validated['shipping_city'],
                 'shipping_state' => $validated['shipping_state'],
                 'shipping_pincode' => $validated['shipping_pincode'],
+                'shipping_latitude' => $validated['shipping_latitude'] ?? null,
+                'shipping_longitude' => $validated['shipping_longitude'] ?? null,
                 'billing_address' => $billingSame ? $validated['shipping_address'] : $validated['billing_address'],
                 'billing_city' => $billingSame ? $validated['shipping_city'] : $validated['billing_city'],
                 'billing_state' => $billingSame ? $validated['shipping_state'] : $validated['billing_state'],
                 'billing_pincode' => $billingSame ? $validated['shipping_pincode'] : $validated['billing_pincode'],
-                'order_type' => $validated['order_type'] ?? 'retail',
+                'order_type' => $validated['order_type'],
                 'subtotal' => $subtotal,
                 'discount_amount' => $totalDiscount,
                 'first_time_discount_applied' => $firstTimeDiscountAmount,
