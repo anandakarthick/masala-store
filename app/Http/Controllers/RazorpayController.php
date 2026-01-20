@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendOrderEmails;
 use App\Models\Order;
 use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
@@ -9,6 +10,60 @@ use Illuminate\Support\Facades\Log;
 
 class RazorpayController extends Controller
 {
+    /**
+     * Test Razorpay configuration (for debugging)
+     */
+    public function testConfig()
+    {
+        $razorpay = PaymentMethod::where('code', 'razorpay')->first();
+        
+        $result = [
+            'payment_method_exists' => (bool) $razorpay,
+            'is_active' => $razorpay ? $razorpay->is_active : false,
+            'key_id' => null,
+            'key_id_valid_format' => false,
+            'key_secret_set' => false,
+            'api_test' => null,
+        ];
+
+        if ($razorpay) {
+            $keyId = $razorpay->getSetting('key_id');
+            $keySecret = $razorpay->getSetting('key_secret');
+            
+            $result['key_id'] = $keyId ? (substr($keyId, 0, 12) . '...') : 'NOT SET';
+            $result['key_id_valid_format'] = $keyId && str_starts_with($keyId, 'rzp_');
+            $result['key_secret_set'] = !empty($keySecret);
+            $result['mode'] = $keyId && str_contains($keyId, '_test_') ? 'TEST' : 'LIVE';
+            
+            // Test API connection
+            if ($keyId && $keySecret) {
+                $ch = curl_init('https://api.razorpay.com/v1/orders?count=1');
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_USERPWD, $keyId . ':' . $keySecret);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+                
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $curlError = curl_error($ch);
+                curl_close($ch);
+                
+                if ($curlError) {
+                    $result['api_test'] = 'CURL_ERROR: ' . $curlError;
+                } elseif ($httpCode === 200) {
+                    $result['api_test'] = 'SUCCESS';
+                } elseif ($httpCode === 401) {
+                    $result['api_test'] = 'AUTH_FAILED - Check if Key ID and Key Secret are from the same account and mode (test/live)';
+                } else {
+                    $data = json_decode($response, true);
+                    $result['api_test'] = 'HTTP_' . $httpCode . ': ' . ($data['error']['description'] ?? 'Unknown error');
+                }
+            }
+        }
+
+        return response()->json($result);
+    }
+
     /**
      * Create Razorpay order
      */
@@ -24,6 +79,7 @@ class RazorpayController extends Controller
         $razorpay = PaymentMethod::where('code', 'razorpay')->first();
         
         if (!$razorpay || !$razorpay->is_active) {
+            Log::error('Razorpay not configured or disabled');
             return response()->json([
                 'success' => false,
                 'message' => 'Razorpay is not configured or disabled.',
@@ -34,23 +90,57 @@ class RazorpayController extends Controller
         $keySecret = $razorpay->getSetting('key_secret');
 
         if (!$keyId || !$keySecret) {
+            Log::error('Razorpay credentials missing', [
+                'key_id_set' => !empty($keyId),
+                'key_secret_set' => !empty($keySecret),
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Razorpay credentials are not configured.',
             ], 400);
         }
 
+        // Validate key format
+        if (!str_starts_with($keyId, 'rzp_')) {
+            Log::error('Invalid Razorpay key format', ['key_id' => substr($keyId, 0, 10)]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Razorpay Key ID format. It should start with rzp_test_ or rzp_live_',
+            ], 400);
+        }
+
+        // Calculate amount to pay (total - wallet if used)
+        $amountToPay = $order->total_amount - ($order->wallet_amount_used ?? 0);
+        
+        // Ensure minimum amount (₹1 = 100 paise)
+        if ($amountToPay < 1) {
+            Log::error('Amount too low for Razorpay', ['amount' => $amountToPay]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Order amount must be at least ₹1 for online payment.',
+            ], 400);
+        }
+
         try {
             // Create Razorpay order using API
+            $amountInPaise = (int) round($amountToPay * 100);
+            
             $orderData = [
                 'receipt' => $order->order_number,
-                'amount' => (int) ($order->total_amount * 100), // Amount in paise
+                'amount' => $amountInPaise,
                 'currency' => 'INR',
                 'notes' => [
-                    'order_id' => $order->id,
+                    'order_id' => (string) $order->id,
                     'order_number' => $order->order_number,
                 ],
             ];
+
+            Log::info('Creating Razorpay order', [
+                'order_id' => $order->id,
+                'amount_inr' => $amountToPay,
+                'amount_paise' => $amountInPaise,
+                'key_id' => substr($keyId, 0, 15) . '...',
+            ]);
 
             $ch = curl_init('https://api.razorpay.com/v1/orders');
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -58,10 +148,20 @@ class RazorpayController extends Controller
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($orderData));
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
             
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
             curl_close($ch);
+
+            if ($curlError) {
+                Log::error('Razorpay CURL error', ['error' => $curlError]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Network error. Please check your internet connection.',
+                ], 500);
+            }
 
             $razorpayOrder = json_decode($response, true);
 
@@ -69,11 +169,24 @@ class RazorpayController extends Controller
                 Log::error('Razorpay order creation failed', [
                     'response' => $razorpayOrder,
                     'http_code' => $httpCode,
+                    'order_data' => $orderData,
                 ]);
+                
+                $errorMessage = 'Failed to create payment order.';
+                
+                if ($httpCode === 401) {
+                    $errorMessage = 'Payment gateway authentication failed. Please contact support.';
+                } elseif (isset($razorpayOrder['error']['description'])) {
+                    $errorMessage = 'Payment error: ' . $razorpayOrder['error']['description'];
+                }
                 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to create payment order. Please try again.',
+                    'message' => $errorMessage,
+                    'debug' => config('app.debug') ? [
+                        'http_code' => $httpCode,
+                        'error' => $razorpayOrder['error'] ?? null,
+                    ] : null,
                 ], 500);
             }
 
@@ -82,23 +195,31 @@ class RazorpayController extends Controller
                 'transaction_id' => $razorpayOrder['id'],
             ]);
 
+            Log::info('Razorpay order created successfully', [
+                'order_id' => $order->id,
+                'razorpay_order_id' => $razorpayOrder['id'],
+            ]);
+
             return response()->json([
                 'success' => true,
                 'razorpay_order_id' => $razorpayOrder['id'],
                 'razorpay_key_id' => $keyId,
-                'amount' => $order->total_amount,
+                'amount' => $amountToPay,
                 'currency' => 'INR',
-                'name' => \App\Models\Setting::get('business_name', 'SV Masala & Herbal Products'),
+                'name' => \App\Models\Setting::get('business_name', 'SV Products'),
                 'description' => 'Order #' . $order->order_number,
                 'prefill' => [
                     'name' => $order->customer_name,
-                    'email' => $order->customer_email,
+                    'email' => $order->customer_email ?? '',
                     'contact' => $order->customer_phone,
                 ],
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Razorpay error: ' . $e->getMessage());
+            Log::error('Razorpay exception', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             
             return response()->json([
                 'success' => false,
@@ -155,6 +276,9 @@ class RazorpayController extends Controller
             'order_id' => $order->id,
             'payment_id' => $request->razorpay_payment_id,
         ]);
+
+        // Send order emails
+        SendOrderEmails::dispatch($order->fresh()->load('items.product'));
 
         return response()->json([
             'success' => true,
@@ -223,6 +347,9 @@ class RazorpayController extends Controller
                 'order_id' => $order->id,
                 'payment_id' => $payment['id'],
             ]);
+
+            // Send order emails
+            SendOrderEmails::dispatch($order->fresh()->load('items.product'));
         }
     }
 

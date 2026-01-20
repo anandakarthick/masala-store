@@ -126,6 +126,7 @@ Route::prefix('checkout')->name('checkout.')->group(function () {
 
 // Razorpay Routes
 Route::prefix('razorpay')->name('razorpay.')->group(function () {
+    Route::get('/test-config', [RazorpayController::class, 'testConfig'])->name('test-config'); // Debug route
     Route::post('/create-order', [RazorpayController::class, 'createOrder'])->name('create-order');
     Route::post('/verify-payment', [RazorpayController::class, 'verifyPayment'])->name('verify-payment');
 });
