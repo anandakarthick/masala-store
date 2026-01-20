@@ -42,6 +42,28 @@ Route::get('/test-blade', function () {
 
 /*
 |--------------------------------------------------------------------------
+| SEO Redirects - Removed/Moved Pages
+|--------------------------------------------------------------------------
+| Add 301 redirects for removed categories, products, or pages here.
+| This helps maintain SEO value and provides good user experience.
+*/
+
+// Removed categories - redirect to products page or similar category
+Route::get('/category/scented-candles', function () {
+    return redirect('/products', 301);
+});
+
+Route::get('/category/return-gift-candles', function () {
+    return redirect('/products', 301);
+});
+
+// Add more redirects here as needed:
+// Route::get('/category/old-category-slug', function () {
+//     return redirect('/category/new-category-slug', 301);
+// });
+
+/*
+|--------------------------------------------------------------------------
 | Frontend Routes
 |--------------------------------------------------------------------------
 */
