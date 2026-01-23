@@ -35,17 +35,25 @@
         </header>
 
         <section class="bg-white rounded-lg shadow-md p-8 mb-8" aria-labelledby="our-story">
-            <h2 id="our-story" class="text-2xl font-bold text-gray-800 mb-4">Our Story</h2>
-            <p class="text-gray-600 mb-4">
-                Welcome to <strong>{{ $businessName }}</strong>, your trusted destination for authentic, homemade masala powders, premium Indian spices, and natural herbal products. We are passionate about bringing the finest, chemical-free products to your doorstep, made with traditional recipes passed down through generations.
-            </p>
-            <p class="text-gray-600 mb-4">
-                Our journey began with a simple mission: to provide families with <strong>100% pure, preservative-free products</strong> that enhance their health and well-being. Every product we offer – from aromatic turmeric powder and coriander powder to nourishing hair growth oils and herbal bath powders – is freshly prepared in small batches to ensure maximum freshness and quality.
-            </p>
-            <p class="text-gray-600">
-                Based in <strong>Chennai, Tamil Nadu</strong>, we source the finest raw ingredients and process them using traditional methods. Our commitment to quality means you'll never find artificial colors, chemicals, or preservatives in any of our products.
-            </p>
-        </section>
+    <h2 id="our-story" class="text-2xl font-bold text-gray-800 mb-4">Our Story</h2>
+
+    <p class="text-gray-600 mb-4">
+        Welcome to <strong>{{ $businessName }}</strong>, your trusted destination for authentic, homemade masala powders, premium Indian spices, and natural herbal products. We are passionate about bringing the finest, chemical-free products to your doorstep, made with traditional recipes passed down through generations.
+    </p>
+
+    <p class="text-gray-600 mb-4">
+        Our journey began with a simple mission: to provide families with <strong>100% pure, preservative-free products</strong> that enhance their health and well-being. Every product we offer – from aromatic turmeric powder and coriander powder to nourishing hair growth oils and herbal bath powders – is freshly prepared in small batches to ensure maximum freshness and quality.
+    </p>
+
+    <p class="text-gray-600 mb-4">
+        Based in <strong>Chennai, Tamil Nadu</strong>, we source the finest raw ingredients and process them using traditional methods. Our commitment to quality means you'll never find artificial colors, chemicals, or preservatives in any of our products.
+    </p>
+
+    <p class="text-sm text-gray-500 italic">
+        Website developed and maintained by <strong>ANANDAKARTHICK S</strong>.
+    </p>
+</section>
+
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
             <section class="bg-orange-50 rounded-lg p-6" aria-labelledby="our-mission">
