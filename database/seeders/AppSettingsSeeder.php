@@ -26,14 +26,14 @@ class AppSettingsSeeder extends Seeder
             // Business Info
             ['key' => 'business_name', 'value' => 'SV Products', 'type' => 'text', 'group' => 'business'],
             ['key' => 'business_email', 'value' => 'svproducts2025@gmail.com', 'type' => 'text', 'group' => 'business'],
-            ['key' => 'business_phone', 'value' => '+919003096885', 'type' => 'text', 'group' => 'business'],
+            ['key' => 'business_phone', 'value' => '+919789616885', 'type' => 'text', 'group' => 'business'],
             ['key' => 'business_address', 'value' => 'Chennai, Tamil Nadu, India', 'type' => 'textarea', 'group' => 'business'],
-            ['key' => 'whatsapp_number', 'value' => '919003096885', 'type' => 'text', 'group' => 'business'],
+            ['key' => 'whatsapp_number', 'value' => '919789616885', 'type' => 'text', 'group' => 'business'],
             ['key' => 'whatsapp_enabled', 'value' => '1', 'type' => 'boolean', 'group' => 'business'],
             
             // Support Info
             ['key' => 'support_email', 'value' => 'svproducts2025@gmail.com', 'type' => 'text', 'group' => 'support'],
-            ['key' => 'support_phone', 'value' => '+919003096885', 'type' => 'text', 'group' => 'support'],
+            ['key' => 'support_phone', 'value' => '+919789616885', 'type' => 'text', 'group' => 'support'],
             ['key' => 'support_hours', 'value' => 'Mon-Sat, 9 AM - 6 PM', 'type' => 'text', 'group' => 'support'],
             
             // Currency
@@ -139,7 +139,7 @@ CONTACT US
 
 For questions about this Privacy Policy, please contact us at:
 Email: svproducts2025@gmail.com
-Phone: +919003096885
+Phone: +919789616885
 EOT;
     }
 
@@ -272,8 +272,8 @@ CONTACT US
 
 For refund requests or questions:
 Email: svproducts2025@gmail.com
-Phone: +919003096885
-WhatsApp: +919003096885
+Phone: +919789616885
+WhatsApp: +919789616885
 EOT;
     }
 
@@ -338,7 +338,7 @@ CONTACT US
 
 For shipping queries:
 Email: svproducts2025@gmail.com
-Phone: +919003096885
+Phone: +919789616885
 EOT;
     }
 
@@ -386,7 +386,7 @@ CONTACT US
 
 We'd love to hear from you!
 Email: svproducts2025@gmail.com
-Phone: +919003096885
+Phone: +919789616885
 
 Thank you for choosing SV Products!
 EOT;
@@ -425,7 +425,7 @@ EOT;
             ],
             [
                 'question' => 'How do I contact customer support?',
-                'answer' => 'You can reach our support team via: Phone: +919003096885, WhatsApp: +919003096885, Email: svproducts2025@gmail.com. Our support hours are Mon-Sat, 9 AM - 6 PM.',
+                'answer' => 'You can reach our support team via: Phone: +919789616885, WhatsApp: +919789616885, Email: svproducts2025@gmail.com. Our support hours are Mon-Sat, 9 AM - 6 PM.',
             ],
         ];
     }

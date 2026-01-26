@@ -19,7 +19,7 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Admin User',
                 'email' => 'anandakarthickdon@gmail.com',
                 'password' => Hash::make('password'),
-                'phone' => '9003096885',
+                'phone' => '9789616885',
                 'role_id' => $adminRole?->id,
                 'is_active' => true,
             ]
