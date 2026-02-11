@@ -34,6 +34,33 @@ class PhonePeController extends Controller
     }
 
     /**
+     * Get payment instrument configuration based on payment type
+     */
+    private function getPaymentInstrument(string $paymentType): array
+    {
+        return match ($paymentType) {
+            'UPI' => [
+                'type' => 'UPI_INTENT',
+            ],
+            'CARD' => [
+                'type' => 'PAY_PAGE',
+                'targetApp' => 'CARD',
+            ],
+            'NET_BANKING' => [
+                'type' => 'PAY_PAGE',
+                'targetApp' => 'NET_BANKING',
+            ],
+            'WALLET' => [
+                'type' => 'PAY_PAGE',
+                'targetApp' => 'WALLET',
+            ],
+            default => [
+                'type' => 'PAY_PAGE',
+            ],
+        };
+    }
+
+    /**
      * Get access token from PhonePe
      */
     private function getAccessToken(): ?string
@@ -88,9 +115,11 @@ class PhonePeController extends Controller
     {
         $request->validate([
             'order_id' => 'required|exists:orders,id',
+            'payment_type' => 'nullable|in:UPI,CARD,NET_BANKING,WALLET',
         ]);
 
         $order = Order::findOrFail($request->order_id);
+        $paymentType = $request->input('payment_type', 'UPI');
 
         // Get PhonePe settings
         $phonepe = PaymentMethod::where('code', 'phonepe')->first();
@@ -137,6 +166,9 @@ class PhonePeController extends Controller
             $amountInPaise = (int) round($amountToPay * 100);
             $merchantTransactionId = 'MT' . $order->id . '_' . time();
 
+            // Determine payment instrument based on selected type
+            $paymentInstrument = $this->getPaymentInstrument($paymentType);
+
             $payloadData = [
                 'merchantId' => $this->merchantId,
                 'merchantTransactionId' => $merchantTransactionId,
@@ -144,9 +176,7 @@ class PhonePeController extends Controller
                 'merchantOrderId' => $order->order_number,
                 'message' => 'Payment for Order #' . $order->order_number,
                 'mobileNumber' => preg_replace('/[^0-9]/', '', $order->customer_phone),
-                'paymentInstrument' => [
-                    'type' => 'PAY_PAGE',
-                ],
+                'paymentInstrument' => $paymentInstrument,
                 'redirectUrl' => route('phonepe.callback') . '?order_id=' . $order->id,
                 'redirectMode' => 'REDIRECT',
                 'callbackUrl' => route('phonepe.webhook'),
