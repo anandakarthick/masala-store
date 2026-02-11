@@ -6,7 +6,11 @@
       "Bash(mysql:*)",
       "Bash(php artisan migrate:status:*)",
       "Bash(php artisan tinker:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(php -r:*)",
+      "Bash(findstr:*)",
+      "Bash(more:*)",
+      "Bash(powershell:*)"
     ]
   }
 }
