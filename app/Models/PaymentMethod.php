@@ -94,6 +94,14 @@ class PaymentMethod extends Model
     }
 
     /**
+     * Check if this is PhonePe
+     */
+    public function isPhonePe(): bool
+    {
+        return $this->code === 'phonepe';
+    }
+
+    /**
      * Check if payment method is available for given amount
      */
     public function isAvailableForAmount($amount): bool

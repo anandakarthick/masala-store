@@ -132,6 +132,14 @@ Route::prefix('razorpay')->name('razorpay.')->group(function () {
 });
 Route::post('/razorpay/webhook', [RazorpayController::class, 'webhook'])->name('razorpay.webhook')->withoutMiddleware(['web', 'csrf']);
 
+// PhonePe Routes
+Route::prefix('phonepe')->name('phonepe.')->group(function () {
+    Route::get('/test-config', [App\Http\Controllers\PhonePeController::class, 'testConfig'])->name('test-config');
+    Route::post('/create-order', [App\Http\Controllers\PhonePeController::class, 'createOrder'])->name('create-order');
+    Route::get('/callback', [App\Http\Controllers\PhonePeController::class, 'callback'])->name('callback');
+});
+Route::post('/phonepe/webhook', [App\Http\Controllers\PhonePeController::class, 'webhook'])->name('phonepe.webhook')->withoutMiddleware(['web', 'csrf']);
+
 // Order Tracking
 Route::prefix('track')->name('tracking.')->group(function () {
     Route::get('/', [OrderTrackingController::class, 'index'])->name('index');

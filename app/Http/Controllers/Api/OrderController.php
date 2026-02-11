@@ -634,8 +634,8 @@ class OrderController extends Controller
             ]);
         }
 
-        // Only allow confirmation for pending UPI/Bank Transfer orders
-        if (!in_array($order->payment_method, ['upi', 'bank_transfer'])) {
+        // Only allow confirmation for pending UPI/Bank Transfer/PhonePe orders
+        if (!in_array($order->payment_method, ['upi', 'bank_transfer', 'phonepe'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Payment confirmation not required for this payment method.',
@@ -865,10 +865,10 @@ class OrderController extends Controller
                 'image' => $item->product?->primary_image_url,
             ]);
 
-            // Include payment method details for pending payments (UPI/Bank Transfer)
-            if ($order->payment_status === 'pending' && 
+            // Include payment method details for pending payments (UPI/Bank Transfer/PhonePe)
+            if ($order->payment_status === 'pending' &&
                 $order->status !== 'cancelled' &&
-                in_array($order->payment_method, ['upi', 'bank_transfer'])) {
+                in_array($order->payment_method, ['upi', 'bank_transfer', 'phonepe'])) {
                 
                 $paymentMethod = PaymentMethod::where('code', $order->payment_method)->active()->first();
                 
@@ -899,6 +899,12 @@ class OrderController extends Controller
                             'ifsc_code' => $paymentMethod->getSetting('ifsc_code'),
                             'branch' => $paymentMethod->getSetting('branch'),
                         ];
+                    }
+
+                    // Add PhonePe details
+                    if ($paymentMethod->code === 'phonepe') {
+                        $paymentDetails['requires_redirect'] = true;
+                        $paymentDetails['payment_url'] = route('phonepe.create-order');
                     }
 
                     $data['payment_method_details'] = $paymentDetails;

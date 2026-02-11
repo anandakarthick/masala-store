@@ -157,6 +157,68 @@
                 </div>
                 @endif
                 
+                <!-- PhonePe Settings -->
+                @if($paymentMethod->code === 'phonepe')
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-mobile-alt mr-2 text-purple-600"></i>PhonePe Configuration
+                    </h3>
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
+                        <p class="text-sm text-purple-700">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Get your PhonePe PG credentials from <a href="https://business.phonepe.com/" target="_blank" class="underline font-medium">PhonePe Business Dashboard</a>
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Client ID *</label>
+                            <input type="text" name="phonepe_client_id"
+                                   value="{{ old('phonepe_client_id', $paymentMethod->getSetting('client_id')) }}"
+                                   placeholder="SU26xxxxxxxxxxxxxxxxx"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Client Secret *</label>
+                            <input type="password" name="phonepe_client_secret"
+                                   value="{{ old('phonepe_client_secret', $paymentMethod->getSetting('client_secret')) }}"
+                                   placeholder="••••••••••••••••"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Merchant ID *</label>
+                            <input type="text" name="phonepe_merchant_id"
+                                   value="{{ old('phonepe_merchant_id', $paymentMethod->getSetting('merchant_id')) }}"
+                                   placeholder="M23XXXXXXXX"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Environment</label>
+                            <select name="phonepe_environment"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
+                                <option value="production" {{ $paymentMethod->getSetting('environment') === 'production' ? 'selected' : '' }}>Production (Live)</option>
+                                <option value="sandbox" {{ $paymentMethod->getSetting('environment') === 'sandbox' ? 'selected' : '' }}>Sandbox (Testing)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <h4 class="text-sm font-semibold text-yellow-700 mb-2">
+                            <i class="fas fa-globe mr-1"></i> Webhook URL
+                        </h4>
+                        <code class="text-xs text-yellow-600 break-all">
+                            {{ url('/phonepe/webhook') }}
+                        </code>
+                        <p class="text-xs text-yellow-600 mt-2">Add this URL to your PhonePe dashboard for receiving payment notifications.</p>
+                    </div>
+                </div>
+                @endif
+
                 <!-- UPI Settings -->
                 @if($paymentMethod->code === 'upi')
                 <div class="border-t pt-6">

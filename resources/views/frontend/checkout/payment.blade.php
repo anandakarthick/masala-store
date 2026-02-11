@@ -25,7 +25,60 @@
             </div>
         </div>
 
-        @if($paymentMethod->code === 'razorpay')
+        @if($paymentMethod->code === 'phonepe')
+        <div class="bg-white rounded-lg shadow-md p-6" x-data="phonePePayment()">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="#5F259F"/>
+                        <path d="M15.5 8H11c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h1v-3h2.5c1.38 0 2.5-1.12 2.5-2.5S16.88 8 15.5 8zm0 3.5H12V9.5h3.5c.55 0 1 .45 1 1s-.45 1-1 1z" fill="white"/>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-semibold">Secure Payment via PhonePe</h2>
+                <p class="text-gray-500 text-sm mt-1">Pay using UPI, Card, Net Banking or Wallet</p>
+            </div>
+
+            <div class="flex justify-center space-x-4 mb-6">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-1">
+                        <i class="fas fa-mobile-alt text-purple-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs text-gray-500">UPI</span>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-1">
+                        <i class="fas fa-credit-card text-purple-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs text-gray-500">Card</span>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-1">
+                        <i class="fas fa-university text-purple-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs text-gray-500">NetBanking</span>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-1">
+                        <i class="fas fa-wallet text-purple-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs text-gray-500">Wallet</span>
+                </div>
+            </div>
+
+            <div x-show="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" x-text="error"></div>
+
+            <button @click="initiatePayment()" :disabled="processing"
+                    class="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white py-4 rounded-lg font-semibold">
+                <span x-show="!processing"><i class="fas fa-lock mr-2"></i>Pay ₹{{ number_format($amountToPay, 2) }}</span>
+                <span x-show="processing"><i class="fas fa-spinner fa-spin mr-2"></i>Redirecting to PhonePe...</span>
+            </button>
+
+            <p class="text-xs text-gray-500 text-center mt-4">
+                <i class="fas fa-shield-alt mr-1"></i>Your payment is secured by PhonePe
+            </p>
+        </div>
+
+        @elseif($paymentMethod->code === 'razorpay')
         <div class="bg-white rounded-lg shadow-md p-6" x-data="razorpayPayment()">
             <div class="text-center mb-6">
                 <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -45,7 +98,7 @@
 
             <button @click="initiatePayment()" :disabled="processing"
                     class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-4 rounded-lg font-semibold">
-                <span x-show="!processing"><i class="fas fa-lock mr-2"></i>Pay ₹{{ number_format($order->total_amount, 2) }}</span>
+                <span x-show="!processing"><i class="fas fa-lock mr-2"></i>Pay ₹{{ number_format($amountToPay, 2) }}</span>
                 <span x-show="processing"><i class="fas fa-spinner fa-spin mr-2"></i>Processing...</span>
             </button>
 
@@ -242,7 +295,51 @@ function copyUpiId() {
 </script>
 @endsection
 
-@if($paymentMethod->code === 'razorpay')
+@if($paymentMethod->code === 'phonepe')
+@push('scripts')
+<script>
+function phonePePayment() {
+    return {
+        processing: false,
+        error: null,
+
+        async initiatePayment() {
+            this.processing = true;
+            this.error = null;
+
+            try {
+                const response = await fetch('{{ route("phonepe.create-order") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ order_id: {{ $order->id }} })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    this.error = data.message || 'Failed to create payment order';
+                    this.processing = false;
+                    return;
+                }
+
+                // Redirect to PhonePe payment page
+                window.location.href = data.redirect_url;
+
+            } catch (err) {
+                console.error('Payment error:', err);
+                this.error = 'Something went wrong. Please try again.';
+                this.processing = false;
+            }
+        }
+    }
+}
+</script>
+@endpush
+@elseif($paymentMethod->code === 'razorpay')
 @push('scripts')
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>

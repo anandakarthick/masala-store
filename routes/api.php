@@ -97,6 +97,10 @@ Route::prefix('v1')->group(function () {
         Route::post('/orders/{orderNumber}/confirm-payment', [OrderController::class, 'confirmPayment']);
         Route::get('/orders/{orderNumber}/invoice', [OrderController::class, 'downloadInvoice']);
         Route::get('/orders/{orderNumber}/invoice-url', [OrderController::class, 'getInvoiceUrl']);
+
+        // PhonePe Payment
+        Route::post('/phonepe/create-order', [App\Http\Controllers\Api\PhonePeController::class, 'createOrder']);
+        Route::get('/phonepe/check-status/{orderNumber}', [App\Http\Controllers\Api\PhonePeController::class, 'checkStatus']);
         
         // Wallet
         Route::get('/wallet', [WalletController::class, 'index']);
