@@ -12,18 +12,18 @@ use Illuminate\Support\Facades\Log;
 class PhonePeController extends Controller
 {
     private string $baseUrl;
-    private string $clientId;
-    private string $clientSecret;
     private string $merchantId;
+    private string $saltKey;
+    private string $saltIndex;
 
     public function __construct()
     {
         $phonepe = PaymentMethod::where('code', 'phonepe')->first();
 
         if ($phonepe) {
-            $this->clientId = $phonepe->getSetting('client_id', '');
-            $this->clientSecret = $phonepe->getSetting('client_secret', '');
             $this->merchantId = $phonepe->getSetting('merchant_id', '');
+            $this->saltKey = $phonepe->getSetting('salt_key', '');
+            $this->saltIndex = $phonepe->getSetting('salt_index', '1');
 
             $environment = $phonepe->getSetting('environment', 'production');
             $this->baseUrl = $environment === 'sandbox'
@@ -33,51 +33,13 @@ class PhonePeController extends Controller
     }
 
     /**
-     * Get access token from PhonePe
+     * Generate X-VERIFY checksum for PhonePe
      */
-    private function getAccessToken(): ?string
+    private function generateChecksum(string $base64Payload, string $endpoint): string
     {
-        try {
-            $ch = curl_init($this->baseUrl . '/v1/oauth/token');
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
-                'client_id' => $this->clientId,
-                'client_version' => '1',
-                'client_secret' => $this->clientSecret,
-                'grant_type' => 'client_credentials',
-            ]));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/x-www-form-urlencoded',
-            ]);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlError = curl_error($ch);
-            curl_close($ch);
-
-            if ($curlError) {
-                Log::error('PhonePe OAuth CURL error', ['error' => $curlError]);
-                return null;
-            }
-
-            $data = json_decode($response, true);
-
-            if ($httpCode === 200 && isset($data['access_token'])) {
-                return $data['access_token'];
-            }
-
-            Log::error('PhonePe OAuth failed', [
-                'http_code' => $httpCode,
-                'response' => $data,
-            ]);
-
-            return null;
-        } catch (\Exception $e) {
-            Log::error('PhonePe OAuth exception', ['message' => $e->getMessage()]);
-            return null;
-        }
+        $string = $base64Payload . $endpoint . $this->saltKey;
+        $sha256 = hash('sha256', $string);
+        return $sha256 . '###' . $this->saltIndex;
     }
 
     /**
@@ -118,7 +80,7 @@ class PhonePeController extends Controller
             ], 400);
         }
 
-        if (!$this->clientId || !$this->clientSecret || !$this->merchantId) {
+        if (empty($this->merchantId) || empty($this->saltKey)) {
             return response()->json([
                 'success' => false,
                 'message' => 'PhonePe credentials are not configured.',
@@ -136,32 +98,37 @@ class PhonePeController extends Controller
         }
 
         try {
-            $accessToken = $this->getAccessToken();
-
-            if (!$accessToken) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to authenticate with PhonePe. Please try again.',
-                ], 500);
-            }
-
             $amountInPaise = (int) round($amountToPay * 100);
-            $merchantTransactionId = 'MT' . $order->id . '_' . time();
+            $merchantTransactionId = 'MT' . $order->id . 'T' . time();
+            $merchantUserId = 'MU' . $user->id;
 
-            $payloadData = [
+            // Build payload
+            $payload = [
                 'merchantId' => $this->merchantId,
                 'merchantTransactionId' => $merchantTransactionId,
+                'merchantUserId' => $merchantUserId,
                 'amount' => $amountInPaise,
-                'merchantOrderId' => $order->order_number,
-                'message' => 'Payment for Order #' . $order->order_number,
-                'mobileNumber' => preg_replace('/[^0-9]/', '', $order->customer_phone),
-                'paymentInstrument' => [
-                    'type' => 'PAY_PAGE',
-                ],
                 'redirectUrl' => config('app.url') . '/api/v1/phonepe/callback?order_id=' . $order->id,
                 'redirectMode' => 'REDIRECT',
                 'callbackUrl' => route('phonepe.webhook'),
+                'paymentInstrument' => [
+                    'type' => 'PAY_PAGE',
+                ],
             ];
+
+            // Add mobile number if available
+            if ($order->customer_phone) {
+                $mobileNumber = preg_replace('/[^0-9]/', '', $order->customer_phone);
+                if (strlen($mobileNumber) === 10) {
+                    $payload['mobileNumber'] = $mobileNumber;
+                } elseif (strlen($mobileNumber) > 10) {
+                    $payload['mobileNumber'] = substr($mobileNumber, -10);
+                }
+            }
+
+            $base64Payload = base64_encode(json_encode($payload));
+            $endpoint = '/pg/v1/pay';
+            $checksum = $this->generateChecksum($base64Payload, $endpoint);
 
             Log::info('Creating PhonePe order via API', [
                 'order_id' => $order->id,
@@ -170,15 +137,21 @@ class PhonePeController extends Controller
                 'amount' => $amountToPay,
             ]);
 
-            $ch = curl_init($this->baseUrl . '/v1/pay');
+            $ch = curl_init($this->baseUrl . $endpoint);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['request' => $payloadData]));
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['request' => $base64Payload]));
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
-                'Authorization: O-Bearer ' . $accessToken,
+                'X-VERIFY: ' . $checksum,
             ]);
             curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+
+            if (file_exists(base_path('cacert.pem'))) {
+                curl_setopt($ch, CURLOPT_CAINFO, base_path('cacert.pem'));
+            }
 
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -195,7 +168,7 @@ class PhonePeController extends Controller
 
             $phonePeResponse = json_decode($response, true);
 
-            if ($httpCode !== 200 || !isset($phonePeResponse['redirectUrl'])) {
+            if (!$phonePeResponse || !isset($phonePeResponse['success']) || !$phonePeResponse['success']) {
                 Log::error('PhonePe order creation failed', [
                     'response' => $phonePeResponse,
                     'http_code' => $httpCode,
@@ -204,6 +177,17 @@ class PhonePeController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => $phonePeResponse['message'] ?? 'Failed to create payment order.',
+                ], 500);
+            }
+
+            // Get redirect URL
+            $redirectUrl = $phonePeResponse['data']['instrumentResponse']['redirectInfo']['url'] ?? null;
+
+            if (!$redirectUrl) {
+                Log::error('PhonePe: No redirect URL in response');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to get payment URL.',
                 ], 500);
             }
 
@@ -220,7 +204,7 @@ class PhonePeController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'redirect_url' => $phonePeResponse['redirectUrl'],
+                    'redirect_url' => $redirectUrl,
                     'merchant_transaction_id' => $merchantTransactionId,
                     'amount' => $amountToPay,
                 ],
@@ -263,27 +247,23 @@ class PhonePeController extends Controller
         }
 
         try {
-            $accessToken = $this->getAccessToken();
+            $endpoint = '/pg/v1/status/' . $this->merchantId . '/' . $order->transaction_id;
+            $checksum = $this->generateChecksum('', $endpoint);
 
-            if (!$accessToken) {
-                return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'status' => 'UNKNOWN',
-                        'payment_status' => $order->payment_status,
-                    ],
-                ]);
-            }
-
-            $url = $this->baseUrl . '/v1/status/' . $this->merchantId . '/' . $order->transaction_id;
+            $url = $this->baseUrl . $endpoint;
 
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
-                'Authorization: O-Bearer ' . $accessToken,
+                'X-VERIFY: ' . $checksum,
+                'X-MERCHANT-ID: ' . $this->merchantId,
             ]);
             curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+
+            if (file_exists(base_path('cacert.pem'))) {
+                curl_setopt($ch, CURLOPT_CAINFO, base_path('cacert.pem'));
+            }
 
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -291,28 +271,28 @@ class PhonePeController extends Controller
 
             $data = json_decode($response, true);
 
-            if ($httpCode === 200 && isset($data['state'])) {
-                $state = $data['state'];
+            if ($data && isset($data['success']) && $data['success']) {
+                $code = $data['code'] ?? '';
 
                 // Update order if payment completed
-                if ($state === 'COMPLETED' && $order->payment_status !== 'paid') {
+                if ($code === 'PAYMENT_SUCCESS' && $order->payment_status !== 'paid') {
                     $order->update([
                         'payment_status' => 'paid',
                         'status' => 'confirmed',
-                        'transaction_id' => $data['transactionId'] ?? $order->transaction_id,
+                        'transaction_id' => $data['data']['transactionId'] ?? $order->transaction_id,
                     ]);
 
                     SendOrderEmails::dispatch($order->fresh()->load('items.product'));
-                } elseif ($state === 'FAILED' && $order->payment_status !== 'failed') {
+                } elseif (in_array($code, ['PAYMENT_ERROR', 'PAYMENT_DECLINED', 'PAYMENT_CANCELLED']) && $order->payment_status !== 'failed') {
                     $order->update(['payment_status' => 'failed']);
                 }
 
                 return response()->json([
                     'success' => true,
                     'data' => [
-                        'status' => $state,
+                        'status' => $code,
                         'payment_status' => $order->fresh()->payment_status,
-                        'transaction_id' => $data['transactionId'] ?? null,
+                        'transaction_id' => $data['data']['transactionId'] ?? null,
                     ],
                 ]);
             }

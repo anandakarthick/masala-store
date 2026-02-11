@@ -92,10 +92,10 @@ class PaymentMethodController extends Controller
         // Handle PhonePe settings
         if ($paymentMethod->code === 'phonepe') {
             $settings = [
-                'client_id' => $request->input('phonepe_client_id'),
-                'client_secret' => $request->input('phonepe_client_secret'),
                 'merchant_id' => $request->input('phonepe_merchant_id'),
-                'environment' => $request->input('phonepe_environment', 'production'),
+                'salt_key' => $request->input('phonepe_salt_key'),
+                'salt_index' => $request->input('phonepe_salt_index', '1'),
+                'environment' => $request->input('phonepe_environment', 'sandbox'),
             ];
             $validated['settings'] = $settings;
         }

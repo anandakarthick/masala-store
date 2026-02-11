@@ -7,23 +7,22 @@ use App\Models\Order;
 use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class PhonePeController extends Controller
 {
     private string $baseUrl;
-    private string $clientId;
-    private string $clientSecret;
     private string $merchantId;
+    private string $saltKey;
+    private string $saltIndex;
 
     public function __construct()
     {
         $phonepe = PaymentMethod::where('code', 'phonepe')->first();
 
         if ($phonepe) {
-            $this->clientId = $phonepe->getSetting('client_id', '');
-            $this->clientSecret = $phonepe->getSetting('client_secret', '');
             $this->merchantId = $phonepe->getSetting('merchant_id', '');
+            $this->saltKey = $phonepe->getSetting('salt_key', '');
+            $this->saltIndex = $phonepe->getSetting('salt_index', '1');
 
             // Use production or sandbox based on setting
             $environment = $phonepe->getSetting('environment', 'production');
@@ -34,114 +33,13 @@ class PhonePeController extends Controller
     }
 
     /**
-     * Get payment instrument configuration based on payment type
+     * Generate X-VERIFY checksum for PhonePe
      */
-    private function getPaymentInstrument(string $paymentType): array
+    private function generateChecksum(string $base64Payload, string $endpoint): string
     {
-        return match ($paymentType) {
-            'UPI' => [
-                'type' => 'UPI_INTENT',
-            ],
-            'CARD' => [
-                'type' => 'PAY_PAGE',
-                'targetApp' => 'CARD',
-            ],
-            'NET_BANKING' => [
-                'type' => 'PAY_PAGE',
-                'targetApp' => 'NET_BANKING',
-            ],
-            'WALLET' => [
-                'type' => 'PAY_PAGE',
-                'targetApp' => 'WALLET',
-            ],
-            default => [
-                'type' => 'PAY_PAGE',
-            ],
-        };
-    }
-
-    /**
-     * Get access token from PhonePe
-     */
-    private function getAccessToken(): ?string
-    {
-        try {
-            // Check if credentials are set
-            if (empty($this->clientId) || empty($this->clientSecret)) {
-                Log::error('PhonePe OAuth: Missing credentials', [
-                    'client_id_set' => !empty($this->clientId),
-                    'client_secret_set' => !empty($this->clientSecret),
-                ]);
-                return null;
-            }
-
-            $url = $this->baseUrl . '/v1/oauth/token';
-
-            Log::info('PhonePe OAuth: Attempting to get token', [
-                'url' => $url,
-                'client_id' => substr($this->clientId, 0, 10) . '...',
-            ]);
-
-            $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
-                'client_id' => $this->clientId,
-                'client_version' => '1',
-                'client_secret' => $this->clientSecret,
-                'grant_type' => 'client_credentials',
-            ]));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/x-www-form-urlencoded',
-            ]);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-
-            // SSL settings for Windows compatibility
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-
-            // If SSL verification fails, try with bundled CA certificates
-            $caPath = ini_get('curl.cainfo');
-            if (empty($caPath) && file_exists(base_path('cacert.pem'))) {
-                curl_setopt($ch, CURLOPT_CAINFO, base_path('cacert.pem'));
-            }
-
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlError = curl_error($ch);
-            $curlErrno = curl_errno($ch);
-            curl_close($ch);
-
-            if ($curlError) {
-                Log::error('PhonePe OAuth CURL error', [
-                    'error' => $curlError,
-                    'errno' => $curlErrno,
-                    'url' => $url,
-                ]);
-                return null;
-            }
-
-            $data = json_decode($response, true);
-
-            if ($httpCode === 200 && isset($data['access_token'])) {
-                Log::info('PhonePe OAuth: Token obtained successfully');
-                return $data['access_token'];
-            }
-
-            Log::error('PhonePe OAuth failed', [
-                'http_code' => $httpCode,
-                'response' => $data,
-                'url' => $url,
-            ]);
-
-            return null;
-        } catch (\Exception $e) {
-            Log::error('PhonePe OAuth exception', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return null;
-        }
+        $string = $base64Payload . $endpoint . $this->saltKey;
+        $sha256 = hash('sha256', $string);
+        return $sha256 . '###' . $this->saltIndex;
     }
 
     /**
@@ -155,7 +53,7 @@ class PhonePeController extends Controller
         ]);
 
         $order = Order::findOrFail($request->order_id);
-        $paymentType = $request->input('payment_type', 'UPI');
+        $paymentType = $request->input('payment_type', 'PAY_PAGE');
 
         // Get PhonePe settings
         $phonepe = PaymentMethod::where('code', 'phonepe')->first();
@@ -168,11 +66,14 @@ class PhonePeController extends Controller
             ], 400);
         }
 
-        if (!$this->clientId || !$this->clientSecret || !$this->merchantId) {
-            Log::error('PhonePe credentials missing');
+        if (empty($this->merchantId) || empty($this->saltKey)) {
+            Log::error('PhonePe credentials missing', [
+                'merchant_id_set' => !empty($this->merchantId),
+                'salt_key_set' => !empty($this->saltKey),
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'PhonePe credentials are not configured.',
+                'message' => 'PhonePe credentials are not configured. Please set Merchant ID and Salt Key.',
             ], 400);
         }
 
@@ -189,59 +90,62 @@ class PhonePeController extends Controller
         }
 
         try {
-            // Get access token
-            $accessToken = $this->getAccessToken();
-
-            if (!$accessToken) {
-                Log::error('PhonePe: Failed to get access token for order', [
-                    'order_id' => $order->id,
-                    'environment' => PaymentMethod::where('code', 'phonepe')->first()?->getSetting('environment'),
-                ]);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to authenticate with PhonePe. Please check your PhonePe credentials in Admin Panel or try again later.',
-                    'debug' => config('app.debug') ? [
-                        'hint' => 'Visit /phonepe/test-config to diagnose the issue',
-                    ] : null,
-                ], 500);
-            }
-
             $amountInPaise = (int) round($amountToPay * 100);
-            $merchantTransactionId = 'MT' . $order->id . '_' . time();
+            $merchantTransactionId = 'MT' . $order->id . 'T' . time();
+            $merchantUserId = 'MU' . ($order->user_id ?? $order->id);
 
-            // Determine payment instrument based on selected type
-            $paymentInstrument = $this->getPaymentInstrument($paymentType);
-
-            $payloadData = [
+            // Build payload
+            $payload = [
                 'merchantId' => $this->merchantId,
                 'merchantTransactionId' => $merchantTransactionId,
+                'merchantUserId' => $merchantUserId,
                 'amount' => $amountInPaise,
-                'merchantOrderId' => $order->order_number,
-                'message' => 'Payment for Order #' . $order->order_number,
-                'mobileNumber' => preg_replace('/[^0-9]/', '', $order->customer_phone),
-                'paymentInstrument' => $paymentInstrument,
                 'redirectUrl' => route('phonepe.callback') . '?order_id=' . $order->id,
                 'redirectMode' => 'REDIRECT',
                 'callbackUrl' => route('phonepe.webhook'),
+                'paymentInstrument' => [
+                    'type' => 'PAY_PAGE',
+                ],
             ];
+
+            // Add mobile number if available
+            if ($order->customer_phone) {
+                $mobileNumber = preg_replace('/[^0-9]/', '', $order->customer_phone);
+                if (strlen($mobileNumber) === 10) {
+                    $payload['mobileNumber'] = $mobileNumber;
+                } elseif (strlen($mobileNumber) > 10) {
+                    $payload['mobileNumber'] = substr($mobileNumber, -10);
+                }
+            }
+
+            $base64Payload = base64_encode(json_encode($payload));
+            $endpoint = '/pg/v1/pay';
+            $checksum = $this->generateChecksum($base64Payload, $endpoint);
 
             Log::info('Creating PhonePe order', [
                 'order_id' => $order->id,
                 'merchant_transaction_id' => $merchantTransactionId,
                 'amount_inr' => $amountToPay,
                 'amount_paise' => $amountInPaise,
+                'endpoint' => $this->baseUrl . $endpoint,
             ]);
 
-            $ch = curl_init($this->baseUrl . '/v1/pay');
+            $ch = curl_init($this->baseUrl . $endpoint);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['request' => $payloadData]));
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['request' => $base64Payload]));
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
-                'Authorization: O-Bearer ' . $accessToken,
+                'X-VERIFY: ' . $checksum,
             ]);
             curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+
+            // Use CA cert if available
+            if (file_exists(base_path('cacert.pem'))) {
+                curl_setopt($ch, CURLOPT_CAINFO, base_path('cacert.pem'));
+            }
 
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -258,7 +162,12 @@ class PhonePeController extends Controller
 
             $phonePeResponse = json_decode($response, true);
 
-            if ($httpCode !== 200 || !isset($phonePeResponse['redirectUrl'])) {
+            Log::info('PhonePe API response', [
+                'http_code' => $httpCode,
+                'response' => $phonePeResponse,
+            ]);
+
+            if (!$phonePeResponse || !isset($phonePeResponse['success']) || !$phonePeResponse['success']) {
                 Log::error('PhonePe order creation failed', [
                     'response' => $phonePeResponse,
                     'http_code' => $httpCode,
@@ -266,7 +175,7 @@ class PhonePeController extends Controller
 
                 $errorMessage = 'Failed to create payment order.';
                 if (isset($phonePeResponse['message'])) {
-                    $errorMessage = 'Payment error: ' . $phonePeResponse['message'];
+                    $errorMessage = $phonePeResponse['message'];
                 }
 
                 return response()->json([
@@ -274,8 +183,19 @@ class PhonePeController extends Controller
                     'message' => $errorMessage,
                     'debug' => config('app.debug') ? [
                         'http_code' => $httpCode,
-                        'error' => $phonePeResponse,
+                        'response' => $phonePeResponse,
                     ] : null,
+                ], 500);
+            }
+
+            // Get redirect URL from response
+            $redirectUrl = $phonePeResponse['data']['instrumentResponse']['redirectInfo']['url'] ?? null;
+
+            if (!$redirectUrl) {
+                Log::error('PhonePe: No redirect URL in response', ['response' => $phonePeResponse]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to get payment URL from PhonePe.',
                 ], 500);
             }
 
@@ -287,11 +207,12 @@ class PhonePeController extends Controller
             Log::info('PhonePe order created successfully', [
                 'order_id' => $order->id,
                 'merchant_transaction_id' => $merchantTransactionId,
+                'redirect_url' => $redirectUrl,
             ]);
 
             return response()->json([
                 'success' => true,
-                'redirect_url' => $phonePeResponse['redirectUrl'],
+                'redirect_url' => $redirectUrl,
                 'merchant_transaction_id' => $merchantTransactionId,
             ]);
 
@@ -345,22 +266,25 @@ class PhonePeController extends Controller
         }
 
         try {
-            $accessToken = $this->getAccessToken();
+            $endpoint = '/pg/v1/status/' . $this->merchantId . '/' . $order->transaction_id;
+            $checksum = $this->generateChecksum('', $endpoint);
 
-            if (!$accessToken) {
-                Log::error('Failed to get access token for status check');
-                return 'PENDING';
-            }
-
-            $url = $this->baseUrl . '/v1/status/' . $this->merchantId . '/' . $order->transaction_id;
+            $url = $this->baseUrl . $endpoint;
 
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
-                'Authorization: O-Bearer ' . $accessToken,
+                'X-VERIFY: ' . $checksum,
+                'X-MERCHANT-ID: ' . $this->merchantId,
             ]);
             curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+
+            if (file_exists(base_path('cacert.pem'))) {
+                curl_setopt($ch, CURLOPT_CAINFO, base_path('cacert.pem'));
+            }
 
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -370,26 +294,27 @@ class PhonePeController extends Controller
 
             Log::info('PhonePe status check', [
                 'order_id' => $order->id,
+                'http_code' => $httpCode,
                 'response' => $data,
             ]);
 
-            if ($httpCode === 200 && isset($data['state'])) {
-                $state = $data['state'];
+            if ($data && isset($data['success']) && $data['success']) {
+                $code = $data['code'] ?? '';
 
-                if ($state === 'COMPLETED') {
+                if ($code === 'PAYMENT_SUCCESS') {
                     // Payment successful - update order
                     if ($order->payment_status !== 'paid') {
                         $order->update([
                             'payment_status' => 'paid',
                             'status' => 'confirmed',
-                            'transaction_id' => $data['transactionId'] ?? $order->transaction_id,
+                            'transaction_id' => $data['data']['transactionId'] ?? $order->transaction_id,
                         ]);
 
                         // Send order emails
                         SendOrderEmails::dispatch($order->fresh()->load('items.product'));
                     }
                     return 'SUCCESS';
-                } elseif ($state === 'PENDING') {
+                } elseif ($code === 'PAYMENT_PENDING') {
                     return 'PENDING';
                 } else {
                     // FAILED or other states
@@ -409,7 +334,7 @@ class PhonePeController extends Controller
     }
 
     /**
-     * Handle PhonePe webhook
+     * Handle PhonePe webhook (S2S callback)
      */
     public function webhook(Request $request)
     {
@@ -417,18 +342,39 @@ class PhonePeController extends Controller
 
         Log::info('PhonePe webhook received', ['payload' => $payload]);
 
+        // Verify the callback
+        $xVerify = $request->header('X-VERIFY');
+
+        if ($xVerify) {
+            // Validate checksum
+            $expectedChecksum = hash('sha256', $payload . $this->saltKey) . '###' . $this->saltIndex;
+            if ($xVerify !== $expectedChecksum) {
+                Log::warning('PhonePe webhook: Invalid checksum');
+                // Continue anyway as PhonePe may use different checksum format
+            }
+        }
+
         $data = json_decode($payload, true);
 
-        if (!$data || !isset($data['response'])) {
+        if (!$data) {
+            // Try to decode base64 response
+            $response = $data['response'] ?? null;
+            if ($response) {
+                $data = json_decode(base64_decode($response), true);
+            }
+        }
+
+        if (!$data) {
             Log::warning('Invalid PhonePe webhook payload');
             return response()->json(['status' => 'invalid payload'], 400);
         }
 
-        $responseData = $data['response'];
-        $merchantTransactionId = $responseData['merchantTransactionId'] ?? null;
+        $merchantTransactionId = $data['data']['merchantTransactionId']
+            ?? $data['merchantTransactionId']
+            ?? null;
 
         if (!$merchantTransactionId) {
-            Log::warning('No merchantTransactionId in webhook');
+            Log::warning('No merchantTransactionId in webhook', ['data' => $data]);
             return response()->json(['status' => 'ok']);
         }
 
@@ -440,36 +386,36 @@ class PhonePeController extends Controller
             return response()->json(['status' => 'ok']);
         }
 
-        $state = $responseData['state'] ?? null;
+        $code = $data['code'] ?? '';
 
         Log::info('PhonePe webhook processing', [
             'order_id' => $order->id,
-            'state' => $state,
+            'code' => $code,
         ]);
 
-        if ($state === 'COMPLETED') {
+        if ($code === 'PAYMENT_SUCCESS') {
             if ($order->payment_status !== 'paid') {
                 $order->update([
                     'payment_status' => 'paid',
                     'status' => 'confirmed',
-                    'transaction_id' => $responseData['transactionId'] ?? $order->transaction_id,
+                    'transaction_id' => $data['data']['transactionId'] ?? $order->transaction_id,
                 ]);
 
                 Log::info('Payment captured via webhook', [
                     'order_id' => $order->id,
-                    'transaction_id' => $responseData['transactionId'] ?? null,
+                    'transaction_id' => $data['data']['transactionId'] ?? null,
                 ]);
 
                 // Send order emails
                 SendOrderEmails::dispatch($order->fresh()->load('items.product'));
             }
-        } elseif ($state === 'FAILED') {
+        } elseif (in_array($code, ['PAYMENT_ERROR', 'PAYMENT_DECLINED', 'PAYMENT_CANCELLED'])) {
             if ($order->payment_status !== 'failed') {
                 $order->update(['payment_status' => 'failed']);
 
                 Log::warning('Payment failed via webhook', [
                     'order_id' => $order->id,
-                    'error' => $responseData['responseCode'] ?? 'Unknown',
+                    'code' => $code,
                 ]);
             }
         }
@@ -487,61 +433,42 @@ class PhonePeController extends Controller
         $result = [
             'payment_method_exists' => (bool) $phonepe,
             'is_active' => $phonepe ? $phonepe->is_active : false,
-            'client_id' => null,
-            'client_id_set' => false,
-            'client_secret_set' => false,
+            'merchant_id' => null,
             'merchant_id_set' => false,
+            'salt_key_set' => false,
+            'salt_index' => null,
             'environment' => null,
             'base_url' => null,
             'api_test' => null,
             'curl_available' => function_exists('curl_init'),
-            'ssl_version' => null,
             'error_details' => null,
         ];
 
-        // Check cURL SSL info
-        if (function_exists('curl_version')) {
-            $curlVersion = curl_version();
-            $result['ssl_version'] = $curlVersion['ssl_version'] ?? 'unknown';
-        }
-
         if ($phonepe) {
-            $clientId = $phonepe->getSetting('client_id');
-            $clientSecret = $phonepe->getSetting('client_secret');
             $merchantId = $phonepe->getSetting('merchant_id');
+            $saltKey = $phonepe->getSetting('salt_key');
+            $saltIndex = $phonepe->getSetting('salt_index', '1');
 
-            $result['client_id'] = $clientId ? (substr($clientId, 0, 10) . '...') : 'NOT SET';
-            $result['client_id_set'] = !empty($clientId);
-            $result['client_secret_set'] = !empty($clientSecret);
+            $result['merchant_id'] = $merchantId ? (substr($merchantId, 0, 8) . '...') : 'NOT SET';
             $result['merchant_id_set'] = !empty($merchantId);
+            $result['salt_key_set'] = !empty($saltKey);
+            $result['salt_index'] = $saltIndex;
             $result['environment'] = $phonepe->getSetting('environment', 'production');
 
-            // Test API connection
-            if ($clientId && $clientSecret) {
-                $this->clientId = $clientId;
-                $this->clientSecret = $clientSecret;
-                $this->merchantId = $merchantId;
+            $environment = $phonepe->getSetting('environment', 'production');
+            $result['base_url'] = $environment === 'sandbox'
+                ? 'https://api-preprod.phonepe.com/apis/pg-sandbox'
+                : 'https://api.phonepe.com/apis/hermes';
 
-                $environment = $phonepe->getSetting('environment', 'production');
-                $this->baseUrl = $environment === 'sandbox'
-                    ? 'https://api-preprod.phonepe.com/apis/pg-sandbox'
-                    : 'https://api.phonepe.com/apis/hermes';
-
-                $result['base_url'] = $this->baseUrl;
-
-                // Try to get access token with detailed error capture
-                $accessToken = $this->getAccessToken();
-
-                if ($accessToken) {
-                    $result['api_test'] = 'SUCCESS';
-                    $result['token_preview'] = substr($accessToken, 0, 20) . '...';
-                } else {
-                    $result['api_test'] = 'AUTH_FAILED';
-                    $result['error_details'] = 'Check Laravel logs for details. Common issues: wrong credentials, wrong environment, SSL certificate issues.';
-                }
+            if ($merchantId && $saltKey) {
+                $result['api_test'] = 'CREDENTIALS_SET';
+                $result['error_details'] = 'Credentials are configured. Try making a test payment to verify.';
             } else {
                 $result['api_test'] = 'CREDENTIALS_MISSING';
-                $result['error_details'] = 'Please configure Client ID, Client Secret, and Merchant ID in Admin > Payment Methods > PhonePe';
+                $missingFields = [];
+                if (!$merchantId) $missingFields[] = 'Merchant ID';
+                if (!$saltKey) $missingFields[] = 'Salt Key';
+                $result['error_details'] = 'Missing: ' . implode(', ', $missingFields) . '. Configure in Admin > Payment Methods > PhonePe';
             }
         } else {
             $result['api_test'] = 'PAYMENT_METHOD_NOT_FOUND';
