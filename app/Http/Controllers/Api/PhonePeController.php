@@ -227,10 +227,16 @@ class PhonePeController extends Controller
     private function returnToApp(string $status, ?string $orderNumber, string $message)
     {
         // Deep link scheme for the mobile app
-        $deepLink = 'svproducts://payment/' . $status;
+        $deepLinkPath = 'payment/' . $status;
         if ($orderNumber) {
-            $deepLink .= '?order_number=' . $orderNumber;
+            $deepLinkPath .= '?order_number=' . $orderNumber;
         }
+
+        // Simple scheme URL (works on iOS)
+        $schemeUrl = 'svproducts://' . $deepLinkPath;
+
+        // Android Intent URL (more reliable for Android)
+        $intentUrl = 'intent://' . $deepLinkPath . '#Intent;scheme=svproducts;package=com.svproductsnew;end';
 
         // Return HTML page that redirects to the app
         $html = '<!DOCTYPE html>
@@ -286,6 +292,17 @@ class PhonePeController extends Controller
             font-size: 16px;
             margin: 15px 0;
         }
+        .btn-secondary {
+            display: block;
+            background: #e0e0e0;
+            color: #333;
+            padding: 12px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: 15px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -294,16 +311,39 @@ class PhonePeController extends Controller
         <h1>' . ($status === 'success' ? 'Payment Successful!' : ($status === 'failed' ? 'Payment Failed' : 'Processing Payment')) . '</h1>
         <p>' . htmlspecialchars($message) . '</p>
         ' . ($orderNumber ? '<div class="order-number">Order #' . htmlspecialchars($orderNumber) . '</div>' : '') . '
-        <a href="' . $deepLink . '" class="btn">Open App</a>
+        <a href="#" id="openAppBtn" class="btn">Open App</a>
+        <a href="' . $schemeUrl . '" class="btn-secondary">Try Alternative Link</a>
         <p style="margin-top: 20px; font-size: 12px; color: #999;">
-            If the app doesn\'t open automatically, tap the button above.
+            Your payment has been processed. You can close this page.
         </p>
     </div>
     <script>
-        // Try to open the app automatically
+        var schemeUrl = "' . $schemeUrl . '";
+        var intentUrl = "' . $intentUrl . '";
+
+        // Detect if Android
+        var isAndroid = /android/i.test(navigator.userAgent);
+
+        function openApp() {
+            if (isAndroid) {
+                // Use intent URL for Android
+                window.location.href = intentUrl;
+            } else {
+                // Use scheme URL for iOS
+                window.location.href = schemeUrl;
+            }
+        }
+
+        // Button click handler
+        document.getElementById("openAppBtn").onclick = function(e) {
+            e.preventDefault();
+            openApp();
+        };
+
+        // Auto-open after 1.5 seconds
         setTimeout(function() {
-            window.location.href = "' . $deepLink . '";
-        }, 1000);
+            openApp();
+        }, 1500);
     </script>
 </body>
 </html>';
