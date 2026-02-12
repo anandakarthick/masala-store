@@ -91,6 +91,7 @@ class PhonePeController extends Controller
                 ->merchantOrderId($merchantOrderId)
                 ->amount($amountInPaise)
                 ->redirectUrl(route('phonepe.callback') . '?order_id=' . $order->id . '&merchant_order_id=' . $merchantOrderId)
+                ->message('Payment for Order #' . $order->order_number)
                 ->build();
 
             Log::info('Creating PhonePe order', [
