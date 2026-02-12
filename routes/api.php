@@ -50,6 +50,9 @@ Route::prefix('v1')->group(function () {
     
     // Order tracking (public)
     Route::post('/orders/track', [OrderController::class, 'track']);
+
+    // PhonePe callback (public - called by PhonePe after payment)
+    Route::get('/phonepe/callback', [App\Http\Controllers\Api\PhonePeController::class, 'callback']);
     
     // Invoice download with token (public - no auth needed)
     Route::get('/orders/{orderNumber}/invoice-download', [OrderController::class, 'downloadInvoicePublic']);
