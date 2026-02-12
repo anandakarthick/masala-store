@@ -14,7 +14,9 @@
       "WebFetch(domain:developer.phonepe.com)",
       "WebSearch",
       "Bash(composer update:*)",
-      "Bash(composer dump-autoload:*)"
+      "Bash(composer dump-autoload:*)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }
