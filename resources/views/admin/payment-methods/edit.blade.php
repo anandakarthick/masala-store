@@ -166,36 +166,37 @@
                     <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
                         <p class="text-sm text-purple-700">
                             <i class="fas fa-info-circle mr-1"></i>
-                            Get your PhonePe PG credentials from <a href="https://business.phonepe.com/" target="_blank" class="underline font-medium">PhonePe Business Dashboard</a> → Developers → API Keys
+                            Get your PhonePe PG credentials from <a href="https://developer.phonepe.com/" target="_blank" class="underline font-medium">PhonePe Developer Dashboard</a>
                         </p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Merchant ID *</label>
-                            <input type="text" name="phonepe_merchant_id"
-                                   value="{{ old('phonepe_merchant_id', $paymentMethod->getSetting('merchant_id')) }}"
-                                   placeholder="MERCHANTUAT"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Client ID *</label>
+                            <input type="text" name="phonepe_client_id"
+                                   value="{{ old('phonepe_client_id', $paymentMethod->getSetting('client_id')) }}"
+                                   placeholder="TEST-M22XXXXXXXXXXXXX"
                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
-                            <p class="text-xs text-gray-500 mt-1">Your PhonePe Merchant ID</p>
+                            <p class="text-xs text-gray-500 mt-1">Your PhonePe Client ID</p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Salt Key *</label>
-                            <input type="password" name="phonepe_salt_key"
-                                   value="{{ old('phonepe_salt_key', $paymentMethod->getSetting('salt_key')) }}"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Client Secret *</label>
+                            <input type="password" name="phonepe_client_secret"
+                                   value="{{ old('phonepe_client_secret', $paymentMethod->getSetting('client_secret')) }}"
                                    placeholder="••••••••••••••••"
                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
-                            <p class="text-xs text-gray-500 mt-1">Used for generating checksums</p>
+                            <p class="text-xs text-gray-500 mt-1">Your PhonePe Client Secret</p>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Salt Index</label>
-                            <input type="text" name="phonepe_salt_index"
-                                   value="{{ old('phonepe_salt_index', $paymentMethod->getSetting('salt_index', '1')) }}"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Client Version</label>
+                            <input type="number" name="phonepe_client_version"
+                                   value="{{ old('phonepe_client_version', $paymentMethod->getSetting('client_version', '1')) }}"
                                    placeholder="1"
+                                   min="1"
                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
                             <p class="text-xs text-gray-500 mt-1">Usually "1" (check your PhonePe dashboard)</p>
                         </div>
@@ -204,22 +205,23 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Environment</label>
                             <select name="phonepe_environment"
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-500 focus:border-green-500">
-                                <option value="sandbox" {{ $paymentMethod->getSetting('environment', 'sandbox') === 'sandbox' ? 'selected' : '' }}>Sandbox (Testing)</option>
+                                <option value="sandbox" {{ $paymentMethod->getSetting('environment', 'sandbox') === 'sandbox' ? 'selected' : '' }}>UAT / Sandbox (Testing)</option>
                                 <option value="production" {{ $paymentMethod->getSetting('environment') === 'production' ? 'selected' : '' }}>Production (Live)</option>
                             </select>
-                            <p class="text-xs text-gray-500 mt-1">Use Sandbox for testing first</p>
+                            <p class="text-xs text-gray-500 mt-1">Use UAT/Sandbox for testing first</p>
                         </div>
                     </div>
 
                     <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                         <h4 class="text-sm font-semibold text-blue-700 mb-2">
-                            <i class="fas fa-flask mr-1"></i> Sandbox Test Credentials
+                            <i class="fas fa-flask mr-1"></i> How to get credentials
                         </h4>
-                        <div class="text-xs text-blue-600 space-y-1">
-                            <p><strong>Merchant ID:</strong> PGTESTPAYUAT</p>
-                            <p><strong>Salt Key:</strong> 099eb0cd-02cf-4e2a-8aca-3e6c6aff0399</p>
-                            <p><strong>Salt Index:</strong> 1</p>
-                        </div>
+                        <ol class="text-xs text-blue-600 space-y-1 list-decimal list-inside">
+                            <li>Go to <a href="https://developer.phonepe.com/" target="_blank" class="underline">developer.phonepe.com</a></li>
+                            <li>Sign up / Login to your merchant account</li>
+                            <li>Navigate to API Keys section</li>
+                            <li>Copy your Client ID and Client Secret</li>
+                        </ol>
                     </div>
 
                     <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">

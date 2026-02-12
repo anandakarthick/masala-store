@@ -35,62 +35,42 @@
                     </svg>
                 </div>
                 <h2 class="text-lg font-semibold">Secure Payment via PhonePe</h2>
-                <p class="text-gray-500 text-sm mt-1">Select a payment method below</p>
+                <p class="text-gray-500 text-sm mt-1">Pay using UPI, Card, Net Banking or Wallet</p>
             </div>
 
-            <div class="grid grid-cols-2 gap-3 mb-6">
-                <!-- UPI Option -->
-                <button @click="selectPaymentType('UPI')" :disabled="processing"
-                        :class="selectedType === 'UPI' ? 'border-purple-600 bg-purple-50 ring-2 ring-purple-600' : 'border-gray-200 hover:border-purple-300'"
-                        class="p-4 border-2 rounded-xl transition-all duration-200 flex flex-col items-center">
-                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-2">
+            <div class="flex justify-center space-x-4 mb-6">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-1">
                         <i class="fas fa-mobile-alt text-purple-600 text-xl"></i>
                     </div>
-                    <span class="font-medium text-gray-800">UPI</span>
-                    <span class="text-xs text-gray-500">GPay, PhonePe, Paytm</span>
-                </button>
-
-                <!-- Card Option -->
-                <button @click="selectPaymentType('CARD')" :disabled="processing"
-                        :class="selectedType === 'CARD' ? 'border-purple-600 bg-purple-50 ring-2 ring-purple-600' : 'border-gray-200 hover:border-purple-300'"
-                        class="p-4 border-2 rounded-xl transition-all duration-200 flex flex-col items-center">
-                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-2">
+                    <span class="text-xs text-gray-500">UPI</span>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-1">
                         <i class="fas fa-credit-card text-purple-600 text-xl"></i>
                     </div>
-                    <span class="font-medium text-gray-800">Card</span>
-                    <span class="text-xs text-gray-500">Credit / Debit Card</span>
-                </button>
-
-                <!-- NetBanking Option -->
-                <button @click="selectPaymentType('NET_BANKING')" :disabled="processing"
-                        :class="selectedType === 'NET_BANKING' ? 'border-purple-600 bg-purple-50 ring-2 ring-purple-600' : 'border-gray-200 hover:border-purple-300'"
-                        class="p-4 border-2 rounded-xl transition-all duration-200 flex flex-col items-center">
-                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-2">
+                    <span class="text-xs text-gray-500">Card</span>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-1">
                         <i class="fas fa-university text-purple-600 text-xl"></i>
                     </div>
-                    <span class="font-medium text-gray-800">NetBanking</span>
-                    <span class="text-xs text-gray-500">All Banks Supported</span>
-                </button>
-
-                <!-- Wallet Option -->
-                <button @click="selectPaymentType('WALLET')" :disabled="processing"
-                        :class="selectedType === 'WALLET' ? 'border-purple-600 bg-purple-50 ring-2 ring-purple-600' : 'border-gray-200 hover:border-purple-300'"
-                        class="p-4 border-2 rounded-xl transition-all duration-200 flex flex-col items-center">
-                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-2">
+                    <span class="text-xs text-gray-500">NetBanking</span>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-1">
                         <i class="fas fa-wallet text-purple-600 text-xl"></i>
                     </div>
-                    <span class="font-medium text-gray-800">Wallet</span>
-                    <span class="text-xs text-gray-500">PhonePe Wallet</span>
-                </button>
+                    <span class="text-xs text-gray-500">Wallet</span>
+                </div>
             </div>
 
             <div x-show="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" x-text="error"></div>
 
-            <button @click="initiatePayment()" :disabled="processing || !selectedType"
+            <button @click="initiatePayment()" :disabled="processing"
                     class="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-4 rounded-lg font-semibold transition-colors">
-                <span x-show="!processing && !selectedType">Select a payment method</span>
-                <span x-show="!processing && selectedType"><i class="fas fa-lock mr-2"></i>Pay ₹{{ number_format($amountToPay, 2) }}</span>
-                <span x-show="processing"><i class="fas fa-spinner fa-spin mr-2"></i>Processing...</span>
+                <span x-show="!processing"><i class="fas fa-lock mr-2"></i>Pay ₹{{ number_format($amountToPay, 2) }}</span>
+                <span x-show="processing"><i class="fas fa-spinner fa-spin mr-2"></i>Redirecting to PhonePe...</span>
             </button>
 
             <p class="text-xs text-gray-500 text-center mt-4">
@@ -322,19 +302,8 @@ function phonePePayment() {
     return {
         processing: false,
         error: null,
-        selectedType: null,
-
-        selectPaymentType(type) {
-            this.selectedType = type;
-            this.error = null;
-        },
 
         async initiatePayment() {
-            if (!this.selectedType) {
-                this.error = 'Please select a payment method';
-                return;
-            }
-
             this.processing = true;
             this.error = null;
 
@@ -347,8 +316,7 @@ function phonePePayment() {
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({
-                        order_id: {{ $order->id }},
-                        payment_type: this.selectedType
+                        order_id: {{ $order->id }}
                     })
                 });
 

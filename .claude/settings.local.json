@@ -10,7 +10,11 @@
       "Bash(php -r:*)",
       "Bash(findstr:*)",
       "Bash(more:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "WebFetch(domain:developer.phonepe.com)",
+      "WebSearch",
+      "Bash(composer update:*)",
+      "Bash(composer dump-autoload:*)"
     ]
   }
 }

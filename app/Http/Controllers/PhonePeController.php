@@ -7,39 +7,40 @@ use App\Models\Order;
 use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use PhonePe\payments\v2\standardCheckout\StandardCheckoutClient;
+use PhonePe\payments\v2\models\request\builders\StandardCheckoutPayRequestBuilder;
+use PhonePe\Env;
+use PhonePe\common\exceptions\PhonePeException;
 
 class PhonePeController extends Controller
 {
-    private string $baseUrl;
-    private string $merchantId;
-    private string $saltKey;
-    private string $saltIndex;
+    private ?StandardCheckoutClient $client = null;
+    private ?PaymentMethod $phonepe = null;
 
     public function __construct()
     {
-        $phonepe = PaymentMethod::where('code', 'phonepe')->first();
+        $this->phonepe = PaymentMethod::where('code', 'phonepe')->first();
 
-        if ($phonepe) {
-            $this->merchantId = $phonepe->getSetting('merchant_id', '');
-            $this->saltKey = $phonepe->getSetting('salt_key', '');
-            $this->saltIndex = $phonepe->getSetting('salt_index', '1');
+        if ($this->phonepe) {
+            $clientId = $this->phonepe->getSetting('client_id', '');
+            $clientSecret = $this->phonepe->getSetting('client_secret', '');
+            $clientVersion = (int) $this->phonepe->getSetting('client_version', 1);
+            $environment = $this->phonepe->getSetting('environment', 'sandbox');
 
-            // Use production or sandbox based on setting
-            $environment = $phonepe->getSetting('environment', 'production');
-            $this->baseUrl = $environment === 'sandbox'
-                ? 'https://api-preprod.phonepe.com/apis/pg-sandbox'
-                : 'https://api.phonepe.com/apis/hermes';
+            if ($clientId && $clientSecret) {
+                try {
+                    $env = $environment === 'production' ? Env::PRODUCTION : Env::UAT;
+                    $this->client = StandardCheckoutClient::getInstance(
+                        $clientId,
+                        $clientVersion,
+                        $clientSecret,
+                        $env
+                    );
+                } catch (\Exception $e) {
+                    Log::error('PhonePe SDK initialization failed', ['error' => $e->getMessage()]);
+                }
+            }
         }
-    }
-
-    /**
-     * Generate X-VERIFY checksum for PhonePe
-     */
-    private function generateChecksum(string $base64Payload, string $endpoint): string
-    {
-        $string = $base64Payload . $endpoint . $this->saltKey;
-        $sha256 = hash('sha256', $string);
-        return $sha256 . '###' . $this->saltIndex;
     }
 
     /**
@@ -49,16 +50,11 @@ class PhonePeController extends Controller
     {
         $request->validate([
             'order_id' => 'required|exists:orders,id',
-            'payment_type' => 'nullable|in:UPI,CARD,NET_BANKING,WALLET',
         ]);
 
         $order = Order::findOrFail($request->order_id);
-        $paymentType = $request->input('payment_type', 'PAY_PAGE');
 
-        // Get PhonePe settings
-        $phonepe = PaymentMethod::where('code', 'phonepe')->first();
-
-        if (!$phonepe || !$phonepe->is_active) {
+        if (!$this->phonepe || !$this->phonepe->is_active) {
             Log::error('PhonePe not configured or disabled');
             return response()->json([
                 'success' => false,
@@ -66,14 +62,11 @@ class PhonePeController extends Controller
             ], 400);
         }
 
-        if (empty($this->merchantId) || empty($this->saltKey)) {
-            Log::error('PhonePe credentials missing', [
-                'merchant_id_set' => !empty($this->merchantId),
-                'salt_key_set' => !empty($this->saltKey),
-            ]);
+        if (!$this->client) {
+            Log::error('PhonePe client not initialized - check credentials');
             return response()->json([
                 'success' => false,
-                'message' => 'PhonePe credentials are not configured. Please set Merchant ID and Salt Key.',
+                'message' => 'PhonePe credentials are not configured correctly. Please check Client ID and Client Secret.',
             ], 400);
         }
 
@@ -91,130 +84,69 @@ class PhonePeController extends Controller
 
         try {
             $amountInPaise = (int) round($amountToPay * 100);
-            $merchantTransactionId = 'MT' . $order->id . 'T' . time();
-            $merchantUserId = 'MU' . ($order->user_id ?? $order->id);
+            $merchantOrderId = 'ORD' . $order->id . 'T' . time();
 
-            // Build payload
-            $payload = [
-                'merchantId' => $this->merchantId,
-                'merchantTransactionId' => $merchantTransactionId,
-                'merchantUserId' => $merchantUserId,
-                'amount' => $amountInPaise,
-                'redirectUrl' => route('phonepe.callback') . '?order_id=' . $order->id,
-                'redirectMode' => 'REDIRECT',
-                'callbackUrl' => route('phonepe.webhook'),
-                'paymentInstrument' => [
-                    'type' => 'PAY_PAGE',
-                ],
-            ];
-
-            // Add mobile number if available
-            if ($order->customer_phone) {
-                $mobileNumber = preg_replace('/[^0-9]/', '', $order->customer_phone);
-                if (strlen($mobileNumber) === 10) {
-                    $payload['mobileNumber'] = $mobileNumber;
-                } elseif (strlen($mobileNumber) > 10) {
-                    $payload['mobileNumber'] = substr($mobileNumber, -10);
-                }
-            }
-
-            $base64Payload = base64_encode(json_encode($payload));
-            $endpoint = '/pg/v1/pay';
-            $checksum = $this->generateChecksum($base64Payload, $endpoint);
+            // Build payment request using SDK
+            $payRequest = StandardCheckoutPayRequestBuilder::builder()
+                ->merchantOrderId($merchantOrderId)
+                ->amount($amountInPaise)
+                ->redirectUrl(route('phonepe.callback') . '?order_id=' . $order->id . '&merchant_order_id=' . $merchantOrderId)
+                ->build();
 
             Log::info('Creating PhonePe order', [
                 'order_id' => $order->id,
-                'merchant_transaction_id' => $merchantTransactionId,
+                'merchant_order_id' => $merchantOrderId,
                 'amount_inr' => $amountToPay,
                 'amount_paise' => $amountInPaise,
-                'endpoint' => $this->baseUrl . $endpoint,
             ]);
 
-            $ch = curl_init($this->baseUrl . $endpoint);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['request' => $base64Payload]));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/json',
-                'X-VERIFY: ' . $checksum,
-            ]);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+            // Call PhonePe pay API
+            $payResponse = $this->client->pay($payRequest);
 
-            // Use CA cert if available
-            if (file_exists(base_path('cacert.pem'))) {
-                curl_setopt($ch, CURLOPT_CAINFO, base_path('cacert.pem'));
-            }
-
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlError = curl_error($ch);
-            curl_close($ch);
-
-            if ($curlError) {
-                Log::error('PhonePe CURL error', ['error' => $curlError]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Network error. Please check your internet connection.',
-                ], 500);
-            }
-
-            $phonePeResponse = json_decode($response, true);
-
-            Log::info('PhonePe API response', [
-                'http_code' => $httpCode,
-                'response' => $phonePeResponse,
+            Log::info('PhonePe pay response', [
+                'state' => $payResponse->getState(),
+                'order_id' => $payResponse->getOrderId(),
             ]);
 
-            if (!$phonePeResponse || !isset($phonePeResponse['success']) || !$phonePeResponse['success']) {
-                Log::error('PhonePe order creation failed', [
-                    'response' => $phonePeResponse,
-                    'http_code' => $httpCode,
+            if ($payResponse->getState() === 'PENDING') {
+                // Store PhonePe order ID
+                $order->update([
+                    'transaction_id' => $merchantOrderId,
                 ]);
 
-                $errorMessage = 'Failed to create payment order.';
-                if (isset($phonePeResponse['message'])) {
-                    $errorMessage = $phonePeResponse['message'];
-                }
+                Log::info('PhonePe order created successfully', [
+                    'order_id' => $order->id,
+                    'merchant_order_id' => $merchantOrderId,
+                    'phonepe_order_id' => $payResponse->getOrderId(),
+                    'redirect_url' => $payResponse->getRedirectUrl(),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'redirect_url' => $payResponse->getRedirectUrl(),
+                    'merchant_order_id' => $merchantOrderId,
+                ]);
+            } else {
+                Log::error('PhonePe order creation failed', [
+                    'state' => $payResponse->getState(),
+                ]);
 
                 return response()->json([
                     'success' => false,
-                    'message' => $errorMessage,
-                    'debug' => config('app.debug') ? [
-                        'http_code' => $httpCode,
-                        'response' => $phonePeResponse,
-                    ] : null,
+                    'message' => 'Payment initiation failed. State: ' . $payResponse->getState(),
                 ], 500);
             }
 
-            // Get redirect URL from response
-            $redirectUrl = $phonePeResponse['data']['instrumentResponse']['redirectInfo']['url'] ?? null;
-
-            if (!$redirectUrl) {
-                Log::error('PhonePe: No redirect URL in response', ['response' => $phonePeResponse]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to get payment URL from PhonePe.',
-                ], 500);
-            }
-
-            // Store PhonePe transaction ID
-            $order->update([
-                'transaction_id' => $merchantTransactionId,
-            ]);
-
-            Log::info('PhonePe order created successfully', [
-                'order_id' => $order->id,
-                'merchant_transaction_id' => $merchantTransactionId,
-                'redirect_url' => $redirectUrl,
+        } catch (PhonePeException $e) {
+            Log::error('PhonePe SDK exception', [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
             ]);
 
             return response()->json([
-                'success' => true,
-                'redirect_url' => $redirectUrl,
-                'merchant_transaction_id' => $merchantTransactionId,
-            ]);
+                'success' => false,
+                'message' => 'Payment initialization failed: ' . $e->getMessage(),
+            ], 500);
 
         } catch (\Exception $e) {
             Log::error('PhonePe exception', [
@@ -235,6 +167,7 @@ class PhonePeController extends Controller
     public function callback(Request $request)
     {
         $orderId = $request->query('order_id');
+        $merchantOrderId = $request->query('merchant_order_id');
         $order = Order::find($orderId);
 
         if (!$order) {
@@ -242,7 +175,7 @@ class PhonePeController extends Controller
         }
 
         // Check payment status
-        $status = $this->checkPaymentStatus($order);
+        $status = $this->checkPaymentStatus($order, $merchantOrderId);
 
         if ($status === 'SUCCESS') {
             return redirect()->route('checkout.success', $order)
@@ -259,74 +192,57 @@ class PhonePeController extends Controller
     /**
      * Check payment status from PhonePe
      */
-    public function checkPaymentStatus(Order $order): string
+    public function checkPaymentStatus(Order $order, ?string $merchantOrderId = null): string
     {
-        if (!$order->transaction_id) {
+        $merchantOrderId = $merchantOrderId ?? $order->transaction_id;
+
+        if (!$merchantOrderId) {
             return 'FAILED';
         }
 
+        if (!$this->client) {
+            Log::error('PhonePe client not available for status check');
+            return 'PENDING';
+        }
+
         try {
-            $endpoint = '/pg/v1/status/' . $this->merchantId . '/' . $order->transaction_id;
-            $checksum = $this->generateChecksum('', $endpoint);
-
-            $url = $this->baseUrl . $endpoint;
-
-            $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/json',
-                'X-VERIFY: ' . $checksum,
-                'X-MERCHANT-ID: ' . $this->merchantId,
-            ]);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-
-            if (file_exists(base_path('cacert.pem'))) {
-                curl_setopt($ch, CURLOPT_CAINFO, base_path('cacert.pem'));
-            }
-
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            $data = json_decode($response, true);
+            $statusResponse = $this->client->getOrderStatus($merchantOrderId, true);
 
             Log::info('PhonePe status check', [
                 'order_id' => $order->id,
-                'http_code' => $httpCode,
-                'response' => $data,
+                'merchant_order_id' => $merchantOrderId,
+                'state' => $statusResponse->getState(),
             ]);
 
-            if ($data && isset($data['success']) && $data['success']) {
-                $code = $data['code'] ?? '';
+            $state = $statusResponse->getState();
 
-                if ($code === 'PAYMENT_SUCCESS') {
-                    // Payment successful - update order
-                    if ($order->payment_status !== 'paid') {
-                        $order->update([
-                            'payment_status' => 'paid',
-                            'status' => 'confirmed',
-                            'transaction_id' => $data['data']['transactionId'] ?? $order->transaction_id,
-                        ]);
+            if ($state === 'COMPLETED') {
+                // Payment successful - update order
+                if ($order->payment_status !== 'paid') {
+                    $order->update([
+                        'payment_status' => 'paid',
+                        'status' => 'confirmed',
+                    ]);
 
-                        // Send order emails
-                        SendOrderEmails::dispatch($order->fresh()->load('items.product'));
-                    }
-                    return 'SUCCESS';
-                } elseif ($code === 'PAYMENT_PENDING') {
-                    return 'PENDING';
-                } else {
-                    // FAILED or other states
-                    if ($order->payment_status !== 'failed') {
-                        $order->update(['payment_status' => 'failed']);
-                    }
-                    return 'FAILED';
+                    // Send order emails
+                    SendOrderEmails::dispatch($order->fresh()->load('items.product'));
                 }
+                return 'SUCCESS';
+            } elseif ($state === 'PENDING') {
+                return 'PENDING';
+            } else {
+                // FAILED or other states
+                if ($order->payment_status !== 'failed') {
+                    $order->update(['payment_status' => 'failed']);
+                }
+                return 'FAILED';
             }
 
+        } catch (PhonePeException $e) {
+            Log::error('PhonePe status check SDK exception', [
+                'message' => $e->getMessage(),
+            ]);
             return 'PENDING';
-
         } catch (\Exception $e) {
             Log::error('PhonePe status check exception', ['message' => $e->getMessage()]);
             return 'PENDING';
@@ -342,80 +258,58 @@ class PhonePeController extends Controller
 
         Log::info('PhonePe webhook received', ['payload' => $payload]);
 
-        // Verify the callback
-        $xVerify = $request->header('X-VERIFY');
-
-        if ($xVerify) {
-            // Validate checksum
-            $expectedChecksum = hash('sha256', $payload . $this->saltKey) . '###' . $this->saltIndex;
-            if ($xVerify !== $expectedChecksum) {
-                Log::warning('PhonePe webhook: Invalid checksum');
-                // Continue anyway as PhonePe may use different checksum format
-            }
-        }
-
         $data = json_decode($payload, true);
-
-        if (!$data) {
-            // Try to decode base64 response
-            $response = $data['response'] ?? null;
-            if ($response) {
-                $data = json_decode(base64_decode($response), true);
-            }
-        }
 
         if (!$data) {
             Log::warning('Invalid PhonePe webhook payload');
             return response()->json(['status' => 'invalid payload'], 400);
         }
 
-        $merchantTransactionId = $data['data']['merchantTransactionId']
-            ?? $data['merchantTransactionId']
+        // Extract merchant order ID from different possible locations
+        $merchantOrderId = $data['merchantOrderId']
+            ?? $data['data']['merchantOrderId']
             ?? null;
 
-        if (!$merchantTransactionId) {
-            Log::warning('No merchantTransactionId in webhook', ['data' => $data]);
+        if (!$merchantOrderId) {
+            Log::warning('No merchantOrderId in webhook', ['data' => $data]);
             return response()->json(['status' => 'ok']);
         }
 
-        // Find order by transaction ID
-        $order = Order::where('transaction_id', $merchantTransactionId)->first();
+        // Find order by transaction ID (merchant order ID)
+        $order = Order::where('transaction_id', $merchantOrderId)->first();
 
         if (!$order) {
-            Log::warning('Order not found for webhook', ['transaction_id' => $merchantTransactionId]);
+            Log::warning('Order not found for webhook', ['merchant_order_id' => $merchantOrderId]);
             return response()->json(['status' => 'ok']);
         }
 
-        $code = $data['code'] ?? '';
+        $state = $data['state'] ?? $data['data']['state'] ?? '';
 
         Log::info('PhonePe webhook processing', [
             'order_id' => $order->id,
-            'code' => $code,
+            'state' => $state,
         ]);
 
-        if ($code === 'PAYMENT_SUCCESS') {
+        if ($state === 'COMPLETED') {
             if ($order->payment_status !== 'paid') {
                 $order->update([
                     'payment_status' => 'paid',
                     'status' => 'confirmed',
-                    'transaction_id' => $data['data']['transactionId'] ?? $order->transaction_id,
                 ]);
 
                 Log::info('Payment captured via webhook', [
                     'order_id' => $order->id,
-                    'transaction_id' => $data['data']['transactionId'] ?? null,
                 ]);
 
                 // Send order emails
                 SendOrderEmails::dispatch($order->fresh()->load('items.product'));
             }
-        } elseif (in_array($code, ['PAYMENT_ERROR', 'PAYMENT_DECLINED', 'PAYMENT_CANCELLED'])) {
+        } elseif ($state === 'FAILED') {
             if ($order->payment_status !== 'failed') {
                 $order->update(['payment_status' => 'failed']);
 
                 Log::warning('Payment failed via webhook', [
                     'order_id' => $order->id,
-                    'code' => $code,
                 ]);
             }
         }
@@ -428,46 +322,40 @@ class PhonePeController extends Controller
      */
     public function testConfig()
     {
-        $phonepe = PaymentMethod::where('code', 'phonepe')->first();
-
         $result = [
-            'payment_method_exists' => (bool) $phonepe,
-            'is_active' => $phonepe ? $phonepe->is_active : false,
-            'merchant_id' => null,
-            'merchant_id_set' => false,
-            'salt_key_set' => false,
-            'salt_index' => null,
+            'payment_method_exists' => (bool) $this->phonepe,
+            'is_active' => $this->phonepe ? $this->phonepe->is_active : false,
+            'client_id' => null,
+            'client_id_set' => false,
+            'client_secret_set' => false,
+            'client_version' => null,
             'environment' => null,
-            'base_url' => null,
-            'api_test' => null,
-            'curl_available' => function_exists('curl_init'),
+            'sdk_initialized' => (bool) $this->client,
             'error_details' => null,
         ];
 
-        if ($phonepe) {
-            $merchantId = $phonepe->getSetting('merchant_id');
-            $saltKey = $phonepe->getSetting('salt_key');
-            $saltIndex = $phonepe->getSetting('salt_index', '1');
+        if ($this->phonepe) {
+            $clientId = $this->phonepe->getSetting('client_id');
+            $clientSecret = $this->phonepe->getSetting('client_secret');
+            $clientVersion = $this->phonepe->getSetting('client_version', 1);
 
-            $result['merchant_id'] = $merchantId ? (substr($merchantId, 0, 8) . '...') : 'NOT SET';
-            $result['merchant_id_set'] = !empty($merchantId);
-            $result['salt_key_set'] = !empty($saltKey);
-            $result['salt_index'] = $saltIndex;
-            $result['environment'] = $phonepe->getSetting('environment', 'production');
+            $result['client_id'] = $clientId ? (substr($clientId, 0, 10) . '...') : 'NOT SET';
+            $result['client_id_set'] = !empty($clientId);
+            $result['client_secret_set'] = !empty($clientSecret);
+            $result['client_version'] = $clientVersion;
+            $result['environment'] = $this->phonepe->getSetting('environment', 'sandbox');
 
-            $environment = $phonepe->getSetting('environment', 'production');
-            $result['base_url'] = $environment === 'sandbox'
-                ? 'https://api-preprod.phonepe.com/apis/pg-sandbox'
-                : 'https://api.phonepe.com/apis/hermes';
-
-            if ($merchantId && $saltKey) {
-                $result['api_test'] = 'CREDENTIALS_SET';
-                $result['error_details'] = 'Credentials are configured. Try making a test payment to verify.';
+            if ($this->client) {
+                $result['api_test'] = 'SDK_INITIALIZED';
+                $result['error_details'] = 'SDK is ready. Try making a test payment to verify.';
+            } elseif ($clientId && $clientSecret) {
+                $result['api_test'] = 'SDK_INIT_FAILED';
+                $result['error_details'] = 'Credentials are set but SDK failed to initialize. Check Client ID and Client Secret.';
             } else {
                 $result['api_test'] = 'CREDENTIALS_MISSING';
                 $missingFields = [];
-                if (!$merchantId) $missingFields[] = 'Merchant ID';
-                if (!$saltKey) $missingFields[] = 'Salt Key';
+                if (!$clientId) $missingFields[] = 'Client ID';
+                if (!$clientSecret) $missingFields[] = 'Client Secret';
                 $result['error_details'] = 'Missing: ' . implode(', ', $missingFields) . '. Configure in Admin > Payment Methods > PhonePe';
             }
         } else {
